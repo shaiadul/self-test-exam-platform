@@ -35,7 +35,7 @@ export default function HomePage() {
           <PrimaryBtn link="/auth" className="w-48">
             Start Now
           </PrimaryBtn>
-          <OutlineBtn link="/auth" className="w-48">
+          <OutlineBtn link="/auth/register" className="w-48">
             Register Now
           </OutlineBtn>
         </div>
@@ -87,10 +87,10 @@ export default function HomePage() {
           exams platform.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
-          <PrimaryBtn link="/auth" className="bg-white text-[#f97a00] w-48">
+          <PrimaryBtn link="/auth/login" className="bg-white text-[#f97a00] w-48">
             Sign In
           </PrimaryBtn>
-          <OutlineBtn link="/auth" className="w-48 text-[#f97a00]">
+          <OutlineBtn link="/auth/register" className="w-48 text-[#f97a00]">
             Register Now
           </OutlineBtn>
         </div>

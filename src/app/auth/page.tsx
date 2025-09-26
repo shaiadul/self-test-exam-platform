@@ -8,7 +8,7 @@ import Image from "next/image";
 export default function Auth() {
   return (
     <main>
-      <section className="flex min-w-full min-h-screen">
+      <section className="flex flex-col md:flex-row min-w-full min-h-screen">
         <div className="bg-gradient-to-tr from-[#dd6b01] to-[#f0b176] w-full">
           <div className="flex justify-center items-center h-full">
             <Image
@@ -26,7 +26,7 @@ export default function Auth() {
             <div className="w-60 h-60">
               <Lottie animationData={onlineExamAnimation} loop={true} />
             </div>
-            <h1 className="md:text-5xl text-center font-bold gradient-text ">
+            <h1 className="text-3xl md:text-5xl text-center font-bold gradient-text ">
               Online Exam Platform
             </h1>
             <p className="text-lg text-center font-normal py-10 max-w-2xl">
@@ -36,10 +36,10 @@ export default function Auth() {
             </p>
 
             <div className="flex flex-col gap-5 w-full justify-center items-center">
-              <PrimaryBtn className="w-1/3 " link="/courses">
+              <PrimaryBtn className="w-1/3 " link="/auth/login">
                 Sign In
               </PrimaryBtn>
-              <OutlineBtn className=" w-1/3 rounded-full" link="/courses">
+              <OutlineBtn className=" w-1/3 rounded-full" link="/auth/register">
                 Register Now
               </OutlineBtn>
             </div>
