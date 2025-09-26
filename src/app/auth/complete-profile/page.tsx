@@ -111,7 +111,7 @@ export default function Verify() {
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck="false"
-                  inputMode="numeric"
+                  inputMode="text"
                 />
               </div>
 
@@ -129,7 +129,7 @@ export default function Verify() {
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck="false"
-                  inputMode="numeric"
+                  inputMode="text"
                 />
               </div>
 
@@ -243,7 +243,7 @@ export default function Verify() {
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck="false"
-                  inputMode="numeric"
+                  inputMode="text"
                 />
               </div>
 
@@ -261,7 +261,7 @@ export default function Verify() {
                   autoCorrect="off"
                   autoCapitalize="off"
                   spellCheck="false"
-                  inputMode="numeric"
+                  inputMode="text"
                 />
               </div>
             </div>
