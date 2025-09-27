@@ -16,7 +16,7 @@ export function OutlineBtn({
   ...props
 }: OutlineButtonProps) {
   const baseClasses = cn(
-    "inline-flex items-center justify-center px-4 md:px-6 py-2 md:py-3",
+    "inline-flex items-center justify-center px-4 md:px-6 py-3",
     "rounded-full text-sm md:text-lg font-semibold",
     "bg-white border border-solid border-[#f97a00]",
     "relative overflow-hidden",
