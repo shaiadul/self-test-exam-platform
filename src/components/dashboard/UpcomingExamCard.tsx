@@ -10,7 +10,7 @@ type UpcomingExamCardProps = {
 
 export default function UpcomingExamCard({ image, title, dateTime }: UpcomingExamCardProps) {
   return (
-    <div className="flex flex-col gap-2 mt-2 items-start">
+    <div className="flex flex-col gap-2 mt-2 items-start w-full">
       <Image
         src={image}
         alt={title}

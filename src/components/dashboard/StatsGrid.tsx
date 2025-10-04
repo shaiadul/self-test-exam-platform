@@ -13,10 +13,10 @@ export default function StatsGrid({ stats }: StatsGridProps) {
       {stats.map((stat, idx) => (
         <div
           key={idx}
-          className="border rounded-lg p-4 flex flex-col items-center justify-center text-center"
+          className="border border-[#dd6b01] rounded-lg p-4 flex flex-col items-center justify-center"
         >
-          <p className="text-gray-500 text-sm">{stat.label}</p>
-          <p className="text-xl font-bold text-[#dd6b01]">{stat.value}</p>
+          <p className="text-gray-500 text-xl">{stat.label}</p>
+          <p className="text-4xl font-bold text-[#dd6b01]">{stat.value}</p>
         </div>
       ))}
     </div>
