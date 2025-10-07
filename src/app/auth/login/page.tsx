@@ -4,16 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import logo2 from "../../../../public/global/logo2.png";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function SignIn() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const router = useRouter();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Phone:", phone, "Password:", password);
+
     // TODO: Handle API call for login
+    router.push("/dashboard");
   };
 
   return (
@@ -38,7 +43,6 @@ export default function SignIn() {
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            
             <div className="flex items-center overflow-hidden border border-solid border-[#f97a00] rounded-lg cursor-not-allowed">
               <span className="px-3 py-4 text-lg text-[#f97a00] font-semibold">
                 +880
@@ -65,7 +69,6 @@ export default function SignIn() {
               />
             </div>
 
-            
             <div>
               <input
                 type="email"
@@ -84,7 +87,6 @@ export default function SignIn() {
               />
             </div>
 
-            
             <div>
               <input
                 type="password"
