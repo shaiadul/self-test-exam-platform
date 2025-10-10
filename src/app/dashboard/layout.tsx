@@ -3,19 +3,19 @@
 import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  FaHome,
-  FaBoxOpen,
-  FaChartBar,
-  FaUserCog,
-  FaSignOutAlt,
-} from "react-icons/fa";
+import { FaHome, FaBoxOpen, FaChartBar, FaUserCog } from "react-icons/fa";
 import Image from "next/image";
 import { IoMdLogOut } from "react-icons/io";
+import { SiGoogletagmanager } from "react-icons/si";
 
 const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: <FaHome /> },
   { name: "Exam Pack", href: "/dashboard/exam-pack", icon: <FaBoxOpen /> },
+  {
+    name: "Manage Exam Pack",
+    href: "/dashboard/manage-exam-pack",
+    icon: <SiGoogletagmanager />,
+  },
   { name: "Reporting", href: "/dashboard/reporting", icon: <FaChartBar /> },
   {
     name: "Edit Profile",
