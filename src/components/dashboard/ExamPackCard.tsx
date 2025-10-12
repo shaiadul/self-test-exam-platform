@@ -17,7 +17,7 @@ export default function ExamPackCard({
   title,
   description,
   totalExams,
-  // link,
+  link,
 }: ExamPackCardProps) {
   return (
     <div className="flex flex-col gap-3 mt-4 items-start w-full bg-white rounded-2xl shadow-md p-4 border border-gray-100 hover:shadow-lg transition-shadow duration-300">
@@ -43,7 +43,7 @@ export default function ExamPackCard({
           {totalExams} Exams
         </span>
         <Link
-          href="/dashboard/exam-pack/exam-pack-details"
+          href={link}
           className="px-4 py-2 text-sm text-[#dd6b01] rounded-lg hover:text-[#c95f00] underline"
         >
           View Pack

@@ -1,20 +1,36 @@
 "use client";
 
-import React, { useRef, useState, DragEvent } from "react";
+import React, { useRef, useState, DragEvent, useEffect } from "react";
 import Image from "next/image";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import CustomSelect from "@/components/ui/CustomSelect"; // adjust path if needed
 
-export default function AddExamPackPage() {
+export default function EditExamPackPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [examPackData, setExamPackData] = useState({
+    id: "",
     name: "",
     details: "",
     level: "",
     batch: "",
     image: "",
   });
+
+  // ✅ Simulate fetching existing data
+  useEffect(() => {
+    // Replace this with an API call (e.g., fetch(`/api/exam-pack/${id}`))
+    const existingData = {
+      id: "EP-101",
+      name: "SSC Exam Preparation 2025",
+      details:
+        "A complete mock test package designed to prepare SSC students for board exams. Includes practice sets, previous year questions, and detailed solutions.",
+      level: "SSC",
+      batch: "2025",
+      image: "/global/test.png", // existing image
+    };
+    setExamPackData(existingData);
+  }, []);
 
   // --- Image Upload Handlers ---
   const handleFileChange = (file: File) => {
@@ -41,15 +57,15 @@ export default function AddExamPackPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Exam Pack Submitted:", examPackData);
-    // TODO: Submit to API
+    console.log("Updated Exam Pack:", examPackData);
+    // TODO: call PUT API endpoint here
   };
 
   return (
     <main className="p-6 md:p-10">
-      <section className="">
+      <section>
         <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-[#dd6b01]">
-          Add New Exam Pack
+          Edit Exam Pack
         </h1>
 
         <form
@@ -76,6 +92,16 @@ export default function AddExamPackPage() {
                   fill
                   className="object-cover object-center w-full h-full rounded-2xl"
                 />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExamPackData({ ...examPackData, image: "" });
+                  }}
+                  className="absolute top-3 right-3 bg-white text-gray-700 hover:text-red-500 shadow-md px-3 py-1 rounded-md text-sm font-medium"
+                >
+                  Remove
+                </button>
               </div>
             ) : (
               <>
@@ -161,7 +187,7 @@ export default function AddExamPackPage() {
               type="submit"
               className="w-full bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold text-base py-3 rounded-full hover:opacity-90 transition-all duration-500 cursor-pointer"
             >
-              Save Exam Pack
+              Update Exam Pack
             </button>
           </div>
         </form>
@@ -169,7 +195,7 @@ export default function AddExamPackPage() {
         {/* --- Relevant Rules Section --- */}
         <div className="mt-14 bg-orange-50 border border-[#fcd6aa] rounded-2xl p-6 md:p-10 shadow-sm">
           <h2 className="text-xl md:text-2xl font-semibold text-[#dd6b01] mb-4">
-            📘 Relevant Rules for Creating Exam Packs
+            📘 Relevant Rules for Editing Exam Packs
           </h2>
 
           <ul className="list-disc list-inside space-y-2 text-gray-700 text-base leading-relaxed">
