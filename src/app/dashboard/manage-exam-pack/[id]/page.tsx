@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FaEdit, FaTrashAlt, FaPlus } from "react-icons/fa";
 import { MdOutlineEditNote } from "react-icons/md";
 
@@ -37,6 +38,12 @@ const examData: Exam[] = [
 ];
 
 export default function ExamPackDetail() {
+  const router = useRouter();
+  const handleEditExam = (id: string) => {
+    console.log("Edit Exam:", id);
+    router.push(`/dashboard/manage-exam-pack/mathbcs2025/edit-exam`);
+  };
+
   return (
     <div className="p-6 md:p-10">
       {/* --- Page Header --- */}
@@ -149,6 +156,9 @@ export default function ExamPackDetail() {
                 <td className="px-6 py-4 text-center">
                   <div className="flex justify-center items-center gap-3">
                     <button
+                      onClick={() => {
+                        handleEditExam(exam.id);
+                      }}
                       className="flex items-center gap-2 bg-[#dd6b01] text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-[#c25e00] transition-all cursor-pointer"
                       title="Edit Exam"
                     >
