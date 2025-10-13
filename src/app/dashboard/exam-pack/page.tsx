@@ -8,7 +8,6 @@ import {
   FaTags,
 } from "react-icons/fa";
 import ExamPackCard from "@/components/dashboard/ExamPackCard";
-import CustomSelect from "@/components/ui/CustomSelect";
 
 export default function ExamPackPage() {
   // ---- Mock Exam Pack Data ----
@@ -211,7 +210,7 @@ export default function ExamPackPage() {
               onClick={() => setShowDropdown((prev) => !prev)}
               className="flex items-center justify-between min-w-[160px] border border-[#dd6b01] text-[#dd6b01] text-sm px-3 py-2 rounded-lg hover:bg-[#fff4ec] transition cursor-pointer"
             >
-              {sortBy === "name" ? "Sort by Name" : "Sort by Total Exams"}
+              {sortBy === "name" ? "Sort by Name" : "Sort by Exams"}
               <FaSortAmountDown
                 className={`ml-2 transition-transform ${
                   showDropdown ? "rotate-180" : ""
