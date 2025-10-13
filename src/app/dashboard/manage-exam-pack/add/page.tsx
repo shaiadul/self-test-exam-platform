@@ -104,57 +104,75 @@ export default function AddExamPackPage() {
 
           {/* --- Form Inputs --- */}
           <div className="space-y-5">
-            <input
-              type="text"
-              placeholder="Exam Pack Name*"
-              className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
-              value={examPackData.name}
-              onChange={(e) =>
-                setExamPackData({ ...examPackData, name: e.target.value })
-              }
-              required
-            />
-
-            <textarea
-              placeholder="Details*"
-              className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg resize-none focus:ring-2 focus:ring-[#f97a00] min-h-[120px]"
-              value={examPackData.details}
-              onChange={(e) =>
-                setExamPackData({ ...examPackData, details: e.target.value })
-              }
-              required
-            />
+            <div>
+              <label className="text-sm font-semibold text-gray-800 block mb-1">
+                Exam Pack Name
+              </label>
+              <input
+                type="text"
+                placeholder="Exam Pack Name*"
+                className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
+                value={examPackData.name}
+                onChange={(e) =>
+                  setExamPackData({ ...examPackData, name: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-800 block mb-1">
+                Details (description)
+              </label>
+              <textarea
+                placeholder="Details*"
+                className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg resize-none focus:ring-2 focus:ring-[#f97a00] min-h-[120px]"
+                value={examPackData.details}
+                onChange={(e) =>
+                  setExamPackData({ ...examPackData, details: e.target.value })
+                }
+                required
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <CustomSelect
-                label="Select Level"
-                options={[
-                  "PSC",
-                  "SSC",
-                  "HSC",
-                  "BCS",
-                  "BS",
-                  "BA",
-                  "BBA",
-                  "MA",
-                  "PHD",
-                ]}
-                value={examPackData.level}
-                onChange={(val) =>
-                  setExamPackData({ ...examPackData, level: val })
-                }
-              />
-
-              <CustomSelect
-                label="Select Batch"
-                options={Array.from({ length: 20 }, (_, i) =>
-                  (2010 + i).toString()
-                )}
-                value={examPackData.batch}
-                onChange={(val) =>
-                  setExamPackData({ ...examPackData, batch: val })
-                }
-              />
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Level
+                </label>
+                <CustomSelect
+                  label="Select Level"
+                  options={[
+                    "PSC",
+                    "SSC",
+                    "HSC",
+                    "BCS",
+                    "BS",
+                    "BA",
+                    "BBA",
+                    "MA",
+                    "PHD",
+                  ]}
+                  value={examPackData.level}
+                  onChange={(val) =>
+                    setExamPackData({ ...examPackData, level: val })
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Batch
+                </label>
+                <CustomSelect
+                  label="Select Batch"
+                  options={Array.from({ length: 20 }, (_, i) =>
+                    (2010 + i).toString()
+                  )}
+                  value={examPackData.batch}
+                  onChange={(val) =>
+                    setExamPackData({ ...examPackData, batch: val })
+                  }
+                />
+              </div>
             </div>
 
             <button

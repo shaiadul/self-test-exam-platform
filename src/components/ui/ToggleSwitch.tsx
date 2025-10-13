@@ -21,7 +21,7 @@ export default function ToggleSwitch({
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${
+        className={`relative w-14 h-7 rounded-full transition-colors duration-500 cursor-pointer ${
           checked ? "bg-[#f97a00]" : "bg-gray-300"
         }`}
       >

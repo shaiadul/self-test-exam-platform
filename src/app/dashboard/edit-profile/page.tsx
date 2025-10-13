@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import logo2 from "../../../../public/global/logo2.png";
 import { useRouter } from "next/navigation";
 import CustomSelect from "@/components/ui/CustomSelect";
 import { FaEdit } from "react-icons/fa";
@@ -14,7 +13,7 @@ export default function EditProfile() {
 
   // --- Prefilled user data ---
   const [profileData, setProfileData] = useState({
-    image: "/global/no-picture.jpg",
+    image: "/user/md-saidul.jpeg",
     name: "Md Saidul Basar",
     email: "saidul@example.com",
     phone: "01700000000",
@@ -34,7 +33,7 @@ export default function EditProfile() {
 
   return (
     <main>
-      <section className="flex-1 flex items-center justify-center py-20 px-4">
+      <section className="flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-7xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center gradient-text mb-6">
             Edit Your Profile
@@ -84,132 +83,172 @@ export default function EditProfile() {
 
             {/* ---- Form Fields ---- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Enter your name*"
-                className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
-                value={profileData.name}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, name: e.target.value })
-                }
-                required
-              />
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your name*"
+                  className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
+                  value={profileData.name}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, name: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Email
+                </label>
 
-              <input
-                type="email"
-                placeholder="Enter your email*"
-                className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
-                value={profileData.email}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, email: e.target.value })
-                }
-                required
-              />
+                <input
+                  type="email"
+                  placeholder="Enter your email*"
+                  className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
+                  value={profileData.email}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, email: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Phone
+                </label>
 
-              <input
-                type="phone"
-                placeholder="Enter your phone*"
-                className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
-                value={profileData.phone}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, phone: e.target.value })
-                }
-                required
-              />
+                <input
+                  type="phone"
+                  placeholder="Enter your phone*"
+                  className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
+                  value={profileData.phone}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, phone: e.target.value })
+                  }
+                  required
+                />
+              </div>
 
-              <CustomSelect
-                label="Select your level"
-                options={[
-                  "PSC",
-                  "SSC",
-                  "HSC",
-                  "BCS",
-                  "BS",
-                  "BA",
-                  "BBA",
-                  "MA",
-                  "PHD",
-                ]}
-                value={profileData.level}
-                onChange={(val) =>
-                  setProfileData({ ...profileData, level: val })
-                }
-              />
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Level
+                </label>
 
-              <CustomSelect
-                label="Select your batch"
-                options={[
-                  "2010",
-                  "2011",
-                  "2012",
-                  "2013",
-                  "2014",
-                  "2015",
-                  "2016",
-                  "2017",
-                  "2018",
-                  "2019",
-                  "2020",
-                  "2021",
-                  "2022",
-                  "2023",
-                  "2024",
-                  "2025",
-                  "2026",
-                  "2027",
-                  "2028",
-                  "2029",
-                  "2030",
-                ]}
-                value={profileData.batch}
-                onChange={(val) =>
-                  setProfileData({ ...profileData, batch: val })
-                }
-              />
+                <CustomSelect
+                  label="Select your level"
+                  options={[
+                    "PSC",
+                    "SSC",
+                    "HSC",
+                    "BCS",
+                    "BS",
+                    "BA",
+                    "BBA",
+                    "MA",
+                    "PHD",
+                  ]}
+                  value={profileData.level}
+                  onChange={(val) =>
+                    setProfileData({ ...profileData, level: val })
+                  }
+                />
+              </div>
 
-              <CustomSelect
-                label="Select your board"
-                options={[
-                  "Dhaka",
-                  "Chattogram",
-                  "Rajshahi",
-                  "Khulna",
-                  "Barishal",
-                  "Rangpur",
-                  "Mymensingh",
-                  "Sylhet",
-                  "Comilla",
-                ]}
-                value={profileData.board}
-                onChange={(val) =>
-                  setProfileData({ ...profileData, board: val })
-                }
-              />
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Batch
+                </label>
+                <CustomSelect
+                  label="Select your batch"
+                  options={[
+                    "2010",
+                    "2011",
+                    "2012",
+                    "2013",
+                    "2014",
+                    "2015",
+                    "2016",
+                    "2017",
+                    "2018",
+                    "2019",
+                    "2020",
+                    "2021",
+                    "2022",
+                    "2023",
+                    "2024",
+                    "2025",
+                    "2026",
+                    "2027",
+                    "2028",
+                    "2029",
+                    "2030",
+                  ]}
+                  value={profileData.batch}
+                  onChange={(val) =>
+                    setProfileData({ ...profileData, batch: val })
+                  }
+                />
+              </div>
 
-              <input
-                type="text"
-                placeholder="Institute Name*"
-                className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
-                value={profileData.institution}
-                onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    institution: e.target.value,
-                  })
-                }
-                required
-              />
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Board
+                </label>
 
-              <input
-                type="text"
-                placeholder="Address*"
-                className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
-                value={profileData.address}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, address: e.target.value })
-                }
-                required
-              />
+                <CustomSelect
+                  label="Select your board"
+                  options={[
+                    "Dhaka",
+                    "Chattogram",
+                    "Rajshahi",
+                    "Khulna",
+                    "Barishal",
+                    "Rangpur",
+                    "Mymensingh",
+                    "Sylhet",
+                    "Comilla",
+                  ]}
+                  value={profileData.board}
+                  onChange={(val) =>
+                    setProfileData({ ...profileData, board: val })
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Institute
+                </label>
+                <input
+                  type="text"
+                  placeholder="Institute Name*"
+                  className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
+                  value={profileData.institution}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      institution: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  placeholder="Address*"
+                  className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
+                  value={profileData.address}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, address: e.target.value })
+                  }
+                  required
+                />
+              </div>
             </div>
 
             <button

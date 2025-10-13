@@ -46,7 +46,7 @@ export default function Verify() {
         </div>
       </section>
 
-      <section className="flex-1 flex items-center justify-center py-20 px-4">
+      <section className="flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-7xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center gradient-text mb-6">
             Complete Your Profile
@@ -98,6 +98,9 @@ export default function Verify() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Name
+                </label>
                 <input
                   type="text"
                   placeholder="Enter your name*"
@@ -116,6 +119,9 @@ export default function Verify() {
               </div>
 
               <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Email
+                </label>
                 <input
                   type="email"
                   placeholder="Enter your email*"
@@ -134,6 +140,9 @@ export default function Verify() {
               </div>
 
               <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Phone
+                </label>
                 <input
                   type="phone"
                   placeholder="Enter your phone*"
@@ -152,6 +161,9 @@ export default function Verify() {
               </div>
 
               <div className="">
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Level
+                </label>
                 <CustomSelect
                   label="Enter your level*"
                   options={[
@@ -173,6 +185,9 @@ export default function Verify() {
               </div>
 
               <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Batch
+                </label>
                 <CustomSelect
                   label="Enter your batch*"
                   options={[
@@ -206,6 +221,9 @@ export default function Verify() {
               </div>
 
               <div className="">
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Board
+                </label>
                 <CustomSelect
                   label="Enter your board*"
                   options={[
@@ -227,6 +245,9 @@ export default function Verify() {
               </div>
 
               <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Institute
+                </label>
                 <input
                   type="text"
                   placeholder="Institute Name*"
@@ -248,6 +269,9 @@ export default function Verify() {
               </div>
 
               <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Address
+                </label>
                 <input
                   type="text"
                   placeholder="Address*"

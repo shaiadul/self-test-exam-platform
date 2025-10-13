@@ -178,27 +178,35 @@ export default function EditExamPage({
                 }}
               />
             </div>
-
-            <input
-              type="text"
-              placeholder="Exam Name*"
-              className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
-              value={examPackData.name}
-              onChange={(e) =>
-                setExamPackData({ ...examPackData, name: e.target.value })
-              }
-              required
-            />
-
-            <textarea
-              placeholder="Details*"
-              className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg resize-none focus:ring-2 focus:ring-[#f97a00] min-h-[120px]"
-              value={examPackData.details}
-              onChange={(e) =>
-                setExamPackData({ ...examPackData, details: e.target.value })
-              }
-              required
-            />
+            <div>
+              <label className="text-sm font-semibold text-gray-800 block mb-1">
+                Exam Name
+              </label>
+              <input
+                type="text"
+                placeholder="Exam Name*"
+                className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
+                value={examPackData.name}
+                onChange={(e) =>
+                  setExamPackData({ ...examPackData, name: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-800 block mb-1">
+                Details (Description)
+              </label>
+              <textarea
+                placeholder="Details*"
+                className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg resize-none focus:ring-2 focus:ring-[#f97a00] min-h-[120px]"
+                value={examPackData.details}
+                onChange={(e) =>
+                  setExamPackData({ ...examPackData, details: e.target.value })
+                }
+                required
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DateTimePicker
                 label="Start Date & Time"
@@ -220,92 +228,121 @@ export default function EditExamPage({
           {/* Right side (Inputs + Toggles) */}
           <div className="space-y-5">
             <div className="text-2xl text-[#dd6b01] font-semibold">
-              Update Exam Info
+              Assign Student
             </div>
             <div className="grid grid-cols-3 gap-4">
-              <CustomSelect
-                label="Select Level"
-                options={[
-                  "PSC",
-                  "SSC",
-                  "HSC",
-                  "BCS",
-                  "BS",
-                  "BA",
-                  "BBA",
-                  "MA",
-                  "PHD",
-                ]}
-                value={examPackData.level}
-                onChange={(val) =>
-                  setExamPackData({ ...examPackData, level: val })
-                }
-              />
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Level
+                </label>
+                <CustomSelect
+                  label="Select Level"
+                  options={[
+                    "PSC",
+                    "SSC",
+                    "HSC",
+                    "BCS",
+                    "BS",
+                    "BA",
+                    "BBA",
+                    "MA",
+                    "PHD",
+                  ]}
+                  value={examPackData.level}
+                  onChange={(val) =>
+                    setExamPackData({ ...examPackData, level: val })
+                  }
+                />
+              </div>
 
-              <CustomSelect
-                label="Select Batch"
-                options={Array.from({ length: 20 }, (_, i) =>
-                  (2010 + i).toString()
-                )}
-                value={examPackData.batch}
-                onChange={(val) =>
-                  setExamPackData({ ...examPackData, batch: val })
-                }
-              />
-
-              <CustomSelect
-                label="Select Exam Pack"
-                options={["Science Explored"]}
-                value={examPackData.pack}
-                onChange={(val) =>
-                  setExamPackData({ ...examPackData, pack: val })
-                }
-              />
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Batch
+                </label>
+                <CustomSelect
+                  label="Select Batch"
+                  options={Array.from({ length: 20 }, (_, i) =>
+                    (2010 + i).toString()
+                  )}
+                  value={examPackData.batch}
+                  onChange={(val) =>
+                    setExamPackData({ ...examPackData, batch: val })
+                  }
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Exam Pack
+                </label>
+                <CustomSelect
+                  label="Select Exam Pack"
+                  options={["Science Explored"]}
+                  value={examPackData.pack}
+                  onChange={(val) =>
+                    setExamPackData({ ...examPackData, pack: val })
+                  }
+                />
+              </div>
             </div>
 
             <div className="text-2xl text-[#dd6b01] font-semibold">
               Marking Details
             </div>
             <div className="grid grid-cols-3 gap-4">
-              <input
-                type="number"
-                placeholder="Total Marks*"
-                className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
-                value={examPackData.totalMarks || ""}
-                onChange={(e) =>
-                  setExamPackData({
-                    ...examPackData,
-                    totalMarks: parseFloat(e.target.value),
-                  })
-                }
-                required
-              />
-              <input
-                type="number"
-                placeholder="Per Question Mark*"
-                className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
-                value={examPackData.perQuestionMark || ""}
-                onChange={(e) =>
-                  setExamPackData({
-                    ...examPackData,
-                    perQuestionMark: parseFloat(e.target.value),
-                  })
-                }
-                required
-              />
-              <input
-                type="number"
-                placeholder="Passing Marks*"
-                className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
-                value={examPackData.passMark || ""}
-                onChange={(e) =>
-                  setExamPackData({
-                    ...examPackData,
-                    passMark: parseFloat(e.target.value),
-                  })
-                }
-                required
-              />
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Total Marks
+                </label>
+                <input
+                  type="number"
+                  placeholder="Total Marks*"
+                  className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
+                  value={examPackData.totalMarks || ""}
+                  onChange={(e) =>
+                    setExamPackData({
+                      ...examPackData,
+                      totalMarks: parseFloat(e.target.value),
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Per Question Mark
+                </label>
+                <input
+                  type="number"
+                  placeholder="Per Question Mark*"
+                  className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
+                  value={examPackData.perQuestionMark || ""}
+                  onChange={(e) =>
+                    setExamPackData({
+                      ...examPackData,
+                      perQuestionMark: parseFloat(e.target.value),
+                    })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-800 block mb-1">
+                  Passing Marks
+                </label>
+                <input
+                  type="number"
+                  placeholder="Passing Marks*"
+                  className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
+                  value={examPackData.passMark || ""}
+                  onChange={(e) =>
+                    setExamPackData({
+                      ...examPackData,
+                      passMark: parseFloat(e.target.value),
+                    })
+                  }
+                  required
+                />
+              </div>
             </div>
 
             {/* --- Exam Settings (Toggles) --- */}
@@ -346,6 +383,7 @@ export default function EditExamPage({
                       scoreValue: parseFloat(e.target.value),
                     })
                   }
+                  required
                   className="w-full px-4 py-2 border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00] focus:outline-0"
                 />
               )}
@@ -368,6 +406,7 @@ export default function EditExamPage({
                       negativeValue: parseFloat(e.target.value),
                     })
                   }
+                  required
                   className="w-full px-4 py-2 border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00] focus:outline-0"
                 />
               )}
@@ -390,6 +429,7 @@ export default function EditExamPage({
                       totalTimeValue: parseFloat(e.target.value),
                     })
                   }
+                  required
                   className="w-full px-4 py-2 border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00] focus:outline-0"
                 />
               )}
