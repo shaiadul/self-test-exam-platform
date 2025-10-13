@@ -223,7 +223,7 @@ export default function ExamPackPage() {
               <ul className="absolute top-full left-0 mt-1 w-full bg-white border border-[#dd6b01] rounded-lg shadow-md z-20 cursor-pointer">
                 {[
                   { label: "Sort by Name", value: "name" },
-                  { label: "Sort by Total Exams", value: "totalExams" },
+                  { label: "Sort by Exams", value: "totalExams" },
                 ].map((opt) => (
                   <li
                     key={opt.value}
