@@ -253,7 +253,7 @@ export default function AddExamPage() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h1 className="text-2xl md:text-3xl font-bold text-[#dd6b01]">
-            🧾 Create New Exam
+            🧾 Create New Question 
           </h1>
         </div>
 
