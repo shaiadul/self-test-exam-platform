@@ -7,6 +7,7 @@ import { FaHome, FaBoxOpen, FaChartBar, FaUserCog } from "react-icons/fa";
 import Image from "next/image";
 import { IoMdLogOut } from "react-icons/io";
 import { SiGoogletagmanager } from "react-icons/si";
+import { MdQuestionAnswer } from "react-icons/md";
 
 const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: <FaHome /> },
@@ -17,6 +18,11 @@ const menuItems = [
     icon: <SiGoogletagmanager />,
   },
   { name: "Reporting", href: "/dashboard/reporting", icon: <FaChartBar /> },
+  {
+    name: "Qustion Bank",
+    href: "/dashboard/question/add",
+    icon: <MdQuestionAnswer />,
+  },
   {
     name: "Edit Profile",
     href: "/dashboard/edit-profile",
