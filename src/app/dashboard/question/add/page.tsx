@@ -253,7 +253,7 @@ export default function AddExamPage() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h1 className="text-2xl md:text-3xl font-bold text-[#dd6b01]">
-            🧾 Create New Question 
+            🧾 Create New Question
           </h1>
         </div>
 
@@ -346,6 +346,56 @@ export default function AddExamPage() {
             </div>
           </div>
         )}
+      </div>
+      {/* --- Relevant Rules Section --- */}
+      <div className="mt-14 max-w-5xl mx-auto bg-orange-50 border border-[#fcd6aa] rounded-2xl p-6 md:p-10 shadow-sm">
+        <h2 className="text-xl md:text-2xl font-semibold text-[#dd6b01] mb-4">
+          📘 Relevant Rules for Creating Question
+        </h2>
+
+        <ul className="list-disc list-inside space-y-2 text-gray-700 text-base leading-relaxed">
+          <li>
+            The <span className="font-bold">Exam Pack Name</span> must be
+            unique, descriptive, and easily recognizable.
+          </li>
+          <li>
+            Maximum image ratio is{" "}
+            <span className="font-bold">around 663×322 (≈2.06:1)</span>.
+          </li>
+          <li>
+            Ensure that any <span className="font-bold">uploaded images</span>{" "}
+            are high-quality and do not exceed{" "}
+            <span className="font-bold">2MB</span> in size.
+          </li>
+          <li>
+            Use accurate <span className="font-bold">exam level</span> and{" "}
+            <span className="font-bold">batch</span> details to categorize exams
+            properly.
+          </li>
+          <li>
+            Include complete and clear information in the{" "}
+            <span className="font-bold">“Details”</span> section to help
+            students understand the exam content.
+          </li>
+          <li>
+            Review all <span className="font-bold">questions and options</span>{" "}
+            for correctness before publishing.
+          </li>
+          <li>
+            Once published, exam packs can be edited but cannot be deleted
+            directly without admin approval.
+          </li>
+          <li>
+            Maintain a consistent{" "}
+            <span className="font-bold">format and style</span> for questions,
+            passages, and images to ensure uniformity across the exam pack.
+          </li>
+        </ul>
+
+        <p className="mt-5 text-gray-600 text-sm italic">
+          Tip: Well-structured and accurate exam packs help students quickly
+          find relevant materials and improve their learning experience.
+        </p>
       </div>
     </div>
   );

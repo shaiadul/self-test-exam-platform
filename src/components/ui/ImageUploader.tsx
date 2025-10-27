@@ -11,7 +11,7 @@ interface ImageUploaderProps {
   height?: string;
 }
 
-const DEFAULT_HEIGHT = "h-80";
+const DEFAULT_HEIGHT = "h-96";
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   onUpload,
@@ -127,9 +127,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               >
                 <MdClose size={18} />
               </button>
-            </div>
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-black/40 text-red-500 font-medium text-xs rounded-md select-none">
-              Click to replace
             </div>
           </>
         ) : (
