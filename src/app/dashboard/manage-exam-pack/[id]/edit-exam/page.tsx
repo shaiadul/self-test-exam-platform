@@ -28,6 +28,8 @@ type ExamData = {
   negativeValue: number;
   totalTime: boolean;
   totalTimeValue: number;
+  privateExam: boolean;
+  privatePassword: string;
 };
 
 export default function EditExamPage({
@@ -63,6 +65,8 @@ export default function EditExamPage({
     negativeValue: 0,
     totalTime: true,
     totalTimeValue: 60,
+    privateExam: true,
+    privatePassword: "Exam@123",
   });
 
   // --- Preload Data when editing ---
@@ -91,6 +95,8 @@ export default function EditExamPage({
         negativeValue: existingExam.negativeValue || 0,
         totalTime: existingExam.totalTime || false,
         totalTimeValue: existingExam.totalTimeValue || 0,
+        privateExam: existingExam.privateExam || false,
+        privatePassword: existingExam.privatePassword || "",
       });
     }
   }, [existingExam]);
@@ -365,6 +371,27 @@ export default function EditExamPage({
                   setExamSettings({ ...examSettings, feedback: val })
                 }
               />
+              <ToggleSwitch
+                label="Private Exam"
+                checked={examSettings.privateExam}
+                onChange={(val) =>
+                  setExamSettings({ ...examSettings, privateExam: val })
+                }
+              />
+              {examSettings.privateExam && (
+                <input
+                  type="text"
+                  placeholder="Enter Private Password"
+                  value={examSettings.privatePassword || ""}
+                  onChange={(e) =>
+                    setExamSettings({
+                      ...examSettings,
+                      privatePassword: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00] focus:outline-0"
+                />
+              )}
               <ToggleSwitch
                 label="Score Limit"
                 checked={examSettings.scoreLimit}

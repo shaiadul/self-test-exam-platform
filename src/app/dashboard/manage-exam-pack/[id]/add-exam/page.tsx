@@ -32,6 +32,8 @@ export default function AddExamPage() {
     negativeValue: 0,
     totalTime: false,
     totalTimeValue: 0,
+    privateExam: false,
+    privatePassword: "",
   });
 
   // --- Image Upload Handlers ---
@@ -309,6 +311,28 @@ export default function AddExamPage() {
                   setExamSettings({ ...examSettings, feedback: val })
                 }
               />
+              
+              <ToggleSwitch
+                label="Private Exam"
+                checked={examSettings.privateExam}
+                onChange={(val) =>
+                  setExamSettings({ ...examSettings, privateExam: val })
+                }
+              />
+              {examSettings.privateExam && (
+                <input
+                  type="text"
+                  placeholder="Enter Private Password"
+                  value={examSettings.privatePassword || ""}
+                  onChange={(e) =>
+                    setExamSettings({
+                      ...examSettings,
+                      privatePassword: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2 border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00] focus:outline-0"
+                />
+              )}
 
               <ToggleSwitch
                 label="Score Limit"
