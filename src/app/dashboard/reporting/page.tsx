@@ -167,7 +167,7 @@ export default function ExamReportPage() {
             onClick={() =>
               setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
             }
-            className="flex items-center gap-2 border border-[#dd6b01] px-3 py-2 rounded-lg text-[#dd6b01] hover:bg-[#dd6b01] hover:text-white transition"
+            className="flex items-center text-sm gap-2 border border-[#dd6b01] px-3 py-2 rounded-lg text-[#dd6b01] hover:bg-[#dd6b01] hover:text-white transition"
           >
             {sortOrder === "asc" ? (
               <>

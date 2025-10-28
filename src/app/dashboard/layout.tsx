@@ -5,9 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaHome, FaBoxOpen, FaChartBar, FaUserCog } from "react-icons/fa";
 import Image from "next/image";
-import { IoMdLogOut } from "react-icons/io";
+import { IoMdLogOut, IoMdSettings } from "react-icons/io";
 import { SiGoogletagmanager } from "react-icons/si";
 import { MdQuestionAnswer } from "react-icons/md";
+import { TbMessageReportFilled } from "react-icons/tb";
 
 const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: <FaHome /> },
@@ -23,10 +24,17 @@ const menuItems = [
     href: "/dashboard/question/add",
     icon: <MdQuestionAnswer />,
   },
+
+  { name: "Exam Reports", href: "/dashboard/report", icon: <TbMessageReportFilled /> },
   {
     name: "Edit Profile",
     href: "/dashboard/edit-profile",
     icon: <FaUserCog />,
+  },
+  {
+    name: "Settings",
+    href: "/dashboard/settings",
+    icon: <IoMdSettings />,
   },
 ];
 
