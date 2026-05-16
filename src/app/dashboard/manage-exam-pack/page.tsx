@@ -3,7 +3,7 @@ import AddButton from "@/components/ui/AddButton";
 
 export default function ManageExamPackPage() {
   return (
-    <main className="p-6 md:p-10">
+    <main>
       <AddButton href="/dashboard/manage-exam-pack/add" label="Add Exam Pack" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
         <ExamPackCard

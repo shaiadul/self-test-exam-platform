@@ -50,7 +50,7 @@ const settingsModules = [
 
 export default function SettingsPage() {
   return (
-    <div className="p-6 md:p-10 space-y-8">
+    <div className="space-y-8">
       <h1 className="text-3xl font-bold text-[#dd6b01]">Settings</h1>
       <p className="text-gray-500">
         Configure your system modules, permissions, finances and assets.

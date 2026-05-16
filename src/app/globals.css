@@ -1,15 +1,24 @@
 @import "tailwindcss";
 
+@theme {
+  --color-primary: #f97a00;
+  --color-primary-light: #f0b176;
+  --color-primary-dark: #dd6b01;
+  
+  --shadow-premium: 0 10px 25px -5px rgba(249, 122, 0, 0.1), 0 8px 10px -6px rgba(249, 122, 0, 0.1);
+  --shadow-premium-hover: 0 20px 25px -5px rgba(249, 122, 0, 0.15), 0 10px 10px -6px rgba(249, 122, 0, 0.1);
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,33 +31,37 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Times New Roman", Times, serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .gradient-text {
-  background: linear-gradient(90deg, #f97a00, #f978008a);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-light;
 }
 
 .gradient-border {
   border: 2px solid;
-  border-radius: 9999px !important; /* <-- Tailwind rounded-full */
-  border-image: linear-gradient(90deg, #f97a00, #f978008a) 1;
+  border-radius: 9999px !important;
+  border-image: linear-gradient(90deg, #f97a00, #f0b176) 1;
 }
 
-/* ---------- 1) Remove default spinner controls (cross-browser) ---------- */
-/* Chrome, Edge, Safari, Opera */
+/* Custom Utilities */
+.glass-card {
+  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-premium;
+}
+
+.hover-lift {
+  @apply transition-transform duration-300 hover:-translate-y-1 hover:shadow-premium-hover;
+}
+
+/* ---------- 1) Remove default spinner controls ---------- */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
-  display: none; /* ensure hidden */
 }
 
-/* Firefox */
 input[type="number"] {
   -moz-appearance: textfield;
 }

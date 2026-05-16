@@ -5,125 +5,109 @@ import Link from "next/link";
 import logo2 from "../../../../public/global/logo2.png";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/Input";
+import { FaEnvelope, FaLock, FaArrowLeft, FaUser } from "react-icons/fa";
+import { motion } from "framer-motion";
 
 export default function Register() {
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Phone:", phone, "Password:", password);
-    // TODO: Handle API call for login
-    router.push("/auth/verify");
+    setLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      router.push("/auth/verify");
+    }, 1000);
   };
 
   return (
-    <main className="">
-      <section className="flex items-center justify-between mx-auto max-w-7xl w-full px-4 md:px-10 py-10">
-        <div>
+    <main className="min-h-screen bg-gray-50 flex flex-col">
+      <section className="flex items-center justify-between mx-auto max-w-7xl w-full px-6 py-8">
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
           <Link href="/">
-            <Image src={logo2} alt="logo" className="w-40 md:w-60" />
+            <Image src={logo2} alt="logo" width={180} height={40} className="w-auto h-10" />
           </Link>
-        </div>
-        <div className="">
-          <Link href="/" className="text-sm md:text-lg font-semibold underline">
-            Back to Home
+        </motion.div>
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+          <Link href="/" className="flex items-center gap-2 text-gray-500 hover:text-primary font-bold transition-colors">
+            <FaArrowLeft className="text-sm" />
+            <span>Back to Home</span>
           </Link>
-        </div>
+        </motion.div>
       </section>
 
-      <section className="flex-1 flex items-center justify-center py-20 px-4">
-        <div className="w-full max-w-md">
-          <h2 className="text-3xl md:text-4xl font-bold text-center gradient-text mb-6">
-            Sign Up
-          </h2>
+      <section className="flex-1 flex items-center justify-center p-6 pb-20">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md bg-white p-10 rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100"
+        >
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-black gradient-text mb-3">
+              Create Account
+            </h2>
+            <p className="text-gray-500 font-medium">Join 1200+ students on our platform</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex items-center overflow-hidden border border-solid border-[#f97a00] rounded-lg cursor-not-allowed">
-              <span className="px-3 py-4 text-lg text-[#f97a00] font-semibold">
-                +880
-              </span>
-              <span className="w-[2px] h-6 bg-[#f97a00]"></span>
-              <input
-                type="tel"
-                placeholder="Enter your phone number"
-                className="w-full px-3 py-4 text-lg outline-none cursor-not-allowed`"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                disabled
-                pattern="[0-9]{11}"
-                title="Phone number should be 11 digits"
-                maxLength={11}
-                minLength={11}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-                inputMode="numeric"
-                name="phone"
-                id="phone"
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Input 
+              label="Full Name"
+              type="text"
+              placeholder="John Doe"
+              icon={<FaUser />}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
 
-            <div>
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="w-full px-3 py-4 outline-none text-lg border border-solid border-[#f97a00] rounded-lg"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-                inputMode="email"
-                name="email"
-                id="email"
-              />
-            </div>
+            <Input 
+              label="Email Address"
+              type="email"
+              placeholder="name@example.com"
+              icon={<FaEnvelope />}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
-            <div>
-              <input
-                type="password"
-                placeholder="Enter your password"
-                className="w-full px-3 py-4 outline-none border border-solid border-[#f97a00] rounded-lg"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-                name="password"
-                id="password"
-              />
-            </div>
-
-            {/* Links */}
-            <div className="flex flex-col items-center justify-between text-lg my-5">
-              <span className="text-gray-700">
-                Already have an account?{" "}
-                <Link
-                  href="/auth/login"
-                  className="font-semibold text-black underline"
-                >
-                  Sign In
-                </Link>
-              </span>
-            </div>
+            <Input 
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              icon={<FaLock />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold text-md md:text-lg px-4 md:px-6 py-3 md:py-3 rounded-full hover:opacity-90 transition cursor-pointer"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-lg px-6 py-4 rounded-2xl hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Register Now
+              {loading ? "Creating account..." : "Register Now"}
             </button>
+
+            <div className="text-center pt-4">
+              <p className="text-gray-500 font-medium">
+                Already have an account?{" "}
+                <Link
+                  href="/auth/login"
+                  className="font-bold text-primary hover:underline"
+                >
+                  Sign In
+                </Link>
+              </p>
+            </div>
           </form>
-        </div>
+        </motion.div>
       </section>
     </main>
   );

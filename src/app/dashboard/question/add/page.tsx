@@ -248,8 +248,8 @@ export default function AddExamPage() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-5 md:px-10 font-sans">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="min-h-screen font-sans">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h1 className="text-2xl md:text-3xl font-bold text-[#dd6b01]">
@@ -348,7 +348,7 @@ export default function AddExamPage() {
         )}
       </div>
       {/* --- Relevant Rules Section --- */}
-      <div className="mt-14 max-w-5xl mx-auto bg-orange-50 border border-[#fcd6aa] rounded-2xl p-6 md:p-10 shadow-sm">
+      <div className="mt-14 w-full bg-orange-50 border border-[#fcd6aa] rounded-2xl p-6 md:p-10 shadow-sm">
         <h2 className="text-xl md:text-2xl font-semibold text-[#dd6b01] mb-4">
           📘 Relevant Rules for Creating Question
         </h2>
