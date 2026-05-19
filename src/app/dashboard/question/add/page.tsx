@@ -7,6 +7,7 @@ import { FaBookOpen, FaImage, FaListUl, FaPlusCircle } from "react-icons/fa";
 import CustomSelect from "@/components/ui/CustomSelect";
 import ImageUploader from "@/components/ui/ImageUploader";
 import { MdOutlineDeleteSweep } from "react-icons/md";
+import { PageContainer } from "@/components/common/PageContainer";
 
 // --- TYPES ---
 type QuestionType = "mcq" | "passage" | "picture";
@@ -248,8 +249,7 @@ export default function AddExamPage() {
   };
 
   return (
-    <div className="min-h-screen font-sans">
-      <div className="w-full space-y-6">
+    <PageContainer className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <h1 className="text-2xl md:text-3xl font-bold text-[#dd6b01]">
@@ -346,7 +346,6 @@ export default function AddExamPage() {
             </div>
           </div>
         )}
-      </div>
       {/* --- Relevant Rules Section --- */}
       <div className="mt-14 w-full bg-orange-50 border border-[#fcd6aa] rounded-2xl p-6 md:p-10 shadow-sm">
         <h2 className="text-xl md:text-2xl font-semibold text-[#dd6b01] mb-4">
@@ -397,6 +396,6 @@ export default function AddExamPage() {
           find relevant materials and improve their learning experience.
         </p>
       </div>
-    </div>
+    </PageContainer>
   );
 }

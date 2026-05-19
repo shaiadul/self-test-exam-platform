@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaEdit, FaTrashAlt, FaPlus } from "react-icons/fa";
 import { MdOutlineEditNote } from "react-icons/md";
+import { PageContainer } from "@/components/common/PageContainer";
 
 type Exam = {
   id: string;
@@ -45,7 +46,7 @@ export default function ExamPackDetail() {
   };
 
   return (
-    <div className="p-6 md:p-10">
+    <PageContainer>
       {/* --- Page Header --- */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
         <h1 className="text-3xl font-bold text-[#dd6b01]">
@@ -180,6 +181,6 @@ export default function ExamPackDetail() {
           </tbody>
         </table>
       </div>
-    </div>
+    </PageContainer>
   );
 }

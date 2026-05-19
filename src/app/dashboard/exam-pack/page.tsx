@@ -8,6 +8,7 @@ import {
   FaTags,
 } from "react-icons/fa";
 import ExamPackCard from "@/components/dashboard/ExamPackCard";
+import { PageContainer } from "@/components/common/PageContainer";
 
 export default function ExamPackPage() {
   // ---- Mock Exam Pack Data ----
@@ -146,7 +147,7 @@ export default function ExamPackPage() {
   ];
 
   return (
-    <main className="p-6 md:p-10">
+    <PageContainer className="space-y-6">
       {/* ---- Controls ---- */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4 w-full">
@@ -271,6 +272,6 @@ export default function ExamPackPage() {
       ) : (
         <p className="text-center text-gray-500 mt-10">No exam packs found.</p>
       )}
-    </main>
+    </PageContainer>
   );
 }

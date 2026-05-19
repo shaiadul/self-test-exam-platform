@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FaLock, FaUserShield } from "react-icons/fa";
+import { PageContainer } from "@/components/common/PageContainer";
 
 interface Permission {
   id: string;
@@ -20,7 +21,7 @@ export default function PermissionManagementPage() {
   const [permissions, setPermissions] = useState(mockPermissions);
 
   return (
-    <div className="p-6 md:p-10 space-y-6">
+    <PageContainer className="space-y-6">
       <h1 className="text-3xl font-bold text-[#dd6b01]">Permission Management</h1>
       <p className="text-gray-500">Manage access permissions for different roles.</p>
 
@@ -55,6 +56,6 @@ export default function PermissionManagementPage() {
           </tbody>
         </table>
       </div>
-    </div>
+    </PageContainer>
   );
 }

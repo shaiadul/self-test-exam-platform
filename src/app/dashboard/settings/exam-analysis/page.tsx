@@ -1,6 +1,7 @@
 "use client";
 
 import { FaBook, FaUsers, FaClipboardList, FaUserShield } from "react-icons/fa";
+import { PageContainer } from "@/components/common/PageContainer";
 
 export default function ExamAnalysisPage() {
   // Dummy stats
@@ -12,7 +13,7 @@ export default function ExamAnalysisPage() {
   ];
 
   return (
-    <div className="p-6 md:p-10 space-y-6">
+    <PageContainer className="space-y-6">
       <h1 className="text-3xl font-bold text-[#dd6b01]">Exam Analysis</h1>
       <p className="text-gray-500">Reports and statistics for exams, students, packs, and teachers.</p>
 
@@ -30,6 +31,6 @@ export default function ExamAnalysisPage() {
           );
         })}
       </div>
-    </div>
+    </PageContainer>
   );
 }

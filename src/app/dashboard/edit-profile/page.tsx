@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import CustomSelect from "@/components/ui/CustomSelect";
 import { FaEdit } from "react-icons/fa";
+import { PageContainer } from "@/components/common/PageContainer";
 
 export default function EditProfile() {
   const router = useRouter();
@@ -32,9 +33,7 @@ export default function EditProfile() {
   };
 
   return (
-    <main>
-      <section className="flex-1 flex items-center justify-center px-4">
-        <div className="w-full max-w-7xl">
+    <PageContainer>
           <h2 className="text-3xl md:text-4xl font-bold text-center gradient-text mb-6">
             Edit Your Profile
           </h2>
@@ -258,8 +257,6 @@ export default function EditProfile() {
               Save Changes
             </button>
           </form>
-        </div>
-      </section>
-    </main>
+    </PageContainer>
   );
 }

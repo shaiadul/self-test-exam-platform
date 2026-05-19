@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PageContainer } from "@/components/common/PageContainer";
 
 const levels = ["HSC", "SSC", "Primary"];
 const boards = ["Dhaka", "Chattogram", "Rajshahi", "Sylhet"];
@@ -12,7 +13,7 @@ export default function AssetsSetupPage() {
   const [batch, setBatch] = useState(batches[0]);
 
   return (
-    <div className="p-6 md:p-10 space-y-6">
+    <PageContainer className="space-y-6">
       <h1 className="text-3xl font-bold text-[#dd6b01]">Assets Setup</h1>
       <p className="text-gray-500">Update levels, boards, batches, and other assets.</p>
 
@@ -54,6 +55,6 @@ export default function AssetsSetupPage() {
       <button className="px-6 py-2 mt-6 bg-[#dd6b01] text-white rounded-lg hover:bg-orange-600 transition">
         Save Assets
       </button>
-    </div>
+    </PageContainer>
   );
 }

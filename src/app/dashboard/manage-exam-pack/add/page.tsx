@@ -4,6 +4,7 @@ import React, { useRef, useState, DragEvent } from "react";
 import Image from "next/image";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import CustomSelect from "@/components/ui/CustomSelect"; // adjust path if needed
+import { PageContainer } from "@/components/common/PageContainer";
 
 export default function AddExamPackPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -46,8 +47,7 @@ export default function AddExamPackPage() {
   };
 
   return (
-    <main className="p-6 md:p-10">
-      <section className="">
+    <PageContainer>
         <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-[#dd6b01]">
           Add New Exam Pack
         </h1>
@@ -219,7 +219,6 @@ export default function AddExamPackPage() {
             materials.
           </p>
         </div>
-      </section>
-    </main>
+    </PageContainer>
   );
 }

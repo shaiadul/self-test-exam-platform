@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PageContainer } from "@/components/common/PageContainer";
 
 type Exam = {
   id: string; // Professional ID
@@ -88,7 +89,7 @@ const examData: Exam[] = [
 
 export default function ExamPackDetail() {
   return (
-    <div className="p-6 md:p-10">
+    <PageContainer className="space-y-6">
       <h1 className="text-3xl font-bold text-[#dd6b01] mb-6">
         Exam Pack: Science Explorer
       </h1>
@@ -195,6 +196,6 @@ export default function ExamPackDetail() {
           </tbody>
         </table>
       </div>
-    </div>
+    </PageContainer>
   );
 }

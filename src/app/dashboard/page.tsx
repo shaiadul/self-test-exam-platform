@@ -4,10 +4,11 @@ import StatsGrid from "@/components/dashboard/StatsGrid";
 import UpcomingExamCard from "@/components/dashboard/UpcomingExamCard";
 import UserCard from "@/components/dashboard/UserCard";
 import { FaGraduationCap } from "react-icons/fa";
+import { PageContainer } from "@/components/common/PageContainer";
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-10 pb-10">
+    <PageContainer>
       {/* Welcome Section */}
       <div className="flex flex-col lg:flex-row gap-8 items-stretch">
         <div className="flex-1">
@@ -104,6 +105,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

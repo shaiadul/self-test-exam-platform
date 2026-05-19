@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { FaSearch, FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
+import { PageContainer } from "@/components/common/PageContainer";
 
 // ---- Reusable Info Item ----
 interface InfoItemProps {
@@ -94,7 +95,7 @@ export default function ExamInfoPage() {
     });
 
   return (
-    <div className="p-6 md:p-10 space-y-8">
+    <PageContainer className="space-y-8">
       {/* ---- Header ---- */}
       <div className="bg-white p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start justify-between">
@@ -308,6 +309,6 @@ export default function ExamInfoPage() {
           <p className="text-center text-gray-500 py-6">No students found.</p>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

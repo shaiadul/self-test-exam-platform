@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PageContainer } from "@/components/common/PageContainer";
 
 // --- TYPES ---
 type Answer = string;
@@ -445,10 +446,8 @@ export default function ExamPage() {
   }, [isSubmitted]);
 
   return (
-    <div className="bg-white min-h-screen font-sans">
-      <main className="container mx-auto px-6 md:px-12 py-8">
-        <div className="max-w-5xl mx-auto space-y-6">
-         <Timer
+    <PageContainer className="space-y-6">
+      <Timer
   duration={3 * 60}
   onTimeUp={() => handleSubmit("Time up!")}
   isRunning={!isSubmitted}
@@ -517,9 +516,6 @@ export default function ExamPage() {
               </button>
             </div>
           )}
-        </div>
-      </main>
-
       {/* Modal */}
       <ResultModal
         show={showModal}
@@ -527,6 +523,6 @@ export default function ExamPage() {
         message={securityMessage}
         onClose={() => setShowModal(false)}
       />
-    </div>
+    </PageContainer>
   );
 }

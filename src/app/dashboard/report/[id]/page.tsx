@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useMemo } from "react";
 import { FaSearch, FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
+import { PageContainer } from "@/components/common/PageContainer";
 
 // ---- Mock Exam & Student Data ----
 interface Student {
@@ -119,7 +120,7 @@ export default function SingleExamReportPage() {
   }, [searchTerm, sortBy, sortOrder]);
 
   return (
-    <div className="p-6 md:p-10 space-y-8">
+    <PageContainer className="space-y-8">
       {/* ---- Exam Header ---- */}
       <div className="">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
@@ -313,6 +314,6 @@ export default function SingleExamReportPage() {
           <p className="text-center text-gray-500 py-6">No students found.</p>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

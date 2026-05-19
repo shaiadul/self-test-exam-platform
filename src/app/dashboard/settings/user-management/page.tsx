@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FaUserPlus, FaUsers, FaUserCog } from "react-icons/fa";
+import { PageContainer } from "@/components/common/PageContainer";
 
 interface User {
   id: string;
@@ -21,7 +22,7 @@ export default function UserManagementPage() {
   const [users, setUsers] = useState(mockUsers);
 
   return (
-    <div className="p-6 md:p-10 space-y-6">
+    <PageContainer className="space-y-6">
       <h1 className="text-3xl font-bold text-[#dd6b01]">User Management</h1>
       <p className="text-gray-500">Create, manage users and assign roles.</p>
 
@@ -64,6 +65,6 @@ export default function UserManagementPage() {
           </tbody>
         </table>
       </div>
-    </div>
+    </PageContainer>
   );
 }

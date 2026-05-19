@@ -2,6 +2,7 @@
 
 import { FaUsers, FaUserShield, FaMoneyBillWave, FaChartLine, FaCogs, FaTools } from "react-icons/fa";
 import Link from "next/link";
+import { PageContainer } from "@/components/common/PageContainer";
 
 const settingsModules = [
   {
@@ -50,7 +51,7 @@ const settingsModules = [
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-8">
+    <PageContainer className="space-y-8">
       <h1 className="text-3xl font-bold text-[#dd6b01]">Settings</h1>
       <p className="text-gray-500">
         Configure your system modules, permissions, finances and assets.
@@ -80,6 +81,6 @@ export default function SettingsPage() {
           );
         })}
       </div>
-    </div>
+    </PageContainer>
   );
 }

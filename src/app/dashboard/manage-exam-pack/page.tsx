@@ -1,11 +1,12 @@
 import ExamPackCard from "@/components/dashboard/ExamPackCard";
 import AddButton from "@/components/ui/AddButton";
+import { PageContainer } from "@/components/common/PageContainer";
 
 export default function ManageExamPackPage() {
   return (
-    <main>
+    <PageContainer>
       <AddButton href="/dashboard/manage-exam-pack/add" label="Add Exam Pack" />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <ExamPackCard
           image="/global/test.png"
           title="Math Beginner Pack"
@@ -63,6 +64,6 @@ export default function ManageExamPackPage() {
           link="/dashboard/manage-exam-pack/mathbcs2025"
         />
       </div>
-    </main>
+    </PageContainer>
   );
 }

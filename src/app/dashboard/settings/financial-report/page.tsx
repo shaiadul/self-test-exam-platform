@@ -1,6 +1,7 @@
 "use client";
 
 import { FaChartPie, FaMoneyBillWave } from "react-icons/fa";
+import { PageContainer } from "@/components/common/PageContainer";
 
 export default function FinancialReportPage() {
   const totalIncome = 12000;
@@ -8,7 +9,7 @@ export default function FinancialReportPage() {
   const netIncome = totalIncome - totalExpenditure;
 
   return (
-    <div className="p-6 md:p-10 space-y-6">
+    <PageContainer className="space-y-6">
       <h1 className="text-3xl font-bold text-[#dd6b01]">Financial Report</h1>
       <p className="text-gray-500">Organizer income and expense overview</p>
 
@@ -31,6 +32,6 @@ export default function FinancialReportPage() {
           <p className="text-gray-900 font-bold text-xl">${netIncome}</p>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

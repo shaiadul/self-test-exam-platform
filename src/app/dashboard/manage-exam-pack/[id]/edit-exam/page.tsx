@@ -6,6 +6,7 @@ import { FaCloudUploadAlt } from "react-icons/fa";
 import CustomSelect from "@/components/ui/CustomSelect";
 import DateTimePicker from "@/components/ui/DateTimePicker";
 import ToggleSwitch from "@/components/ui/ToggleSwitch";
+import { PageContainer } from "@/components/common/PageContainer";
 import { tr } from "framer-motion/client";
 
 type ExamData = {
@@ -131,8 +132,7 @@ export default function EditExamPage({
   };
 
   return (
-    <main className="p-6 md:p-10">
-      <section>
+    <PageContainer>
         <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-[#dd6b01]">
           Edit Exam
         </h1>
@@ -529,7 +529,6 @@ export default function EditExamPage({
             find and complete their exams more efficiently.
           </p>
         </div>
-      </section>
-    </main>
+    </PageContainer>
   );
 }
