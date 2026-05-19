@@ -4,6 +4,8 @@ import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageContainer } from "@/components/common/PageContainer";
+import Scorecard from "@/components/dashboard/Scorecard";
+import CertificatePrintLayout from "@/components/dashboard/CertificatePrintLayout";
 
 // --- TYPES ---
 type Answer = string;
@@ -288,72 +290,29 @@ const ResultModal = ({
         exit={{ opacity: 0 }}
       >
         <motion.div
-          className="bg-white rounded-3xl shadow-2xl p-8 sm:p-10 w-[90%] max-w-md text-center relative"
+          className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-[95%] max-w-2xl text-center relative print:hidden"
           initial={{ scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
           {/* Header */}
-          <h2 className="text-3xl font-bold text-[#dd6b01] mb-2">
-            Exam Result
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">
+            Exam Submission Complete
           </h2>
-          <div className="h-1 w-16 bg-[#dd6b01] mx-auto mb-5 rounded-full" />
+          <div className="h-1 w-16 bg-[#dd6b01] mx-auto mb-6 rounded-full" />
 
           {/* Message */}
           {message && (
-            <p className="text-red-500 font-medium mb-4 bg-red-50 px-3 py-1 rounded-md inline-block">
-              {message}
+            <p className="text-red-500 font-medium text-xs mb-4 bg-red-50 px-3 py-1.5 rounded-md inline-block">
+              ⚠️ {message}
             </p>
           )}
 
-          {/* Result Summary */}
-          <div className="space-y-2 text-gray-700 text-sm sm:text-base">
-            <p>
-              <span className="font-semibold text-gray-800">
-                Total Questions:
-              </span>{" "}
-              {result.total}
-            </p>
-            <p>
-              <span className="font-semibold text-gray-800">
-                Correct Answers:
-              </span>{" "}
-              {result.correct}
-            </p>
-            <p>
-              <span className="font-semibold text-gray-800">
-                Wrong Answers:
-              </span>{" "}
-              {result.wrong}
-            </p>
-            <p>
-              <span className="font-semibold text-gray-800">
-                Negative Marks:
-              </span>{" "}
-              {result.negative.toFixed(2)}
-            </p>
+          {/* Reusable Premium Scorecard */}
+          <div className="text-left mb-6">
+            <Scorecard result={result} />
           </div>
-
-          {/* Divider */}
-          <div className="border-t border-gray-200 my-5" />
-
-          {/* Final Score */}
-          <p className="font-semibold text-lg sm:text-xl text-gray-800 mb-1">
-            Final Score:{" "}
-            <span className="text-[#dd6b01]">
-              {result.finalScore.toFixed(2)} / {result.total}
-            </span>
-          </p>
-
-          {/* Pass/Fail Status */}
-          <p
-            className={`font-bold text-lg ${
-              result.passed ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {result.passed ? "🎉 Passed" : "Failed"}
-          </p>
 
           {/* Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-5">
@@ -446,7 +405,8 @@ export default function ExamPage() {
   }, [isSubmitted]);
 
   return (
-    <PageContainer className="space-y-6">
+    <PageContainer>
+      <div className="print:hidden space-y-6">
       <Timer
   duration={3 * 60}
   onTimeUp={() => handleSubmit("Time up!")}
@@ -522,6 +482,13 @@ export default function ExamPage() {
         result={calculateResult()}
         message={securityMessage}
         onClose={() => setShowModal(false)}
+      />
+      </div>
+
+      {/* Official Certificate & Transcript PDF/Print Layout */}
+      <CertificatePrintLayout
+        examName="Science Explorer"
+        result={calculateResult()}
       />
     </PageContainer>
   );

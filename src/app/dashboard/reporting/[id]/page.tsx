@@ -4,6 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { FaSearch, FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
 import { PageContainer } from "@/components/common/PageContainer";
+import Scorecard from "@/components/dashboard/Scorecard";
+import CertificatePrintLayout from "@/components/dashboard/CertificatePrintLayout";
 
 // ---- Reusable Info Item ----
 interface InfoItemProps {
@@ -94,71 +96,138 @@ export default function ExamInfoPage() {
       return a.merit - b.merit;
     });
 
+  const myResult = {
+    total: 20,
+    correct: 15,
+    wrong: 4,
+    negative: 2.5,
+    finalScore: 13,
+    passed: true,
+  };
+
   return (
-    <PageContainer className="space-y-8">
+    <PageContainer>
+      <div className="print:hidden space-y-8">
       {/* ---- Header ---- */}
-      <div className="bg-white p-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start justify-between">
+      <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Left Info */}
-          <div className="flex items-center gap-3">
+          <div className="lg:col-span-2 flex flex-col md:flex-row items-center gap-4">
             <Image
               src="/global/science.png"
               alt="subject image"
               width={200}
               height={38}
               priority
-              className="rounded-md"
+              className="rounded-xl object-cover w-full md:w-48"
             />
             <div>
               <h1 className="text-2xl font-bold text-[#dd6b01]">
                 Science Explorer
               </h1>
-              <p className="text-gray-400 max-w-md line-clamp-3 my-2">
+              <p className="text-gray-400 max-w-md line-clamp-2 my-2 text-sm">
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit.
                 Phasellus velit bibendum mi, eget risus. Nisi nisl tellus leo
                 erat volutpat elementum.
               </p>
-              <span className="font-semibold text-gray-600">
+              <span className="font-semibold text-gray-600 text-xs bg-gray-100 px-2.5 py-1 rounded-md">
                 10:30 AM | Sunday, 5th October 2025
               </span>
             </div>
           </div>
 
           {/* center Info */}
-          <div className="md:col-span-2 lg:col-span-1 flex mx-auto">
-            <div>
-              <div className="flex items-center gap-3">
-                <InfoItem label="Level" value="HSC" />
-                <InfoItem label="Batch" value="2019 - 2020" />
-                <InfoItem label="Exam Pack" value="Science Explorer" />
-              </div>
+          <div className="lg:col-span-1 border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-6">
+            <div className="flex flex-wrap gap-2">
+              <InfoItem label="Level" value="HSC" />
+              <InfoItem label="Batch" value="2019 - 2020" />
+              <InfoItem label="Exam Pack" value="Science Explorer" />
+            </div>
 
-              <div className="mt-3">
-                <span className="text-md font-semibold text-[#dd6b01]">
-                  Result
-                </span>
-                <div className="flex items-center gap-3 mt-1">
-                  <InfoItem label="Total Marks" value="20" />
-                  <InfoItem label="Mark" value="1.25" />
-                  <InfoItem label="Pass Marks" value="15" />
-                  <InfoItem label="Negative Mark" value="1.50" />
-                </div>
+            <div className="mt-4">
+              <span className="text-xs font-bold text-[#dd6b01] uppercase tracking-wider">
+                Exam Details
+              </span>
+              <div className="flex flex-wrap gap-2 mt-1.5">
+                <InfoItem label="Total Marks" value="20" />
+                <InfoItem label="Mark" value="1.25" />
+                <InfoItem label="Pass Marks" value="15" />
+                <InfoItem label="Negative Mark" value="1.50" />
               </div>
             </div>
           </div>
-          {/* Right info */}
-          <div className="flex mx-auto">
+        </div>
+      </div>
+
+      {/* ---- Personal Performance Analysis ---- */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Left 2 Columns: Scorecard & Actions */}
+        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h4 className="text-2xl font-bold text-[#dd6b01]">
-                Your Performance
-              </h4>
-              <div className="mt-3 font-semibold">
-                <p className="">Score: 15/20</p>
-                <p className="">Timestamp: 00:07:48</p>
-                <p className="">Merit: 03</p>
-                <p className="">Negative Marks: -4</p>
+              <h2 className="text-xl font-bold text-gray-900">Personal Scorecard</h2>
+              <p className="text-xs text-gray-400 mt-1">Official candidate performance metrics summary.</p>
+            </div>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center justify-center gap-2 bg-[#dd6b01] text-white px-5 py-2.5 rounded-xl shadow-md hover:bg-[#c35f00] transition font-semibold cursor-pointer text-sm"
+            >
+              📥 Download Score Certificate
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            {/* The radial progress and breakdown */}
+            <Scorecard result={myResult} />
+            
+            {/* Additional transcript details */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Performance Details</h3>
+              <div className="border border-gray-100 rounded-2xl p-4 bg-gray-50/50 space-y-3 font-sans">
+                <div className="flex justify-between items-center text-sm py-1 border-b border-gray-100">
+                  <span className="text-gray-500">Attempt Duration</span>
+                  <span className="font-bold text-gray-800">00:07:48</span>
+                </div>
+                <div className="flex justify-between items-center text-sm py-1 border-b border-gray-100">
+                  <span className="text-gray-500">Class Merit Rank</span>
+                  <span className="font-bold text-[#dd6b01]">#03 <span className="text-xs font-normal text-gray-400">of {mockStudents.length}</span></span>
+                </div>
+                <div className="flex justify-between items-center text-sm py-1">
+                  <span className="text-gray-500">Passing Status</span>
+                  <span className="font-bold text-emerald-600">PASSED (75% Correct)</span>
+                </div>
+              </div>
+              
+              {/* Encouragement banner */}
+              <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-emerald-800 text-xs">
+                🎉 <span className="font-bold">Excellent job Saidul!</span> Your accuracy rate is above average. You have qualified for certificate printing. Keep up the great work!
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Right 1 Column: Mini Leaderboard Summary & Batch Stats */}
+        <div className="lg:col-span-1 bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-6">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Leaderboard</h2>
+            <p className="text-xs text-gray-400 mt-1">Top performing peers in this exam pack batch.</p>
+          </div>
+          <div className="space-y-3 font-sans">
+            {mockStudents.slice(0, 3).map((st, i) => (
+              <div key={st.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-50 hover:bg-gray-50/50 transition">
+                <div className="flex items-center gap-2.5">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
+                    i === 0 ? "bg-amber-100 text-amber-700" :
+                    i === 1 ? "bg-slate-100 text-slate-700" :
+                    "bg-orange-100 text-orange-700"
+                  }`}>
+                    #{st.merit}
+                  </span>
+                  <span className="text-sm font-semibold text-gray-800">{st.name}</span>
+                </div>
+                <span className="text-sm font-bold text-[#dd6b01]">{st.score} Qs</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -309,6 +378,13 @@ export default function ExamInfoPage() {
           <p className="text-center text-gray-500 py-6">No students found.</p>
         )}
       </div>
+      </div>
+
+      {/* Official Certificate & Transcript PDF/Print Layout */}
+      <CertificatePrintLayout
+        examName="Science Explorer"
+        result={myResult}
+      />
     </PageContainer>
   );
 }
