@@ -16,10 +16,42 @@ export default function SignIn() {
 
   const router = useRouter();
 
+  // Environment fallback variables
+  const studentEmail = process.env.NEXT_PUBLIC_STUDENT_EMAIL || "student@test.com";
+  const studentPassword = process.env.NEXT_PUBLIC_STUDENT_PASSWORD || "student123";
+  
+  const teacherEmail = process.env.NEXT_PUBLIC_TEACHER_EMAIL || "teacher@test.com";
+  const teacherPassword = process.env.NEXT_PUBLIC_TEACHER_PASSWORD || "teacher123";
+  
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "admin@test.com";
+  const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin123";
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
+    let role = "student";
+    let name = "Md Saidul Basar";
+
+    if (email === studentEmail && password === studentPassword) {
+      role = "student";
+      name = "Md Saidul Basar";
+    } else if (email === teacherEmail && password === teacherPassword) {
+      role = "teacher";
+      name = "Prof. Abdus Salam";
+    } else if (email === adminEmail && password === adminPassword) {
+      role = "admin";
+      name = "Super Admin";
+    } else {
+      // Fallback guest login
+      role = "student";
+      name = email.split("@")[0] || "Guest Candidate";
+    }
+
+    localStorage.setItem("userRole", role);
+    localStorage.setItem("userName", name);
+    localStorage.setItem("userEmail", email);
+
     // Simulate API call
     setTimeout(() => {
       router.push("/dashboard");
@@ -88,10 +120,47 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-lg px-6 py-4 rounded-2xl hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-lg px-6 py-4 rounded-2xl hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
+
+            {/* Quick Demo Preset Credentials */}
+            <div className="border-t border-gray-100 pt-6 mt-6">
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block text-center mb-3">Quick Demo Logins</span>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(studentEmail);
+                    setPassword(studentPassword);
+                  }}
+                  className="px-2 py-2.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl border border-emerald-100 hover:bg-emerald-100/50 transition cursor-pointer text-center"
+                >
+                  Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(teacherEmail);
+                    setPassword(teacherPassword);
+                  }}
+                  className="px-2 py-2.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-xl border border-blue-100 hover:bg-blue-100/50 transition cursor-pointer text-center"
+                >
+                  Teacher
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(adminEmail);
+                    setPassword(adminPassword);
+                  }}
+                  className="px-2 py-2.5 bg-purple-50 text-purple-700 text-xs font-bold rounded-xl border border-purple-100 hover:bg-purple-100/50 transition cursor-pointer text-center"
+                >
+                  Admin
+                </button>
+              </div>
+            </div>
 
             <div className="text-center pt-4">
               <p className="text-gray-500 font-medium">

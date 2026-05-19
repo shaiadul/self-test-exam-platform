@@ -48,6 +48,11 @@ export const DashboardHeader = () => {
   const [notifications, setNotifications] = useState<NotifItem[]>(initialNotifications);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
+  // User Profile Session state
+  const [userName, setUserName] = useState("Md Saidul Basar");
+  const [userRoleLabel, setUserRoleLabel] = useState("Student Account");
+  const [userAvatar, setUserAvatar] = useState("/user/md-saidul.jpeg");
+
   // Refs for clicking outside
   const searchRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -60,6 +65,22 @@ export const DashboardHeader = () => {
   );
 
   useEffect(() => {
+    // Populate session user role data on client mount
+    const role = localStorage.getItem("userRole") || "student";
+    const name = localStorage.getItem("userName") || "Md Saidul Basar";
+    setUserName(name);
+    
+    if (role === "admin") {
+      setUserRoleLabel("System Administrator");
+      setUserAvatar("/global/logo2.png");
+    } else if (role === "teacher") {
+      setUserRoleLabel("Lead Instructor");
+      setUserAvatar("/global/logo2.png");
+    } else {
+      setUserRoleLabel("Student Account");
+      setUserAvatar("/user/md-saidul.jpeg");
+    }
+
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchDropdown(false);
@@ -88,7 +109,7 @@ export const DashboardHeader = () => {
   };
 
   return (
-    <header className="h-20 bg-white/95 backdrop-blur-md border-b border-gray-100/80 sticky top-0 z-40 w-full transition-all">
+    <header className="h-20 bg-white/95 backdrop-blur-md border-b border-[#dd6b01]/10 fixed top-0 left-0 lg:left-72 right-0 z-40 transition-all">
       <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-6">
         
         {/* Functional Search Bar */}
@@ -220,17 +241,22 @@ export const DashboardHeader = () => {
           {/* User Account Info */}
           <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-gray-800 leading-none">Md Saidul Basar</p>
-              <p className="text-xs text-gray-500 mt-1">Student Account</p>
+              <p className="text-sm font-bold text-gray-800 leading-none">{userName}</p>
+              <p className="text-xs text-gray-500 mt-1">{userRoleLabel}</p>
             </div>
-            <div className="w-10 h-10 rounded-full border-2 border-[#dd6b01]/20 overflow-hidden shadow-sm hover:border-[#dd6b01]/50 transition-all cursor-pointer">
-              <Image 
-                src="/user/md-saidul.jpeg" 
-                alt="Profile" 
-                width={40} 
-                height={40}
-                className="object-cover"
-              />
+            <div className="w-10 h-10 rounded-full border-2 border-[#dd6b01]/20 overflow-hidden shadow-sm hover:border-[#dd6b01]/50 transition-all cursor-pointer relative bg-orange-50 flex items-center justify-center font-bold text-[#dd6b01]">
+              {userAvatar && (userAvatar.includes(".jpeg") || userAvatar.includes(".png") || userAvatar.includes(".jpg")) ? (
+                <Image 
+                  src={userAvatar} 
+                  alt="Profile" 
+                  width={40} 
+                  height={40}
+                  className="object-cover w-full h-full"
+                  onError={() => setUserAvatar("")}
+                />
+              ) : (
+                userName.charAt(0)
+              )}
             </div>
           </div>
         </div>
