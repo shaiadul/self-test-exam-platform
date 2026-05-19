@@ -1,26 +1,33 @@
 import { Stat } from "@/lib/types";
-import { FaCheckCircle, FaTimesCircle, FaPercentage, FaHistory } from "react-icons/fa";
+import { FaCheckCircle, FaTimesCircle, FaPercentage, FaHistory, FaBookOpen, FaAward, FaChalkboardTeacher, FaUsers } from "react-icons/fa";
 
 interface StatsGridProps {
   stats: Stat[];
 }
 
 const getIcon = (label: string) => {
-  switch (label.toLowerCase()) {
-    case 'completed exams': return <FaHistory />;
-    case 'average mark': return <FaPercentage />;
-    case 'passed': return <FaCheckCircle />;
-    case 'failed': return <FaTimesCircle />;
-    default: return null;
-  }
+  const normLabel = label.toLowerCase();
+  if (normLabel.includes('completed') || normLabel.includes('attempts')) return <FaHistory />;
+  if (normLabel.includes('average') || normLabel.includes('accuracy') || normLabel.includes('rating')) return <FaPercentage />;
+  if (normLabel.includes('passed') || normLabel.includes('active') || normLabel.includes('registered')) return <FaCheckCircle />;
+  if (normLabel.includes('failed') || normLabel.includes('pending')) return <FaTimesCircle />;
+  if (normLabel.includes('question') || normLabel.includes('pack')) return <FaBookOpen />;
+  if (normLabel.includes('leaderboard') || normLabel.includes('rank')) return <FaAward />;
+  return <FaHistory />;
 };
 
 const getColorClass = (label: string) => {
-  switch (label.toLowerCase()) {
-    case 'passed': return 'text-green-600 bg-green-50';
-    case 'failed': return 'text-red-600 bg-red-50';
-    default: return 'text-primary bg-primary/10';
+  const normLabel = label.toLowerCase();
+  if (normLabel.includes('passed') || normLabel.includes('registered') || normLabel.includes('accuracy') || normLabel.includes('rating')) {
+    return 'text-emerald-600 bg-emerald-50 border-emerald-100';
   }
+  if (normLabel.includes('failed') || normLabel.includes('pending')) {
+    return 'text-rose-600 bg-rose-50 border-rose-100';
+  }
+  if (normLabel.includes('question') || normLabel.includes('pack') || normLabel.includes('attempts')) {
+    return 'text-blue-600 bg-blue-50 border-blue-100';
+  }
+  return 'text-[#dd6b01] bg-orange-50 border-orange-100';
 };
 
 export default function StatsGrid({ stats }: StatsGridProps) {
@@ -29,13 +36,17 @@ export default function StatsGrid({ stats }: StatsGridProps) {
       {stats.map((stat, idx) => (
         <div
           key={idx}
-          className="bg-white border border-gray-100 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover-lift"
+          className="bg-white border border-gray-100/80 rounded-3xl p-6 flex flex-col items-center justify-center text-center hover:shadow-lg hover:shadow-gray-100/50 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group"
         >
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl mb-4 ${getColorClass(stat.label)}`}>
+          {/* Subtle colored card glow */}
+          <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-gray-50 rounded-full blur-xl group-hover:bg-primary/5 transition-colors duration-500 pointer-events-none"></div>
+
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg mb-3.5 border shadow-sm ${getColorClass(stat.label)}`}>
             {getIcon(stat.label)}
           </div>
-          <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">{stat.label}</p>
-          <p className="text-3xl font-black text-gray-900">{stat.value}</p>
+          
+          <p className="text-gray-400 text-[10px] font-extrabold uppercase tracking-widest mb-1.5">{stat.label}</p>
+          <p className="text-3xl font-black text-gray-900 tracking-tight">{stat.value}</p>
         </div>
       ))}
     </div>
