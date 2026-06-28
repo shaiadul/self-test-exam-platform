@@ -233,7 +233,7 @@ export default function ExamInfoPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
               {/* Radial progress and breakdown */}
-              <Scorecard result={myResult} />
+              <Scorecard result={myResult} totalMarks={attempt.totalMarks} />
 
               {/* Additional transcript details */}
               <div className="space-y-4">
@@ -463,7 +463,7 @@ export default function ExamInfoPage() {
       </div>
 
       {/* Official Certificate & Transcript PDF/Print Layout */}
-      <CertificatePrintLayout examName={attempt.examName} result={myResult} />
+      <CertificatePrintLayout examName={attempt.examName} totalMarks={attempt.totalMarks} result={myResult} />
     </PageContainer>
   );
 }

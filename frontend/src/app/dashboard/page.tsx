@@ -186,9 +186,9 @@ export default function DashboardPage() {
                   {stats?.institutionRank || `Top 5% of ${profileData.institution || "Govt. Titumir College"}`}
                 </p>
               </div>
-              <button className="relative z-10 mt-4 w-full py-2.5 bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/25 rounded-2xl font-bold transition-all text-xs cursor-pointer">
-                View Dynamic Leaderboard
-              </button>
+              <Link href="/dashboard/reporting" className="relative z-10 mt-4 w-full py-2.5 bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/25 rounded-2xl font-bold transition-all text-xs cursor-pointer text-center block">
+                View Performance Reports
+              </Link>
             </div>
           </div>
 
@@ -232,9 +232,9 @@ export default function DashboardPage() {
                   <h3 className="text-lg font-black text-gray-900 tracking-tight">
                     Recent Exam Results
                   </h3>
-                  <button className="text-[#dd6b01] text-xs font-bold hover:underline cursor-pointer">
+                  <Link href="/dashboard/reporting" className="text-[#dd6b01] text-xs font-bold hover:underline cursor-pointer">
                     View Evaluation History
-                  </button>
+                  </Link>
                 </div>
                 {stats?.recentExams && stats.recentExams.length > 0 ? (
                   <ExamsTable exams={stats.recentExams} />
@@ -257,6 +257,7 @@ export default function DashboardPage() {
                 {(stats?.upcomingExams || []).map((exam: any, idx: number) => (
                   <UpcomingExamCard
                     key={idx}
+                    id={exam.id}
                     image={exam.image || "/global/logo2.png"}
                     title={exam.title}
                     dateTime={exam.dateTime}
@@ -298,9 +299,9 @@ export default function DashboardPage() {
                   Average Accuracy Across 8 Active Batches
                 </p>
               </div>
-              <button className="relative z-10 mt-4 w-full py-2.5 bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/25 rounded-2xl font-bold transition-all text-xs cursor-pointer">
-                Manage Class Leaderboard
-              </button>
+              <Link href="/dashboard/report" className="relative z-10 mt-4 w-full py-2.5 bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/25 rounded-2xl font-bold transition-all text-xs cursor-pointer text-center block">
+                Manage Class Reports
+              </Link>
             </div>
           </div>
 
@@ -344,9 +345,9 @@ export default function DashboardPage() {
                   <h3 className="text-lg font-black text-gray-900 tracking-tight">
                     Assigned Exam Packages
                   </h3>
-                  <button className="text-blue-600 text-xs font-bold hover:underline cursor-pointer">
+                  <Link href="/dashboard/manage-exam-pack" className="text-blue-600 text-xs font-bold hover:underline cursor-pointer">
                     Add Exam Schedule
-                  </button>
+                  </Link>
                 </div>
                 {stats?.assignedPacks && stats.assignedPacks.length > 0 ? (
                   <ExamsTable exams={stats.assignedPacks} />
@@ -420,9 +421,9 @@ export default function DashboardPage() {
                   All Nodes Online & Healthy
                 </p>
               </div>
-              <button className="relative z-10 mt-4 w-full py-2.5 bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/25 rounded-2xl font-bold transition-all text-xs cursor-pointer">
-                Access System Shell Logs
-              </button>
+              <Link href="/dashboard/settings" className="relative z-10 mt-4 w-full py-2.5 bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/25 rounded-2xl font-bold transition-all text-xs cursor-pointer text-center block">
+                Access Portal Settings
+              </Link>
             </div>
           </div>
 
@@ -466,9 +467,9 @@ export default function DashboardPage() {
                   <h3 className="text-lg font-black text-gray-900 tracking-tight">
                     System Operations Audit Trail
                   </h3>
-                  <button className="text-purple-600 text-xs font-bold hover:underline cursor-pointer">
-                    Export Security Logs
-                  </button>
+                  <Link href="/dashboard/settings/permission-management" className="text-purple-600 text-xs font-bold hover:underline cursor-pointer">
+                    Review Permission Logs
+                  </Link>
                 </div>
                 {stats?.auditLogs && stats.auditLogs.length > 0 ? (
                   <ExamsTable exams={stats.auditLogs} />

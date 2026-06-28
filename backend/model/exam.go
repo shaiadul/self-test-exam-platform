@@ -111,6 +111,7 @@ type RecentExamAttempt struct {
 }
 
 type UpcomingExamDetail struct {
+	ID       string `json:"id"`
 	Image    string `json:"image"`
 	Title    string `json:"title"`
 	DateTime string `json:"dateTime"`

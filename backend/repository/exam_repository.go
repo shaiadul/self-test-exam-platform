@@ -18,6 +18,7 @@ type ExamRepository interface {
 
 	GetExamsByPackID(packID int) ([]model.Exam, error)
 	GetExamByID(id string) (*model.Exam, error)
+	GetUpcomingExamsForUser(userID int, now time.Time) ([]model.Exam, error)
 	CreateExam(exam *model.Exam) error
 	UpdateExam(exam *model.Exam) error
 	DeleteExam(id string) error
@@ -233,6 +234,48 @@ func (r *SQLExamRepository) GetExamByID(id string) (*model.Exam, error) {
 	}
 
 	return &e, nil
+}
+
+func (r *SQLExamRepository) GetUpcomingExamsForUser(userID int, now time.Time) ([]model.Exam, error) {
+	query := `
+		SELECT e.id, e.exam_pack_id, e.name, e.start_date, e.end_date, e.level, e.batch, e.total_marks, e.passing_marks, e.per_question_marks, e.negative_marks, e.created_at, e.updated_at
+		FROM exams e
+		LEFT JOIN exam_attempts a ON e.id = a.exam_id AND a.user_id = $1
+		WHERE a.id IS NULL AND e.end_date > $2
+		ORDER BY e.start_date ASC
+		LIMIT 5`
+
+	rows, err := r.db.Query(query, userID, now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var exams []model.Exam
+	for rows.Next() {
+		var e model.Exam
+		err := rows.Scan(
+			&e.ID,
+			&e.ExamPackID,
+			&e.Name,
+			&e.StartDate,
+			&e.EndDate,
+			&e.Level,
+			&e.Batch,
+			&e.TotalMarks,
+			&e.PassingMarks,
+			&e.PerQuestionMarks,
+			&e.NegativeMarks,
+			&e.CreatedAt,
+			&e.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		exams = append(exams, e)
+	}
+
+	return exams, nil
 }
 
 func (r *SQLExamRepository) CreateExam(exam *model.Exam) error {

@@ -583,11 +583,28 @@ func (h *ExamHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) 
 			FailedCount:     completed - passed,
 			AccuracyData:    accuracyData,
 			RecentExams:     recentExams,
-			UpcomingExams: []model.UpcomingExamDetail{
-				{"/global/logo2.png", "Islamic Economics & Banking", "10:30 AM | Sunday, 14th May"},
-				{"/global/logo2.png", "Physics 1st Paper Electromagnetism", "12:30 PM | Monday, 15th May"},
-			},
 		}
+
+		upcoming, err := h.examRepo.GetUpcomingExamsForUser(userID, time.Now())
+		upcomingDetails := []model.UpcomingExamDetail{}
+		if err == nil && len(upcoming) > 0 {
+			for _, e := range upcoming {
+				dtStr := e.StartDate.Format("03:04 PM | Monday, 02nd Jan 2006")
+				upcomingDetails = append(upcomingDetails, model.UpcomingExamDetail{
+					ID:       e.ID,
+					Image:    "/global/no-picture.jpg",
+					Title:    e.Name,
+					DateTime: dtStr,
+				})
+			}
+		} else {
+			upcomingDetails = []model.UpcomingExamDetail{
+				{"HSC2341", "/global/no-picture.jpg", "Algebra Basics (Active Mock)", "10:30 AM | Sunday, 14th May"},
+				{"HSC2342", "/global/no-picture.jpg", "Physics 1st Paper Prep", "12:30 PM | Monday, 15th May"},
+			}
+		}
+		stats.UpcomingExams = upcomingDetails
+
 		json.NewEncoder(w).Encode(stats)
 
 	case "teacher":
