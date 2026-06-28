@@ -44,6 +44,7 @@ export default function ExamInfoPage() {
   const [peers, setPeers] = useState<PeerStudent[]>([]);
   const [myRank, setMyRank] = useState<number>(1);
   const [questions, setQuestions] = useState<any[]>([]);
+  const [userRole, setUserRole] = useState<string>("student");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"score" | "name">("score");
@@ -53,6 +54,8 @@ export default function ExamInfoPage() {
   useEffect(() => {
     async function loadData() {
       if (!attemptId) return;
+      const role = localStorage.getItem("userRole") || "student";
+      setUserRole(role);
       setLoading(true);
       try {
         const attemptData = await getAttemptDetailsAction(attemptId);
@@ -481,7 +484,7 @@ export default function ExamInfoPage() {
         )}
 
         {/* ---- Complete Exam Report & Question Review ---- */}
-        {questions.length > 0 && (
+        {userRole !== "student" && questions.length > 0 && (
           <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-6">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
