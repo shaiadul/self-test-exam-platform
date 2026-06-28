@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { FaEdit, FaTrashAlt, FaPlus } from "react-icons/fa";
 import { MdOutlineEditNote } from "react-icons/md";
 import { PageContainer } from "../../../../components/common/PageContainer";
-import { getExamsAction, getExamPackDetailsAction, deleteExamAction } from "../../../../lib/actions";
+import { getExamsAction, getExamPackDetailsAction, deleteExamAction, deleteExamPackAction } from "../../../../lib/actions";
 
 type Exam = {
   id: string;
@@ -74,6 +74,21 @@ export default function ExamPackDetail() {
     }
   };
 
+  const handleDeleteExamPack = async () => {
+    if (!confirm(`Are you sure you want to delete exam pack "${packTitle}"? All exams inside will also be deleted.`)) return;
+    try {
+      const res = await deleteExamPackAction(packId);
+      if (res.success) {
+        alert("Exam pack deleted successfully.");
+        router.push("/dashboard/manage-exam-pack");
+      } else {
+        alert(res.error || "Failed to delete exam pack.");
+      }
+    } catch (err) {
+      alert("Failed to delete exam pack.");
+    }
+  };
+
   return (
     <PageContainer>
       {/* --- Page Header --- */}
@@ -89,6 +104,12 @@ export default function ExamPackDetail() {
           >
             <MdOutlineEditNote className="text-lg" /> Edit Exam Pack
           </Link>
+          <button
+            onClick={handleDeleteExamPack}
+            className="flex items-center gap-2 border border-red-600 text-red-600 font-medium px-4 py-2 rounded-lg hover:bg-red-600 hover:text-white transition-all cursor-pointer"
+          >
+            <FaTrashAlt className="text-sm" /> Delete Exam Pack
+          </button>
           <Link
             href={`/dashboard/manage-exam-pack/${packId}/add-exam`}
             className="flex items-center gap-2 bg-[#dd6b01] text-white font-medium px-4 py-2 rounded-lg hover:bg-[#c25e00] transition-all"

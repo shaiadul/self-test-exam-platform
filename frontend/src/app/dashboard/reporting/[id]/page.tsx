@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { FaSearch, FaSortAmountDown, FaSortAmountUp, FaArrowLeft } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import Scorecard from "../../../../components/dashboard/Scorecard";
 import CertificatePrintLayout from "../../../../components/dashboard/CertificatePrintLayout";
-import { getAttemptDetailsAction, getTeacherReportDetailsAction } from "../../../../lib/actions";
+import { getAttemptDetailsAction, getTeacherReportDetailsAction, getQuestionsAction } from "../../../../lib/actions";
 import { useParams, useRouter } from "next/navigation";
 
 // ---- Reusable Info Item ----
@@ -43,6 +43,7 @@ export default function ExamInfoPage() {
   const [attempt, setAttempt] = useState<any>(null);
   const [peers, setPeers] = useState<PeerStudent[]>([]);
   const [myRank, setMyRank] = useState<number>(1);
+  const [questions, setQuestions] = useState<any[]>([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"score" | "name">("score");
@@ -57,6 +58,14 @@ export default function ExamInfoPage() {
         const attemptData = await getAttemptDetailsAction(attemptId);
         if (attemptData) {
           setAttempt(attemptData);
+
+          // Fetch questions for this exam
+          try {
+            const qs = await getQuestionsAction(attemptData.examId);
+            setQuestions(qs || []);
+          } catch (qErr) {
+            console.error("Failed to fetch questions:", qErr);
+          }
           
           // Fetch other students' attempts for this exam to build leaderboard
           const reportDetails = await getTeacherReportDetailsAction(attemptData.examId);
@@ -110,6 +119,16 @@ export default function ExamInfoPage() {
       if (primarySort !== 0) return primarySort;
       return a.merit - b.merit;
     });
+
+  const parsedAnswers = useMemo(() => {
+    if (!attempt?.answers) return {};
+    try {
+      return JSON.parse(attempt.answers);
+    } catch (e) {
+      console.error("Failed to parse answers JSON:", e);
+      return {};
+    }
+  }, [attempt?.answers]);
 
   if (loading) {
     return (
@@ -457,6 +476,115 @@ export default function ExamInfoPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* ---- Complete Exam Report & Question Review ---- */}
+        {questions.length > 0 && (
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                📋 Complete Exam Report & Question Review
+              </h2>
+              <p className="text-xs text-gray-400 mt-1">
+                Review each question, your selected choice, and the official correct answer.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              {questions.map((q, idx) => {
+                const userChoice = parsedAnswers[q.id.toString()] || null;
+                const isCorrect = userChoice === q.correctAnswer;
+                const isUnanswered = userChoice === null || userChoice === undefined || userChoice === "";
+
+                return (
+                  <div
+                    key={q.id}
+                    className={`p-6 border rounded-2xl transition shadow-sm ${
+                      isUnanswered
+                        ? "border-gray-200 bg-gray-50/50"
+                        : isCorrect
+                          ? "border-green-200 bg-green-50/30"
+                          : "border-red-200 bg-red-50/30"
+                    }`}
+                  >
+                    {/* Picture question */}
+                    {q.type === "picture" && q.pictureUrl && (
+                      <div className="relative w-full max-w-md h-48 mb-4 rounded-xl overflow-hidden border">
+                        <Image
+                          src={q.pictureUrl}
+                          alt={`Question ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+
+                    {/* Passage question */}
+                    {q.type === "passage" && q.passage && (
+                      <div className="p-4 bg-white border border-dashed rounded-xl text-gray-700 text-sm mb-4">
+                        {q.passage}
+                      </div>
+                    )}
+
+                    {/* Question text */}
+                    <p className="text-gray-800 font-bold mb-4">
+                      {idx + 1}. {q.questionText}
+                    </p>
+
+                    {/* Options list */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {q.options.map((opt: string, optIdx: number) => {
+                        const isSelected = userChoice === opt;
+                        const isRightOption = q.correctAnswer === opt;
+
+                        return (
+                          <div
+                            key={optIdx}
+                            className={`p-3 rounded-xl border text-sm flex items-center justify-between ${
+                              isRightOption
+                                ? "bg-green-100 border-green-300 text-green-800 font-semibold"
+                                : isSelected
+                                  ? "bg-red-100 border-red-300 text-red-800 font-semibold"
+                                  : "bg-white border-gray-200 text-gray-700"
+                            }`}
+                          >
+                            <span>{opt}</span>
+                            {isRightOption && (
+                              <span className="text-xs bg-green-600 text-white font-bold px-2 py-0.5 rounded-md uppercase">
+                                Correct
+                              </span>
+                            )}
+                            {isSelected && !isRightOption && (
+                              <span className="text-xs bg-red-600 text-white font-bold px-2 py-0.5 rounded-md uppercase">
+                                Your Choice
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Verdict Summary Bar */}
+                    <div className="mt-4 pt-3 border-t border-gray-150/40 text-xs font-semibold">
+                      {isUnanswered ? (
+                        <p className="text-gray-500 italic">
+                          ⚪ Unanswered. Correct answer: <span className="font-extrabold text-green-700">{q.correctAnswer}</span>
+                        </p>
+                      ) : isCorrect ? (
+                        <p className="text-green-700">
+                          ✅ Correct! You selected the right answer: <span className="font-extrabold">{q.correctAnswer}</span>
+                        </p>
+                      ) : (
+                        <p className="text-red-700">
+                          ❌ Incorrect. Your selection: <span className="font-extrabold text-red-800">{userChoice}</span> | Correct answer: <span className="font-extrabold text-green-700">{q.correctAnswer}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
