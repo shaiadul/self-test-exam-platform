@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect, DragEvent } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import CustomSelect from "../../../../../components/ui/CustomSelect";
@@ -108,14 +109,14 @@ export default function AddExamPage() {
         negativeMarks: examSettings.negativeMarking ? -Math.abs(examSettings.negativeValue) : 0,
       });
       if (res.success) {
-        alert("Exam created successfully. Click OK to redirect to Question Bank to add questions.");
+        toast.success("Exam created successfully. Redirecting to add questions.");
         // Redirect to question add page
         router.push(`/dashboard/question/add?examId=${generatedID}`);
       } else {
-        alert(res.error || "Failed to create exam.");
+        toast.error(res.error || "Failed to create exam.");
       }
     } catch (err) {
-      alert("Failed to create exam.");
+      toast.error("Failed to create exam.");
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FaEdit, FaTrashAlt, FaPlus } from "react-icons/fa";
@@ -64,13 +65,13 @@ export default function ExamPackDetail() {
     try {
       const res = await deleteExamAction(examId, packId);
       if (res.success) {
-        alert("Exam deleted successfully.");
+        toast.success("Exam deleted successfully.");
         loadExams();
       } else {
-        alert(res.error || "Failed to delete exam.");
+        toast.error(res.error || "Failed to delete exam.");
       }
     } catch (err) {
-      alert("Failed to delete exam.");
+      toast.error("Failed to delete exam.");
     }
   };
 
@@ -79,13 +80,13 @@ export default function ExamPackDetail() {
     try {
       const res = await deleteExamPackAction(packId);
       if (res.success) {
-        alert("Exam pack deleted successfully.");
+        toast.success("Exam pack deleted successfully.");
         router.push("/dashboard/manage-exam-pack");
       } else {
-        alert(res.error || "Failed to delete exam pack.");
+        toast.error(res.error || "Failed to delete exam pack.");
       }
     } catch (err) {
-      alert("Failed to delete exam pack.");
+      toast.error("Failed to delete exam pack.");
     }
   };
 

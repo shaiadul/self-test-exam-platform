@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { FaUserPlus, FaUsers, FaUserCog, FaTrashAlt, FaTimes, FaEnvelope, FaLock, FaUser } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import { adminGetUsersAction, adminUpdateUserAction, adminDeleteUserAction, registerAction } from "../../../../lib/actions";
@@ -63,12 +64,13 @@ export default function UserManagementPage() {
           prev.map((u) => (u.id === userId ? { ...u, role } : u))
         );
         setEditingUserId(null);
+        toast.success("Role updated successfully.");
       } else {
-        alert(res.error || "Failed to update role");
+        toast.error(res.error || "Failed to update role");
       }
     } catch (err) {
       console.error(err);
-      alert("An error occurred while updating the role.");
+      toast.error("An error occurred while updating the role.");
     }
   }
 
@@ -81,12 +83,13 @@ export default function UserManagementPage() {
       const res = await adminDeleteUserAction(userId);
       if (res.success) {
         setUsers((prev) => prev.filter((u) => u.id !== userId));
+        toast.success("User deleted successfully.");
       } else {
-        alert(res.error || "Failed to delete user");
+        toast.error(res.error || "Failed to delete user");
       }
     } catch (err) {
       console.error(err);
-      alert("An error occurred while deleting the user.");
+      toast.error("An error occurred while deleting the user.");
     }
   }
 
@@ -109,6 +112,7 @@ export default function UserManagementPage() {
         setNewPassword("");
         setNewRole("student");
         setAddUserOpen(false);
+        toast.success("User registered successfully.");
         loadUsers();
       } else {
         setAddError(res.error || "Failed to register user");

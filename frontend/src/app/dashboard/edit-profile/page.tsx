@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Input } from "../../../components/ui/Input";
@@ -28,7 +29,6 @@ export default function EditProfile() {
 
   const [userRole, setUserRole] = useState<string>("student");
   const [loading, setLoading] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   // Dynamic options from system assets API
   const [levelOptions, setLevelOptions] = useState<string[]>([]);
@@ -138,31 +138,23 @@ export default function EditProfile() {
         }
 
         setLoading(false);
-        setShowSuccessToast(true);
+        toast.success("Profile updated successfully!");
 
         setTimeout(() => {
           router.push("/dashboard");
         }, 1500);
       } else {
-        alert(res.error || "Failed to update profile.");
+        toast.error(res.error || "Failed to update profile.");
         setLoading(false);
       }
     } catch (err) {
-      alert("An error occurred updating profile.");
+      toast.error("An error occurred updating profile.");
       setLoading(false);
     }
   };
 
   return (
     <PageContainer className="space-y-6">
-      {/* Dynamic Success Toast */}
-      {showSuccessToast && (
-        <div className="fixed top-6 right-6 z-[9999] bg-[#dd6b01] text-white font-bold px-6 py-4 rounded-xl shadow-xl shadow-orange-500/20 border border-[#dd6b01] flex items-center gap-3 animate-slideIn">
-          <FaCheckCircle className="text-xl" />
-          <span>Profile updated successfully!</span>
-        </div>
-      )}
-
       {/* Main Title Aligned with Dashboard Layout Color theme */}
       <h1 className="text-3xl font-bold text-[#dd6b01] mb-6">
         Edit Your Profile

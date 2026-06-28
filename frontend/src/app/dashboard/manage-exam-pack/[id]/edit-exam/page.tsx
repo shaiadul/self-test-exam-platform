@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect, DragEvent } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import CustomSelect from "../../../../../components/ui/CustomSelect";
@@ -72,7 +73,7 @@ export default function EditExamPage() {
   useEffect(() => {
     async function loadExam() {
       if (!examId) {
-        alert("No Exam ID provided.");
+        toast.warning("No Exam ID provided.");
         router.push(`/dashboard/manage-exam-pack/${packId}`);
         return;
       }
@@ -107,11 +108,11 @@ export default function EditExamPage() {
             privatePassword: "",
           });
         } else {
-          alert("Failed to load exam details.");
+          toast.error("Failed to load exam details.");
           router.push(`/dashboard/manage-exam-pack/${packId}`);
         }
       } catch (err) {
-        alert("Failed to load exam details.");
+        toast.error("Failed to load exam details.");
         router.push(`/dashboard/manage-exam-pack/${packId}`);
       } finally {
         setLoading(false);
@@ -176,13 +177,13 @@ export default function EditExamPage() {
       });
 
       if (res.success) {
-        alert("Exam updated successfully!");
+        toast.success("Exam updated successfully!");
         router.push(`/dashboard/manage-exam-pack/${packId}`);
       } else {
-        alert(res.error || "Failed to update exam.");
+        toast.error(res.error || "Failed to update exam.");
       }
     } catch (err) {
-      alert("Failed to update exam.");
+      toast.error("Failed to update exam.");
     } finally {
       setSaving(false);
     }

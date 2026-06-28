@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { FaChartPie, FaMoneyBillWave, FaPlus, FaListUl, FaCalendarAlt } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import { getTransactionsAction, getFinancialSummaryAction, createTransactionAction } from "../../../../lib/actions";
@@ -55,11 +56,11 @@ export default function FinancialReportPage() {
     e.preventDefault();
     const parsedAmount = parseFloat(txAmount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      alert("Please enter a valid positive amount.");
+      toast.warning("Please enter a valid positive amount.");
       return;
     }
     if (!txDesc.trim()) {
-      alert("Please enter a description.");
+      toast.warning("Please enter a description.");
       return;
     }
 
@@ -69,13 +70,14 @@ export default function FinancialReportPage() {
       if (res.success) {
         setTxAmount("");
         setTxDesc("");
+        toast.success("Transaction added successfully.");
         loadData();
       } else {
-        alert(res.error || "Failed to add transaction");
+        toast.error(res.error || "Failed to add transaction");
       }
     } catch (err) {
       console.error(err);
-      alert("An unexpected error occurred.");
+      toast.error("An unexpected error occurred.");
     } finally {
       setSubmitting(false);
     }

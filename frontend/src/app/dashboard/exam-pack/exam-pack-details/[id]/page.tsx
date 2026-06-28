@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageContainer } from "../../../../../components/common/PageContainer";
@@ -306,7 +307,6 @@ export default function ExamPage() {
 
   // Proctoring States
   const [warnings, setWarnings] = useState(0);
-  const [warningToast, setWarningToast] = useState("");
   const [result, setResult] = useState<any>(null);
 
   useEffect(() => {
@@ -361,11 +361,11 @@ export default function ExamPage() {
         setResult(res.result);
         setShowModal(true);
       } else {
-        alert(res.error || "Failed to submit exam results.");
+        toast.error(res.error || "Failed to submit exam results.");
       }
     } catch (err) {
       console.error(err);
-      alert("An error occurred during submission.");
+      toast.error("An error occurred during submission.");
     }
   };
 
@@ -374,7 +374,7 @@ export default function ExamPage() {
     if (isSubmitted || !isStarted) return;
     setWarnings((prev) => {
       const nextWarn = prev + 1;
-      setWarningToast(`Warning ${nextWarn}/3: ${msg}`);
+      toast.error(`Warning ${nextWarn}/3: ${msg}`, { duration: 4000 });
       
       // Auto submit on 3rd warning
       if (nextWarn >= 3) {
@@ -383,14 +383,6 @@ export default function ExamPage() {
       return nextWarn;
     });
   };
-
-  // Hide toast after timeout
-  useEffect(() => {
-    if (warningToast) {
-      const t = setTimeout(() => setWarningToast(""), 4000);
-      return () => clearTimeout(t);
-    }
-  }, [warningToast]);
 
   // ---- Advanced Exam Security Enforcements ----
   useEffect(() => {
@@ -559,13 +551,6 @@ export default function ExamPage() {
 
   return (
     <PageContainer>
-      {/* Reusable warning toasts */}
-      {warningToast && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] bg-red-600 text-white font-bold px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 border border-red-500 animate-bounce">
-          <span className="text-xl">⚠️</span>
-          <span>{warningToast}</span>
-        </div>
-      )}
 
       <div className="print:hidden space-y-6">
         <Timer

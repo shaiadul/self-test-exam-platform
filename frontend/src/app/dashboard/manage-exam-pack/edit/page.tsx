@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, DragEvent, useEffect } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import CustomSelect from "../../../../components/ui/CustomSelect"; // adjust path if needed
@@ -85,13 +86,13 @@ export default function EditExamPackPage() {
         image: examPackData.image || "/global/test.png",
       });
       if (res.success) {
-        alert("Exam pack updated successfully.");
+        toast.success("Exam pack updated successfully.");
         router.push("/dashboard/manage-exam-pack");
       } else {
-        alert(res.error || "Failed to update exam pack.");
+        toast.error(res.error || "Failed to update exam pack.");
       }
     } catch (err) {
-      alert("Failed to update exam pack.");
+      toast.error("Failed to update exam pack.");
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { FaBookOpen, FaImage, FaListUl, FaPlusCircle, FaArrowLeft } from "react-icons/fa";
@@ -96,11 +97,11 @@ const QuestionForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (disabled) return alert("Please select an exam pack and exam first.");
-    if (!questionText.trim()) return alert("Question text is required!");
+    if (disabled) return toast.warning("Please select an exam pack and exam first.");
+    if (!questionText.trim()) return toast.warning("Question text is required!");
     if (options.filter(Boolean).length < 2)
-      return alert("Please provide at least 2 options!");
-    if (!correctAnswer.trim()) return alert("Please select a correct answer!");
+      return toast.warning("Please provide at least 2 options!");
+    if (!correctAnswer.trim()) return toast.warning("Please select a correct answer!");
 
     const newQuestion = {
       type,
@@ -280,7 +281,7 @@ export default function AddQuestionPage() {
             const qList = await getQuestionsAction(examIdParam);
             setQuestions(qList || []);
           } else {
-            alert("Specified exam not found. You can select an exam pack and exam manually.");
+            toast.error("Specified exam not found. You can select an exam pack and exam manually.");
             setExamId("");
           }
         } catch (err) {
@@ -340,7 +341,7 @@ export default function AddQuestionPage() {
 
   const handleAddQuestion = async (qData: Omit<Question, "id">) => {
     if (!examId) {
-      alert("Please select an exam first!");
+      toast.warning("Please select an exam first!");
       return false;
     }
 
@@ -350,13 +351,14 @@ export default function AddQuestionPage() {
         // Refresh question list
         const qList = await getQuestionsAction(examId);
         setQuestions(qList || []);
+        toast.success("Question added successfully.");
         return true;
       } else {
-        alert(res.error || "Failed to add question to backend.");
+        toast.error(res.error || "Failed to add question to backend.");
         return false;
       }
     } catch (err) {
-      alert("Failed to save question.");
+      toast.error("Failed to save question.");
       return false;
     }
   };

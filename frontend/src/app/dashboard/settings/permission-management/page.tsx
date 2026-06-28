@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { FaUserShield, FaEdit, FaSave, FaTimes, FaLock, FaGlobe } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import { adminGetPermissionsAction, adminUpdatePermissionAction } from "../../../../lib/actions";
@@ -52,12 +53,13 @@ export default function PermissionManagementPage() {
           prev.map((p) => (p.id === id ? { ...p, access } : p))
         );
         setEditingId(null);
+        toast.success("Permission updated successfully.");
       } else {
-        alert(res.error || "Failed to update permission");
+        toast.error(res.error || "Failed to update permission");
       }
     } catch (err) {
       console.error(err);
-      alert("An error occurred while updating the permission.");
+      toast.error("An error occurred while updating the permission.");
     }
   }
 

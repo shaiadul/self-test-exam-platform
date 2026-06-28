@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { FaPlus, FaTimes, FaCog, FaGlobe, FaLayerGroup, FaCalendarAlt } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import { getSystemAssetsAction, createSystemAssetAction, deleteSystemAssetAction } from "../../../../lib/actions";
@@ -47,7 +48,7 @@ export default function AssetsSetupPage() {
 
   async function handleAddAsset(type: string, value: string, clearInput: () => void) {
     if (!value.trim()) {
-      alert("Please enter a valid value.");
+      toast.warning("Please enter a valid value.");
       return;
     }
     setAddingType(type);
@@ -55,13 +56,14 @@ export default function AssetsSetupPage() {
       const res = await createSystemAssetAction(type, value.trim());
       if (res.success) {
         clearInput();
+        toast.success(`${type} added successfully.`);
         loadAssets();
       } else {
-        alert(res.error || `Failed to add ${type}`);
+        toast.error(res.error || `Failed to add ${type}`);
       }
     } catch (err) {
       console.error(err);
-      alert("An unexpected error occurred.");
+      toast.error("An unexpected error occurred.");
     } finally {
       setAddingType(null);
     }
@@ -75,12 +77,13 @@ export default function AssetsSetupPage() {
       const res = await deleteSystemAssetAction(id);
       if (res.success) {
         setAssets((prev) => prev.filter((a) => a.id !== id));
+        toast.success("Asset option deleted successfully.");
       } else {
-        alert(res.error || "Failed to delete asset");
+        toast.error(res.error || "Failed to delete asset");
       }
     } catch (err) {
       console.error(err);
-      alert("An unexpected error occurred.");
+      toast.error("An unexpected error occurred.");
     }
   }
 
