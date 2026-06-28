@@ -9,7 +9,7 @@ import { Input } from "../../../components/ui/Input";
 import { FaEnvelope, FaLock, FaArrowLeft } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-import { login } from "../../../lib/auth";
+import { loginAction } from "../../../lib/actions";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -41,8 +41,17 @@ export default function SignIn() {
     setError("");
 
     try {
-      await login(email, password);
-      router.push("/dashboard");
+      const res = await loginAction(email, password);
+      if (res.success && res.user) {
+        localStorage.setItem("token", res.token || "");
+        localStorage.setItem("userRole", res.user.role || "student");
+        localStorage.setItem("userName", res.user.name || "");
+        localStorage.setItem("userEmail", res.user.email || "");
+        localStorage.setItem("userID", res.user.id.toString());
+        router.push("/dashboard");
+      } else {
+        setError(res.error || "Failed to sign in.");
+      }
     } catch (err) {
       const errorObj = err as Error;
       setError(errorObj.message || "Failed to connect to backend server.");

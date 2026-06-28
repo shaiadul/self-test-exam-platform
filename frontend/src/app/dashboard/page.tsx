@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import ChartCard from "../../components/dashboard/ChartCard";
 import ExamsTable from "../../components/dashboard/ExamsTable";
 import StatsGrid from "../../components/dashboard/StatsGrid";
@@ -42,10 +43,13 @@ const adminChartData = [
   { name: "Feb", value: 95 },
 ];
 
+import { getProfileAction, getDashboardStatsAction } from "../../lib/actions";
+
 export default function DashboardPage() {
   const [userRole, setUserRole] = useState<string>("student");
   const [userName, setUserName] = useState("Md Saidul Basar");
   const [mounted, setMounted] = useState(false);
+  const [stats, setStats] = useState<any>(null);
 
   // Synchronized Profile state loader
   const [profileData, setProfileData] = useState({
@@ -57,48 +61,51 @@ export default function DashboardPage() {
   });
 
   useEffect(() => {
-    const role = localStorage.getItem("userRole") || "student";
-    const name = localStorage.getItem("userName") || "Md Saidul Basar";
-    setUserRole(role);
-    setUserName(name);
+    async function loadDashboard() {
+      try {
+        const profile = await getProfileAction();
+        const liveStats = await getDashboardStatsAction();
 
-    setProfileData(() => {
-      const data = {
-        image: localStorage.getItem("userImage") || "/user/md-saidul.jpeg",
-        board: "",
-        level: "",
-        batch: "",
-        institution: "",
-      };
+        const role = profile?.role || localStorage.getItem("userRole") || "student";
+        const name = profile?.name || localStorage.getItem("userName") || "Md Saidul Basar";
 
-      if (role === "student") {
-        data.board = localStorage.getItem("studentBoard") || "Dhaka";
-        data.level = localStorage.getItem("studentLevel") || "BSS";
-        data.batch = localStorage.getItem("studentBatch") || "2019-2020";
-        data.institution =
-          localStorage.getItem("studentInstitution") ||
-          "Govt. Titumir College Dhaka";
-      } else if (role === "teacher") {
-        data.board = localStorage.getItem("teacherSubject") || "Physics Dept";
-        data.level =
-          localStorage.getItem("teacherDesignation") || "Lead Faculty";
-        data.batch = "LMS Faculty";
-        data.institution =
-          localStorage.getItem("teacherInstitution") ||
-          "Govt. Titumir College Dhaka";
-        data.image = localStorage.getItem("userImage") || "";
-      } else if (role === "admin") {
-        data.board = localStorage.getItem("adminTier") || "Super Admin";
-        data.level = localStorage.getItem("adminDept") || "Global Control";
-        data.batch = localStorage.getItem("adminBase") || "Operations Control";
-        data.institution = "Self-Test Portal Central";
-        data.image = localStorage.getItem("userImage") || "";
+        setUserRole(role);
+        setUserName(name);
+        setStats(liveStats);
+
+        const data = {
+          image: profile?.image || localStorage.getItem("userImage") || "/user/md-saidul.jpeg",
+          board: "",
+          level: "",
+          batch: "",
+          institution: "",
+        };
+
+        if (role === "student") {
+          data.board = profile?.board || "Dhaka";
+          data.level = profile?.level || "BSS";
+          data.batch = profile?.batch || "2019-2020";
+          data.institution = profile?.institution || "Govt. Titumir College Dhaka";
+        } else if (role === "teacher") {
+          data.board = profile?.subject || "Physics Dept";
+          data.level = profile?.designation || "Lead Faculty";
+          data.batch = "LMS Faculty";
+          data.institution = profile?.institution || "Govt. Titumir College Dhaka";
+        } else if (role === "admin") {
+          data.board = profile?.adminTier || "Super Admin";
+          data.level = profile?.adminDept || "Global Control";
+          data.batch = profile?.adminBase || "Operations Control";
+          data.institution = "Self-Test Portal Central";
+        }
+
+        setProfileData(data);
+      } catch (err) {
+        console.error("Failed to load dashboard statistics:", err);
+      } finally {
+        setMounted(true);
       }
-
-      return data;
-    });
-
-    setMounted(true);
+    }
+    loadDashboard();
   }, []);
 
   if (!mounted) {
@@ -113,6 +120,42 @@ export default function DashboardPage() {
 
   return (
     <PageContainer>
+      {/* Dynamic Greetings Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8 mb-4 animate-fadeIn">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold text-xs uppercase tracking-wider">
+            ⚡ Dashboard Overview
+          </div>
+          <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
+            Welcome back, {userName.split(" ")[0]}!
+          </h1>
+          <p className="text-gray-500 font-semibold text-sm">
+            {normRole === "student" && "Track your mocks, check dynamic performance charts, and prepare for exams."}
+            {normRole === "teacher" && "Syllabus administration center. Configure exam packs, manage grading & logs."}
+            {normRole === "admin" && "Control node. Monitor server diagnostics, platform database users, and finance logs."}
+          </p>
+        </div>
+
+        {/* Dynamic Contextual Action Panel */}
+        <div className="flex items-center gap-3">
+          {normRole === "student" && (
+            <Link href="/dashboard/exam-pack" className="px-5 py-3 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-sm rounded-2xl shadow-lg shadow-orange-500/10 hover-lift transition">
+              Launch Mock Exams
+            </Link>
+          )}
+          {normRole === "teacher" && (
+            <Link href="/dashboard/manage-exam-pack" className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-blue-500/10 hover-lift transition">
+              Manage Exam Packs
+            </Link>
+          )}
+          {normRole === "admin" && (
+            <Link href="/dashboard/settings/assets-setup" className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-purple-500/10 hover-lift transition">
+              Admin Configuration
+            </Link>
+          )}
+        </div>
+      </div>
+
       {/* ========================================================
           1. STUDENT DASHBOARD
           ======================================================== */}
@@ -138,9 +181,9 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-bold text-orange-50/80 uppercase tracking-widest mb-1">
                   Overall Rank
                 </h3>
-                <p className="text-5xl font-black tracking-tight mb-2">#42</p>
+                <p className="text-5xl font-black tracking-tight mb-2">#{stats?.rank || 42}</p>
                 <p className="text-orange-100 text-xs font-semibold">
-                  Top 5% of Govt. Titumir College Dhaka
+                  {stats?.institutionRank || `Top 5% of ${profileData.institution || "Govt. Titumir College"}`}
                 </p>
               </div>
               <button className="relative z-10 mt-4 w-full py-2.5 bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/25 rounded-2xl font-bold transition-all text-xs cursor-pointer">
@@ -162,7 +205,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <ChartCard
-                  data={studentChartData}
+                  data={stats?.accuracyData || studentChartData}
                   color="#dd6b01"
                   strokeColor="#f59e0b"
                   avgLabel="Avg Mark"
@@ -172,10 +215,10 @@ export default function DashboardPage() {
             <div>
               <StatsGrid
                 stats={[
-                  { label: "Completed Exams", value: "25" },
-                  { label: "Average Mark", value: "66%" },
-                  { label: "Passed Ratio", value: "75%" },
-                  { label: "Failed Count", value: "6" },
+                  { label: "Completed Exams", value: stats?.completedCount?.toString() || "0" },
+                  { label: "Average Mark", value: stats?.averageMark || "0%" },
+                  { label: "Passed Ratio", value: stats?.passedRatio || "0%" },
+                  { label: "Failed Count", value: stats?.failedCount?.toString() || "0" },
                 ]}
               />
             </div>
@@ -193,24 +236,11 @@ export default function DashboardPage() {
                     View Evaluation History
                   </button>
                 </div>
-                <ExamsTable
-                  exams={[
-                    {
-                      id: "#HSC34930",
-                      name: "Physics-02 Mechanics",
-                      score: "25/30",
-                      negative: "-5",
-                      answerSheet: "#",
-                    },
-                    {
-                      id: "#HSC9800",
-                      name: "Chemistry-03 Organic",
-                      score: "28/30",
-                      negative: "-2",
-                      answerSheet: "#",
-                    },
-                  ]}
-                />
+                {stats?.recentExams && stats.recentExams.length > 0 ? (
+                  <ExamsTable exams={stats.recentExams} />
+                ) : (
+                  <p className="text-sm text-gray-500 py-6 text-center">No recent exams taken yet.</p>
+                )}
               </div>
             </div>
 
@@ -220,20 +250,18 @@ export default function DashboardPage() {
                   Upcoming Schedules
                 </h3>
                 <span className="px-2.5 py-1 bg-orange-100 text-[#dd6b01] text-[10px] font-extrabold rounded-full border border-orange-200 uppercase tracking-wider">
-                  2 Scheduled
+                  {stats?.upcomingExams?.length || 0} Scheduled
                 </span>
               </div>
               <div className="grid grid-cols-1 gap-6">
-                <UpcomingExamCard
-                  image="/global/logo2.png"
-                  title="Islamic Economics & Banking"
-                  dateTime="10:30 AM | Sunday, 14th May"
-                />
-                <UpcomingExamCard
-                  image="/global/logo2.png"
-                  title="Physics 1st Paper Electromagnetism"
-                  dateTime="12:30 PM | Monday, 15th May"
-                />
+                {(stats?.upcomingExams || []).map((exam: any, idx: number) => (
+                  <UpcomingExamCard
+                    key={idx}
+                    image={exam.image || "/global/logo2.png"}
+                    title={exam.title}
+                    dateTime={exam.dateTime}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -289,7 +317,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <ChartCard
-                  data={teacherChartData}
+                  data={stats?.activityData || teacherChartData}
                   color="#3b82f6"
                   strokeColor="#6366f1"
                   avgLabel="Questions/Mo"
@@ -299,10 +327,10 @@ export default function DashboardPage() {
             <div>
               <StatsGrid
                 stats={[
-                  { label: "Active Exam Packs", value: "12" },
-                  { label: "Questions Created", value: "480" },
-                  { label: "Graded Scripts", value: "890" },
-                  { label: "Instructor Rating", value: "4.9 / 5" },
+                  { label: "Active Exam Packs", value: stats?.activePacks?.toString() || "0" },
+                  { label: "Questions Created", value: stats?.questionsCount?.toString() || "0" },
+                  { label: "Graded Scripts", value: stats?.gradedScripts?.toString() || "0" },
+                  { label: "Instructor Rating", value: stats?.rating || "4.9 / 5" },
                 ]}
               />
             </div>
@@ -320,24 +348,11 @@ export default function DashboardPage() {
                     Add Exam Schedule
                   </button>
                 </div>
-                <ExamsTable
-                  exams={[
-                    {
-                      id: "#TCH8820",
-                      name: "Physics Mechanics Part-01",
-                      score: "48 Submits",
-                      negative: "No Negatives",
-                      answerSheet: "#",
-                    },
-                    {
-                      id: "#TCH2390",
-                      name: "Modern Physics & Quantum",
-                      score: "35 Submits",
-                      negative: "-0.25 Marking",
-                      answerSheet: "#",
-                    },
-                  ]}
-                />
+                {stats?.assignedPacks && stats.assignedPacks.length > 0 ? (
+                  <ExamsTable exams={stats.assignedPacks} />
+                ) : (
+                  <p className="text-sm text-gray-500 py-6 text-center">No assigned exams yet.</p>
+                )}
               </div>
             </div>
 
@@ -347,36 +362,27 @@ export default function DashboardPage() {
                   Pending Tasks
                 </h3>
                 <span className="px-2.5 py-1 bg-blue-100 text-blue-700 text-[10px] font-extrabold rounded-full border border-blue-200 uppercase tracking-wider">
-                  Review Drafts
+                  {stats?.pendingTasks?.length || 0} Review Drafts
                 </span>
               </div>
               <div className="grid grid-cols-1 gap-4">
-                <div className="bg-white border border-gray-100/80 rounded-2xl p-4 flex gap-4 hover:shadow-md transition">
-                  <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#dd6b01] flex items-center justify-center text-sm shrink-0 border border-orange-100">
-                    <FaClock />
+                {(stats?.pendingTasks || []).map((task: any, idx: number) => (
+                  <div key={idx} className="bg-white border border-gray-100/80 rounded-2xl p-4 flex gap-4 hover:shadow-md transition">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 border ${
+                      task.type === "time" ? "bg-orange-50 text-[#dd6b01] border-orange-100" : "bg-indigo-50 text-indigo-600 border-indigo-100"
+                    }`}>
+                      {task.type === "time" ? <FaClock /> : <FaCogs />}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-extrabold text-gray-800">
+                        {task.title}
+                      </h4>
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        {task.desc}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-extrabold text-gray-800">
-                      Grade Physics-02 Papers
-                    </h4>
-                    <p className="text-[10px] text-gray-400 mt-1">
-                      12 student submissions pending scorecards
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-white border border-gray-100/80 rounded-2xl p-4 flex gap-4 hover:shadow-md transition">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm shrink-0 border border-indigo-100">
-                    <FaCogs />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-extrabold text-gray-800">
-                      Verify Question Options
-                    </h4>
-                    <p className="text-[10px] text-gray-400 mt-1">
-                      Check correctness of Organic Chemistry answers
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -408,7 +414,7 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-bold text-purple-50/80 uppercase tracking-widest mb-1">
                   Server Status
                 </h3>
-                <p className="text-5xl font-black tracking-tight mb-2">99.9%</p>
+                <p className="text-5xl font-black tracking-tight mb-2">{stats?.serverStatus || "99.9%"}</p>
                 <p className="text-purple-100 text-xs font-semibold flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   All Nodes Online & Healthy
@@ -433,7 +439,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <ChartCard
-                  data={adminChartData}
+                  data={stats?.activityData || adminChartData}
                   color="#7c3aed"
                   strokeColor="#8b5cf6"
                   avgLabel="Total Attempts"
@@ -443,10 +449,10 @@ export default function DashboardPage() {
             <div>
               <StatsGrid
                 stats={[
-                  { label: "Registered Students", value: "12,850" },
-                  { label: "Educator Accounts", value: "450" },
-                  { label: "Maintained Packs", value: "89" },
-                  { label: "Sync Status", value: "100% Synced" },
+                  { label: "Registered Students", value: stats?.registeredCount || "0" },
+                  { label: "Educator Accounts", value: stats?.educatorsCount || "0" },
+                  { label: "Maintained Packs", value: stats?.maintainedPacks || "0" },
+                  { label: "Sync Status", value: stats?.syncStatus || "100% Synced" },
                 ]}
               />
             </div>
@@ -464,24 +470,11 @@ export default function DashboardPage() {
                     Export Security Logs
                   </button>
                 </div>
-                <ExamsTable
-                  exams={[
-                    {
-                      id: "#SYS-90021",
-                      name: "Backup Database Operations",
-                      score: "Success",
-                      negative: "System System",
-                      answerSheet: "#",
-                    },
-                    {
-                      id: "#SYS-11090",
-                      name: "Regrade Physics Mechanics Batch",
-                      score: "Completed",
-                      negative: "Admin Action",
-                      answerSheet: "#",
-                    },
-                  ]}
-                />
+                {stats?.auditLogs && stats.auditLogs.length > 0 ? (
+                  <ExamsTable exams={stats.auditLogs} />
+                ) : (
+                  <p className="text-sm text-gray-500 py-6 text-center">No system operations logged.</p>
+                )}
               </div>
             </div>
 
@@ -495,32 +488,23 @@ export default function DashboardPage() {
                 </span>
               </div>
               <div className="grid grid-cols-1 gap-4">
-                <div className="bg-white border border-gray-100/80 rounded-2xl p-4 flex gap-4 hover:shadow-md transition">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm shrink-0 border border-purple-100">
-                    <FaUserShield />
+                {(stats?.pendingAudits || []).map((audit: any, idx: number) => (
+                  <div key={idx} className="bg-white border border-gray-100/80 rounded-2xl p-4 flex gap-4 hover:shadow-md transition">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm shrink-0 border ${
+                      audit.type === "user" ? "bg-purple-50 text-purple-600 border-purple-100" : "bg-red-50 text-red-600 border-red-100"
+                    }`}>
+                      {audit.type === "user" ? <FaUserShield /> : <FaServer />}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-extrabold text-gray-800">
+                        {audit.title}
+                      </h4>
+                      <p className="text-[10px] text-gray-400 mt-1">
+                        {audit.desc}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-extrabold text-gray-800">
-                      Review Educator Credentials
-                    </h4>
-                    <p className="text-[10px] text-gray-400 mt-1">
-                      4 new physics tutors awaiting dashboard permissions
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-white border border-gray-100/80 rounded-2xl p-4 flex gap-4 hover:shadow-md transition">
-                  <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-sm shrink-0 border border-red-100">
-                    <FaServer />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-extrabold text-gray-800">
-                      Clear Server Cached Logs
-                    </h4>
-                    <p className="text-[10px] text-gray-400 mt-1">
-                      Cache exceeds 4.2GB, needs manual system flush
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>

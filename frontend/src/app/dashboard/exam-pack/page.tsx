@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   FaSearch,
   FaSortAmountDown,
@@ -9,91 +9,11 @@ import {
 } from "react-icons/fa";
 import ExamPackCard from "../../../components/dashboard/ExamPackCard";
 import { PageContainer } from "../../../components/common/PageContainer";
+import { getExamPacksAction } from "../../../lib/actions";
 
 export default function ExamPackPage() {
-  // ---- Mock Exam Pack Data ----
-  const examPacks = [
-    {
-      id: 1,
-      image: "/global/test.png",
-      title: "Math Beginner Pack",
-      description:
-        "Covers algebra, geometry, and basic arithmetic concepts for beginners.",
-      totalExams: 12,
-      link: "/dashboard/exam-pack/exam-pack-details",
-      category: "Math",
-    },
-    {
-      id: 2,
-      image: "/global/test.png",
-      title: "Science Explorer Pack",
-      description:
-        "Includes physics, chemistry, and biology practice exams for learners.",
-      totalExams: 15,
-      link: "/dashboard/exam-pack/exam-pack-details",
-      category: "Science",
-    },
-    {
-      id: 3,
-      image: "/global/test.png",
-      title: "English Grammar Pack",
-      description:
-        "Grammar, vocabulary, and comprehension practice questions in English.",
-      totalExams: 10,
-      link: "/dashboard/exam-pack/exam-pack-details",
-      category: "English",
-    },
-    {
-      id: 4,
-      image: "/global/test.png",
-      title: "History Master Pack",
-      description:
-        "Learn world history through multiple exams covering ancient to modern era.",
-      totalExams: 8,
-      link: "/exam-pack/history-master",
-      category: "History",
-    },
-    {
-      id: 5,
-      image: "/global/test.png",
-      title: "Programming Basics Pack",
-      description:
-        "Practice coding and logic questions in Python, C++, and JavaScript.",
-      totalExams: 20,
-      link: "/dashboard/exam-pack/exam-pack-details",
-      category: "Programming",
-    },
-    {
-      id: 6,
-      image: "/global/no-picture.jpg",
-      title: "Geography Explorer Pack",
-      description:
-        "Covers maps, continents, countries, and geographical features.",
-      totalExams: 9,
-      link: "/dashboard/exam-pack/exam-pack-details",
-      category: "Geography",
-    },
-    {
-      id: 7,
-      image: "/global/test.png",
-      title: "Business Studies Pack",
-      description:
-        "Learn economics, management, and entrepreneurship with practice exams.",
-      totalExams: 14,
-      link: "/dashboard/exam-pack/exam-pack-details",
-      category: "Business",
-    },
-    {
-      id: 8,
-      image: "/global/no-picture.jpg",
-      title: "General Knowledge Pack",
-      description:
-        "Enhance your GK skills covering current affairs, history, and science.",
-      totalExams: 18,
-      link: "/dashboard/exam-pack/exam-pack-details",
-      category: "General",
-    },
-  ];
+  const [examPacks, setExamPacks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // ---- State Management ----
   const [searchTerm, setSearchTerm] = useState("");
@@ -103,9 +23,26 @@ export default function ExamPackPage() {
   const [filterCategory, setFilterCategory] = useState("All");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
+  useEffect(() => {
+    async function loadPacks() {
+      try {
+        const packs = await getExamPacksAction();
+        setExamPacks(packs || []);
+      } catch (err) {
+        console.error("Failed to load exam packs:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPacks();
+  }, []);
+
   // ---- Derived Data (Filtered + Sorted) ----
   const filteredAndSorted = useMemo(() => {
-    let data = [...examPacks];
+    let data = [...examPacks].map(item => ({
+      ...item,
+      link: `/dashboard/exam-pack/exam-pack-details?packId=${item.id}`
+    }));
 
     // Filter by Category
     if (filterCategory !== "All") {
@@ -132,7 +69,7 @@ export default function ExamPackPage() {
     });
 
     return data;
-  }, [searchTerm, sortBy, sortOrder, filterCategory]);
+  }, [examPacks, searchTerm, sortBy, sortOrder, filterCategory]);
 
   const categories = [
     "All",
@@ -263,7 +200,11 @@ export default function ExamPackPage() {
       </div>
 
       {/* ---- Exam Pack Grid ---- */}
-      {filteredAndSorted.length > 0 ? (
+      {loading ? (
+        <div className="min-h-[40vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#dd6b01]"></div>
+        </div>
+      ) : filteredAndSorted.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredAndSorted.map((item) => (
             <ExamPackCard key={item.id} {...item} />

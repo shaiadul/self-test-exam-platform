@@ -7,100 +7,134 @@ import CustomSelect from "../../../../../components/ui/CustomSelect";
 import DateTimePicker from "../../../../../components/ui/DateTimePicker";
 import ToggleSwitch from "../../../../../components/ui/ToggleSwitch";
 import { PageContainer } from "../../../../../components/common/PageContainer";
-import { tr } from "framer-motion/client";
+import { getExamDetailsAction, updateExamAction, getSystemAssetsAction } from "../../../../../lib/actions";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
-type ExamData = {
-  name: string;
-  details: string;
-  level: string;
-  batch: string;
-  image: string;
-  pack: string;
-  totalMarks: number;
-  perQuestionMark: number;
-  passMark: number;
-  startDate: string;
-  endDate: string;
-  randomization: boolean;
-  feedback: boolean;
-  scoreLimit: boolean;
-  scoreValue: number;
-  negativeMarking: boolean;
-  negativeValue: number;
-  totalTime: boolean;
-  totalTimeValue: number;
-  privateExam: boolean;
-  privatePassword: string;
-};
+export default function EditExamPage() {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const idStr = params.id as string;
+  const packId = idStr ? parseInt(idStr) : 0;
+  const examId = searchParams.get("examId") || "";
 
-export default function EditExamPage({
-  existingExam,
-}: {
-  existingExam: ExamData;
-}) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Dynamic options from system assets
+  const [levelOptions, setLevelOptions] = useState<string[]>([]);
+  const [batchOptions, setBatchOptions] = useState<string[]>([]);
 
   // Load initial data from props (or API)
   const [examPackData, setExamPackData] = useState({
-    name: "Science Basics",
-    details:
-      "Welcome to the Science Basics Exam! Here you'll find a collection of basic science questions for beginners.",
-    level: "HSC",
-    batch: "2019",
-    image: "/global/test.png",
+    name: "",
+    details: "",
+    level: "",
+    batch: "",
+    image: "",
     pack: "Science Explorer",
-    totalMarks: 10,
-    perQuestionMark: 1.25,
-    passMark: 6,
-    startDate: "2023-09-25T09:00",
-    endDate: "2023-09-25T11:00",
+    totalMarks: 0,
+    perQuestionMark: 0,
+    passMark: 0,
+    startDate: "",
+    endDate: "",
   });
 
   const [examSettings, setExamSettings] = useState({
-    randomization: true,
+    randomization: false,
     feedback: false,
-    scoreLimit: true,
-    scoreValue: 40,
+    scoreLimit: false,
+    scoreValue: 0,
     negativeMarking: false,
-    negativeValue: 0,
-    totalTime: true,
-    totalTimeValue: 60,
-    privateExam: true,
-    privatePassword: "Exam@123",
+    negativeValue: 0.5,
+    totalTime: false,
+    totalTimeValue: 0,
+    privateExam: false,
+    privatePassword: "",
   });
+
+  // Helper to format ISO date string to datetime-local format
+  const formatDateTime = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "";
+      const pad = (n: number) => n.toString().padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch {
+      return "";
+    }
+  };
 
   // --- Preload Data when editing ---
   useEffect(() => {
-    if (existingExam) {
-      setExamPackData({
-        name: existingExam.name || "",
-        details: existingExam.details || "",
-        level: existingExam.level || "",
-        batch: existingExam.batch || "",
-        image: existingExam.image || "",
-        pack: existingExam.pack || "",
-        totalMarks: existingExam.totalMarks || 0,
-        perQuestionMark: existingExam.perQuestionMark || 0,
-        passMark: existingExam.passMark || 0,
-        startDate: existingExam.startDate || "",
-        endDate: existingExam.endDate || "",
-      });
+    async function loadExam() {
+      if (!examId) {
+        alert("No Exam ID provided.");
+        router.push(`/dashboard/manage-exam-pack/${packId}`);
+        return;
+      }
+      setLoading(true);
+      try {
+        const data = await getExamDetailsAction(examId);
+        if (data) {
+          setExamPackData({
+            name: data.name || "",
+            details: data.details || "Exam details description",
+            level: data.level || "",
+            batch: data.batch || "",
+            image: data.image || "/global/test.png",
+            pack: data.pack || "Science Explorer",
+            totalMarks: data.totalMarks || 0,
+            perQuestionMark: data.perQuestionMarks || 0,
+            passMark: data.passingMarks || 0,
+            startDate: formatDateTime(data.startDate),
+            endDate: formatDateTime(data.endDate),
+          });
 
-      setExamSettings({
-        randomization: existingExam.randomization || false,
-        feedback: existingExam.feedback || false,
-        scoreLimit: existingExam.scoreLimit || false,
-        scoreValue: existingExam.scoreValue || 0,
-        negativeMarking: existingExam.negativeMarking || false,
-        negativeValue: existingExam.negativeValue || 0,
-        totalTime: existingExam.totalTime || false,
-        totalTimeValue: existingExam.totalTimeValue || 0,
-        privateExam: existingExam.privateExam || false,
-        privatePassword: existingExam.privatePassword || "",
-      });
+          setExamSettings({
+            randomization: true,
+            feedback: false,
+            scoreLimit: false,
+            scoreValue: 0,
+            negativeMarking: data.negativeMarks < 0,
+            negativeValue: Math.abs(data.negativeMarks) || 0.5,
+            totalTime: true,
+            totalTimeValue: 60,
+            privateExam: false,
+            privatePassword: "",
+          });
+        } else {
+          alert("Failed to load exam details.");
+          router.push(`/dashboard/manage-exam-pack/${packId}`);
+        }
+      } catch (err) {
+        alert("Failed to load exam details.");
+        router.push(`/dashboard/manage-exam-pack/${packId}`);
+      } finally {
+        setLoading(false);
+      }
     }
-  }, [existingExam]);
+    loadExam();
+  }, [examId, packId, router]);
+
+  // Load system assets for dynamic select options
+  useEffect(() => {
+    async function loadAssets() {
+      try {
+        const assets = await getSystemAssetsAction();
+        if (Array.isArray(assets)) {
+          setLevelOptions(assets.filter((a: any) => a.type === "level").map((a: any) => a.value));
+          setBatchOptions(assets.filter((a: any) => a.type === "batch").map((a: any) => a.value));
+        }
+      } catch (err) {
+        console.error("Failed to load system assets:", err);
+      }
+    }
+    loadAssets();
+  }, []);
 
   // --- Image Upload Handlers ---
   const handleFileChange = (file: File) => {
@@ -125,11 +159,45 @@ export default function EditExamPage({
     if (file) handleFileChange(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Updated Exam Data:", { ...examPackData, ...examSettings });
-    // TODO: send PUT or PATCH request to API
+    setSaving(true);
+    try {
+      const res = await updateExamAction(examId, packId, {
+        name: examPackData.name,
+        startDate: new Date(examPackData.startDate).toISOString(),
+        endDate: new Date(examPackData.endDate).toISOString(),
+        level: examPackData.level || "General",
+        batch: examPackData.batch || "2025",
+        totalMarks: examPackData.totalMarks || 10,
+        passingMarks: examPackData.passMark || 5,
+        perQuestionMarks: examPackData.perQuestionMark || 2,
+        negativeMarks: examSettings.negativeMarking ? -Math.abs(examSettings.negativeValue) : 0,
+      });
+
+      if (res.success) {
+        alert("Exam updated successfully!");
+        router.push(`/dashboard/manage-exam-pack/${packId}`);
+      } else {
+        alert(res.error || "Failed to update exam.");
+      }
+    } catch (err) {
+      alert("Failed to update exam.");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="w-12 h-12 border-4 border-[#dd6b01] border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600 font-medium">Loading Exam Details...</p>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -243,17 +311,7 @@ export default function EditExamPage({
               </label>
               <CustomSelect
                 label="Select Level"
-                options={[
-                  "PSC",
-                  "SSC",
-                  "HSC",
-                  "BCS",
-                  "BS",
-                  "BA",
-                  "BBA",
-                  "MA",
-                  "PHD",
-                ]}
+                options={levelOptions}
                 value={examPackData.level}
                 onChange={(val) =>
                   setExamPackData({ ...examPackData, level: val })
@@ -267,9 +325,7 @@ export default function EditExamPage({
               </label>
               <CustomSelect
                 label="Select Batch"
-                options={Array.from({ length: 20 }, (_, i) =>
-                  (2010 + i).toString(),
-                )}
+                options={batchOptions}
                 value={examPackData.batch}
                 onChange={(val) =>
                   setExamPackData({ ...examPackData, batch: val })
@@ -464,9 +520,10 @@ export default function EditExamPage({
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold text-base py-3 rounded-full hover:opacity-90 transition-all duration-500 cursor-pointer"
+            disabled={saving}
+            className="w-full bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold text-base py-3 rounded-full hover:opacity-90 transition-all duration-500 cursor-pointer disabled:opacity-50"
           >
-            Update Exam
+            {saving ? "Updating..." : "Update Exam"}
           </button>
         </div>
       </form>

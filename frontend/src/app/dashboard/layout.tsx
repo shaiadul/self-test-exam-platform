@@ -47,28 +47,35 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, [pathname]); // refresh auth state on navigate
 
   const allowed = isRouteAllowed(userRole, pathname);
+  const isExamPage = pathname.includes("/dashboard/exam-pack/exam-pack-details/");
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-[#fafafa] print:bg-white print:p-0">
+    <div className={`min-h-screen flex flex-col bg-[#fafafa] print:bg-white print:p-0 ${!isExamPage ? "lg:flex-row" : ""}`}>
       {/* Sidebar for Desktop */}
-      <div className="print:hidden">
-        <Sidebar />
-      </div>
+      {!isExamPage && (
+        <div className="print:hidden">
+          <Sidebar />
+        </div>
+      )}
 
       {/* Mobile Navigation */}
-      <div className="print:hidden">
-        <MobileNav />
-      </div>
+      {!isExamPage && (
+        <div className="print:hidden">
+          <MobileNav />
+        </div>
+      )}
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-h-screen print:p-0 relative">
         {/* Header for Desktop/Mobile */}
-        <div className="print:hidden">
-          <DashboardHeader />
-        </div>
+        {!isExamPage && (
+          <div className="print:hidden">
+            <DashboardHeader />
+          </div>
+        )}
 
-        {/* Added pt-20 to offset the fixed DashboardHeader height (h-20) */}
-        <main className="flex-1 overflow-y-auto print:overflow-visible pt-20">
+        {/* Added pt-20 to offset the fixed DashboardHeader height (h-20) when header is visible */}
+        <main className={`flex-1 overflow-y-auto print:overflow-visible ${!isExamPage ? "pt-20" : "pt-0"}`}>
           <div className="p-6 max-w-7xl mx-auto print:p-0 print:max-w-none">
             {loading ? (
               <div className="min-h-[50vh] flex items-center justify-center">

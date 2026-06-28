@@ -35,10 +35,10 @@ export const Input = ({
           "flex items-center bg-white border-2 rounded-xl transition-all duration-200 overflow-hidden",
           error 
             ? "border-red-500 ring-4 ring-red-500/10" 
-            : "border-gray-100 group-hover:border-primary/50 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10"
+            : "border-gray-200 group-hover:border-primary/50 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10"
         )}>
           {prefix && (
-            <span className="px-4 py-3 bg-gray-50 border-r-2 border-gray-100 text-gray-500 font-bold text-sm">
+            <span className="px-4 py-3 bg-gray-50 border-r-2 border-gray-200 text-gray-500 font-bold text-sm">
               {prefix}
             </span>
           )}

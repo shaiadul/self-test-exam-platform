@@ -43,6 +43,9 @@ func main() {
 	// Initialize repository and handler
 	userRepo := repository.NewSQLUserRepository(config.DB)
 	authHandler := handler.NewAuthHandler(userRepo)
+	
+	examRepo := repository.NewSQLExamRepository(config.DB)
+	examHandler := handler.NewExamHandler(examRepo, userRepo)
 
 	// Routing setup
 	mux := http.NewServeMux()
@@ -54,6 +57,31 @@ func main() {
 	// Protected routes using auth middleware
 	mux.Handle("/api/auth/profile", middleware.AuthMiddleware(http.HandlerFunc(authHandler.GetProfile)))
 	mux.Handle("/api/auth/complete-profile", middleware.AuthMiddleware(http.HandlerFunc(authHandler.CompleteProfile)))
+	
+	// Exam routes
+	mux.Handle("/api/exam-packs", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleExamPacks)))
+	mux.Handle("/api/exam-packs/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleExamPacks)))
+	mux.Handle("/api/exams/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleExams)))
+	mux.Handle("/api/dashboard/stats", middleware.AuthMiddleware(http.HandlerFunc(examHandler.GetDashboardStats)))
+
+	// Attempts & Reporting routes
+	mux.Handle("/api/attempts", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleAttempts)))
+	mux.Handle("/api/attempts/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleAttempts)))
+	mux.Handle("/api/teacher/reports", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleTeacherReports)))
+	mux.Handle("/api/teacher/reports/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleTeacherReports)))
+
+	// Admin Settings routes
+	mux.Handle("/api/admin/users", middleware.AuthMiddleware(http.HandlerFunc(authHandler.HandleAdminUsers)))
+	mux.Handle("/api/admin/users/", middleware.AuthMiddleware(http.HandlerFunc(authHandler.HandleAdminUsers)))
+	mux.Handle("/api/admin/permissions", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandlePermissions)))
+	mux.Handle("/api/admin/permissions/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandlePermissions)))
+
+	// Assets, Transactions, and Analysis routes
+	mux.Handle("/api/admin/analysis", middleware.AuthMiddleware(http.HandlerFunc(examHandler.GetExamAnalysisStats)))
+	mux.Handle("/api/assets", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleSystemAssets)))
+	mux.Handle("/api/assets/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleSystemAssets)))
+	mux.Handle("/api/transactions", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleTransactions)))
+	mux.Handle("/api/transactions/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleTransactions)))
 
 	// Apply CORS
 	handlerWithCORS := corsMiddleware(mux)

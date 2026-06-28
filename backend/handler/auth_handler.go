@@ -2,8 +2,11 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -237,6 +240,21 @@ func (h *AuthHandler) CompleteProfile(w http.ResponseWriter, r *http.Request) {
 	if req.Address != "" {
 		user.Address = &req.Address
 	}
+	if req.Subject != "" {
+		user.Subject = &req.Subject
+	}
+	if req.Designation != "" {
+		user.Designation = &req.Designation
+	}
+	if req.AdminTier != "" {
+		user.AdminTier = &req.AdminTier
+	}
+	if req.AdminDept != "" {
+		user.AdminDept = &req.AdminDept
+	}
+	if req.AdminBase != "" {
+		user.AdminBase = &req.AdminBase
+	}
 
 	if err := h.repo.Update(user); err != nil {
 		http.Error(w, `{"error": "Failed to update profile"}`, http.StatusInternalServerError)
@@ -245,4 +263,78 @@ func (h *AuthHandler) CompleteProfile(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+func (h *AuthHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := h.repo.GetAll()
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Failed to fetch users: %v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	// Sanitize output (don't send hashed passwords)
+	for i := range users {
+		users[i].Password = ""
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
+}
+
+func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request, id int) {
+	var req struct {
+		Role string `json:"role"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := h.repo.UpdateRole(id, req.Role); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Failed to update user role: %v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true}`))
+}
+
+func (h *AuthHandler) DeleteUser(w http.ResponseWriter, r *http.Request, id int) {
+	if err := h.repo.Delete(id); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "Failed to delete user: %v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true}`))
+}
+
+func (h *AuthHandler) HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	if path == "/api/admin/users" || path == "/api/admin/users/" {
+		if r.Method == http.MethodGet {
+			h.ListUsers(w, r)
+		} else {
+			http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		}
+		return
+	}
+
+	idStr := strings.TrimPrefix(path, "/api/admin/users/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, `{"error": "Invalid ID parameter"}`, http.StatusBadRequest)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodPut:
+		h.UpdateUser(w, r, id)
+	case http.MethodDelete:
+		h.DeleteUser(w, r, id)
+	default:
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+	}
 }

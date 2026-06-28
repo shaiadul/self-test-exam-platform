@@ -20,6 +20,8 @@ import {
 } from "react-icons/fa";
 import { PageContainer } from "../../../components/common/PageContainer";
 
+import { getProfileAction, updateProfileAction, getSystemAssetsAction } from "../../../lib/actions";
+
 export default function EditProfile() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -27,6 +29,11 @@ export default function EditProfile() {
   const [userRole, setUserRole] = useState<string>("student");
   const [loading, setLoading] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+
+  // Dynamic options from system assets API
+  const [levelOptions, setLevelOptions] = useState<string[]>([]);
+  const [batchOptions, setBatchOptions] = useState<string[]>([]);
+  const [boardOptions, setBoardOptions] = useState<string[]>([]);
 
   // Core profile state mapping
   const [profileData, setProfileData] = useState({
@@ -52,102 +59,98 @@ export default function EditProfile() {
     adminBase: "Primary Server Node",
   });
 
+  // Load system assets for dynamic select options
   useEffect(() => {
-    const role = localStorage.getItem("userRole") || "student";
-    setUserRole(role);
-
-    // Load initial values from localStorage if they exist
-    const savedName = localStorage.getItem("userName");
-    const savedEmail = localStorage.getItem("userEmail");
-    const savedPhone = localStorage.getItem("userPhone") || "01700000000";
-    const savedAddress =
-      localStorage.getItem("userAddress") || "Dhaka, Bangladesh";
-    const savedImage =
-      localStorage.getItem("userImage") || "/user/md-saidul.jpeg";
-
-    setProfileData((prev) => {
-      const updated = {
-        ...prev,
-        name:
-          savedName ||
-          (role === "admin"
-            ? "Super Admin"
-            : role === "teacher"
-              ? "Prof. Abdus Salam"
-              : "Md Saidul Basar"),
-        email:
-          savedEmail ||
-          (role === "admin"
-            ? "admin@test.com"
-            : role === "teacher"
-              ? "teacher@test.com"
-              : "student@test.com"),
-        phone: savedPhone,
-        address: savedAddress,
-        image: savedImage,
-      };
-
-      if (role === "student") {
-        updated.board = localStorage.getItem("studentBoard") || "Dhaka";
-        updated.level = localStorage.getItem("studentLevel") || "HSC";
-        updated.batch = localStorage.getItem("studentBatch") || "2023";
-        updated.institution =
-          localStorage.getItem("studentInstitution") || "Govt. Titumir College";
-      } else if (role === "teacher") {
-        updated.subject =
-          localStorage.getItem("teacherSubject") || "Physics Department";
-        updated.designation =
-          localStorage.getItem("teacherDesignation") ||
-          "Lead Physics Instructor";
-        updated.institution =
-          localStorage.getItem("teacherInstitution") ||
-          "Govt. Titumir College Dhaka";
-      } else if (role === "admin") {
-        updated.adminTier = localStorage.getItem("adminTier") || "Super Admin";
-        updated.adminDept =
-          localStorage.getItem("adminDept") || "Core Control Operations";
-        updated.adminBase =
-          localStorage.getItem("adminBase") || "Primary Server Node";
+    async function loadAssets() {
+      try {
+        const assets = await getSystemAssetsAction();
+        if (Array.isArray(assets)) {
+          setLevelOptions(assets.filter((a: any) => a.type === "level").map((a: any) => a.value));
+          setBatchOptions(assets.filter((a: any) => a.type === "batch").map((a: any) => a.value));
+          setBoardOptions(assets.filter((a: any) => a.type === "board").map((a: any) => a.value));
+        }
+      } catch (err) {
+        console.error("Failed to load system assets:", err);
       }
-
-      return updated;
-    });
+    }
+    loadAssets();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function loadProfile() {
+      const role = localStorage.getItem("userRole") || "student";
+      setUserRole(role);
+
+      try {
+        const profile = await getProfileAction();
+        if (profile) {
+          setProfileData({
+            name: profile.name || "",
+            email: profile.email || "",
+            phone: profile.phone || "",
+            address: profile.address || "",
+            image: profile.image || "/user/md-saidul.jpeg",
+            level: profile.level || "HSC",
+            batch: profile.batch || "2023",
+            board: profile.board || "Dhaka",
+            institution: profile.institution || "",
+            subject: profile.subject || "",
+            designation: profile.designation || "",
+            adminTier: profile.adminTier || "",
+            adminDept: profile.adminDept || "",
+            adminBase: profile.adminBase || "",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load profile:", err);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Save fields to localStorage
-    localStorage.setItem("userName", profileData.name);
-    localStorage.setItem("userEmail", profileData.email);
-    localStorage.setItem("userPhone", profileData.phone);
-    localStorage.setItem("userAddress", profileData.address);
-    localStorage.setItem("userImage", profileData.image);
+    try {
+      const res = await updateProfileAction(profileData);
+      if (res.success && res.user) {
+        // Save fields to localStorage
+        localStorage.setItem("userName", res.user.name || "");
+        localStorage.setItem("userEmail", res.user.email || "");
+        localStorage.setItem("userPhone", res.user.phone || "");
+        localStorage.setItem("userAddress", res.user.address || "");
+        localStorage.setItem("userImage", res.user.image || "/user/md-saidul.jpeg");
 
-    if (userRole === "student") {
-      localStorage.setItem("studentBoard", profileData.board);
-      localStorage.setItem("studentLevel", profileData.level);
-      localStorage.setItem("studentBatch", profileData.batch);
-      localStorage.setItem("studentInstitution", profileData.institution);
-    } else if (userRole === "teacher") {
-      localStorage.setItem("teacherSubject", profileData.subject);
-      localStorage.setItem("teacherDesignation", profileData.designation);
-      localStorage.setItem("teacherInstitution", profileData.institution);
-    } else if (userRole === "admin") {
-      localStorage.setItem("adminTier", profileData.adminTier);
-      localStorage.setItem("adminDept", profileData.adminDept);
-      localStorage.setItem("adminBase", profileData.adminBase);
-    }
+        if (userRole === "student") {
+          localStorage.setItem("studentBoard", res.user.board || "");
+          localStorage.setItem("studentLevel", res.user.level || "");
+          localStorage.setItem("studentBatch", res.user.batch || "");
+          localStorage.setItem("studentInstitution", res.user.institution || "");
+        } else if (userRole === "teacher") {
+          localStorage.setItem("teacherSubject", res.user.subject || "");
+          localStorage.setItem("teacherDesignation", res.user.designation || "");
+          localStorage.setItem("teacherInstitution", res.user.institution || "");
+        } else if (userRole === "admin") {
+          localStorage.setItem("adminTier", res.user.adminTier || "");
+          localStorage.setItem("adminDept", res.user.adminDept || "");
+          localStorage.setItem("adminBase", res.user.adminBase || "");
+        }
 
-    setTimeout(() => {
+        setLoading(false);
+        setShowSuccessToast(true);
+
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1500);
+      } else {
+        alert(res.error || "Failed to update profile.");
+        setLoading(false);
+      }
+    } catch (err) {
+      alert("An error occurred updating profile.");
       setLoading(false);
-      setShowSuccessToast(true);
-
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
-    }, 800);
+    }
   };
 
   return (
@@ -293,76 +296,49 @@ export default function EditProfile() {
               Student Academic Info
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-sm font-bold text-gray-700 ml-1 block mb-2">
-                  Academic Level
-                </label>
-                <CustomSelect
-                  label="Select level"
-                  options={["PSC", "SSC", "HSC", "BCS", "BSS", "BS", "BBA"]}
-                  value={profileData.level}
-                  onChange={(val) =>
-                    setProfileData({ ...profileData, level: val })
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-sm font-bold text-gray-700 ml-1 block mb-2">
-                  Class Batch
-                </label>
-                <CustomSelect
-                  label="Select batch"
-                  options={[
-                    "2018",
-                    "2019",
-                    "2020",
-                    "2021",
-                    "2022",
-                    "2023",
-                    "2024",
-                    "2025",
-                    "2026",
-                  ]}
-                  value={profileData.batch}
-                  onChange={(val) =>
-                    setProfileData({ ...profileData, batch: val })
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-sm font-bold text-gray-700 ml-1 block mb-2">
-                  Education Board
-                </label>
-                <CustomSelect
-                  label="Select board"
-                  options={[
-                    "Dhaka",
-                    "Chattogram",
-                    "Rajshahi",
-                    "Khulna",
-                    "Sylhet",
-                    "Mymensingh",
-                  ]}
-                  value={profileData.board}
-                  onChange={(val) =>
-                    setProfileData({ ...profileData, board: val })
-                  }
-                />
-              </div>
-              <Input
-                label="Educational Institution"
-                type="text"
-                placeholder="Enter college/school name"
-                icon={<FaBuilding className="text-[#dd6b01]" />}
-                value={profileData.institution}
-                onChange={(e) =>
-                  setProfileData({
-                    ...profileData,
-                    institution: e.target.value,
-                  })
+              <CustomSelect
+                label="Academic Level"
+                placeholder="Select level"
+                options={levelOptions}
+                value={profileData.level}
+                onChange={(val) =>
+                  setProfileData({ ...profileData, level: val })
                 }
-                required
               />
+              <CustomSelect
+                label="Class Batch"
+                placeholder="Select batch"
+                options={batchOptions}
+                value={profileData.batch}
+                onChange={(val) =>
+                  setProfileData({ ...profileData, batch: val })
+                }
+              />
+              <CustomSelect
+                label="Education Board"
+                placeholder="Select board"
+                options={boardOptions}
+                value={profileData.board}
+                onChange={(val) =>
+                  setProfileData({ ...profileData, board: val })
+                }
+              />
+              <div className="md:col-span-2">
+                <Input
+                  label="Educational Institution"
+                  type="text"
+                  placeholder="Enter college/school name"
+                  icon={<FaBuilding className="text-[#dd6b01]" />}
+                  value={profileData.institution}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      institution: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
             </div>
           </div>
         )}

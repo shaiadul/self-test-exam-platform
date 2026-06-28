@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   FaSearch,
   FaSortAmountDown,
   FaSortAmountUp,
-  FaEye,
-  FaDownload,
   FaFilter,
 } from "react-icons/fa";
 import { PageContainer } from "../../../components/common/PageContainer";
+import { getTeacherReportsAction } from "../../../lib/actions";
 
 type Report = {
   id: string;
@@ -23,59 +22,6 @@ type Report = {
   totalStudents: number;
 };
 
-const reportData: Report[] = [
-  {
-    id: "EP-101",
-    examName: "Algebra Basics",
-    packName: "Mathematics - HSC",
-    startDate: "2025-10-05T10:30",
-    highest: 19,
-    lowest: 8,
-    average: 13.5,
-    totalStudents: 45,
-  },
-  {
-    id: "EP-102",
-    examName: "Physics Fundamentals",
-    packName: "Science - SSC",
-    startDate: "2025-09-25T09:00",
-    highest: 20,
-    lowest: 10,
-    average: 15.6,
-    totalStudents: 52,
-  },
-  {
-    id: "EP-103",
-    examName: "Chemistry Lab",
-    packName: "Science - HSC",
-    startDate: "2025-10-01T14:00",
-    highest: 18,
-    lowest: 6,
-    average: 12.7,
-    totalStudents: 48,
-  },
-  {
-    id: "EP-104",
-    examName: "Biology Concepts",
-    packName: "Science - HSC",
-    startDate: "2025-10-07T13:00",
-    highest: 19,
-    lowest: 11,
-    average: 15.3,
-    totalStudents: 50,
-  },
-  {
-    id: "EP-105",
-    examName: "Geography Basics",
-    packName: "General Studies - SSC",
-    startDate: "2025-09-28T09:00",
-    highest: 17,
-    lowest: 7,
-    average: 11.8,
-    totalStudents: 42,
-  },
-];
-
 export default function TeacherReportPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<
@@ -83,10 +29,27 @@ export default function TeacherReportPage() {
   >("highest");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadReports() {
+      setLoading(true);
+      try {
+        const data = await getTeacherReportsAction();
+        setReports(data || []);
+      } catch (err) {
+        console.error("Failed to load teacher reports:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadReports();
+  }, []);
 
   // ---- Filter & Sort Logic ----
   const filteredReports = useMemo(() => {
-    const filtered = reportData.filter(
+    const filtered = reports.filter(
       (r) =>
         r.examName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         r.packName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,9 +68,8 @@ export default function TeacherReportPage() {
 
       return sortOrder === "asc" ? valA - valB : valB - valA;
     });
-  }, [searchTerm, sortBy, sortOrder]);
+  }, [reports, searchTerm, sortBy, sortOrder]);
 
-  // ---- Sort Options ----
   const sortOptions: {
     label: string;
     value: "highest" | "lowest" | "average" | "date";
@@ -117,6 +79,17 @@ export default function TeacherReportPage() {
     { label: "Sort by Average", value: "average" },
     { label: "Sort by Date", value: "date" },
   ];
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="w-12 h-12 border-4 border-[#dd6b01] border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600 font-medium">Loading reports...</p>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer className="space-y-6">
@@ -145,7 +118,7 @@ export default function TeacherReportPage() {
             <button
               type="button"
               onClick={() => setShowDropdown((p) => !p)}
-              className="flex items-center justify-between min-w-[170px] border border-[#dd6b01] text-[#dd6b01] text-sm px-3 py-2 rounded-lg hover:bg-[#fff4ec] transition"
+              className="flex items-center justify-between min-w-[170px] border border-[#dd6b01] text-[#dd6b01] text-sm px-3 py-2 rounded-lg bg-white hover:bg-[#fff4ec] transition cursor-pointer"
             >
               {sortBy === "highest"
                 ? "Sort by Highest"
@@ -162,7 +135,7 @@ export default function TeacherReportPage() {
             </button>
 
             {showDropdown && (
-              <ul className="absolute top-full left-0 mt-1 w-full bg-white border border-[#dd6b01] rounded-lg shadow-md z-20">
+              <ul className="absolute top-full left-0 mt-1 w-full bg-white border border-[#dd6b01] rounded-lg shadow-md z-20 cursor-pointer">
                 {sortOptions.map((opt) => (
                   <li
                     key={opt.value}
@@ -184,7 +157,7 @@ export default function TeacherReportPage() {
           {/* Sort Order */}
           <button
             onClick={() => setSortOrder((p) => (p === "asc" ? "desc" : "asc"))}
-            className="flex items-center gap-2 border border-[#dd6b01] px-3 py-2 rounded-lg text-sm text-[#dd6b01] hover:bg-[#dd6b01] hover:text-white transition"
+            className="flex items-center gap-2 border border-[#dd6b01] px-3 py-2 rounded-lg text-sm text-[#dd6b01] bg-white hover:bg-[#dd6b01] hover:text-white transition cursor-pointer"
           >
             {sortOrder === "asc" ? (
               <>
@@ -264,7 +237,7 @@ export default function TeacherReportPage() {
                   {r.lowest}
                 </td>
 
-                <td className="px-6 py-4 text-gray-800">{r.average}</td>
+                <td className="px-6 py-4 text-gray-800">{r.average.toFixed(1)}</td>
 
                 <td className="px-6 py-4 text-gray-600 text-sm">
                   {r.totalStudents}

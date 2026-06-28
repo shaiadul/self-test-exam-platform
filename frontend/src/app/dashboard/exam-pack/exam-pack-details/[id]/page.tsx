@@ -2,15 +2,17 @@
 
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageContainer } from "../../../../../components/common/PageContainer";
 import Scorecard from "../../../../../components/dashboard/Scorecard";
 import CertificatePrintLayout from "../../../../../components/dashboard/CertificatePrintLayout";
+import { getExamDetailsAction, getQuestionsAction, submitExamAction } from "../../../../../lib/actions";
 
 // --- TYPES ---
 type Answer = string;
 interface QuestionData {
-  id: string;
+  id: number;
   type: "mcq" | "passage" | "picture";
   questionText: string;
   options: string[];
@@ -23,14 +25,14 @@ interface QuestionData {
 interface TimerProps {
   duration: number;
   onTimeUp: () => void;
-  isRunning: boolean; // new prop
+  isRunning: boolean;
 }
 
 const Timer = ({ duration, onTimeUp, isRunning }: TimerProps) => {
   const [timeLeft, setTimeLeft] = useState(duration);
 
   useEffect(() => {
-    if (!isRunning) return; // stop timer if not running
+    if (!isRunning) return;
 
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
@@ -44,7 +46,7 @@ const Timer = ({ duration, onTimeUp, isRunning }: TimerProps) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isRunning, onTimeUp]); // depend on isRunning
+  }, [isRunning, onTimeUp]);
 
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
@@ -84,11 +86,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 }) => {
   const isAnswered = selected !== null;
   const isCorrect = selected === question.correctAnswer;
-  const isSubmitted = isLocked; // same meaning: after exam submit
+  const isSubmitted = isLocked;
 
   return (
     <div
-      className={`bg-white border rounded-xl p-6 shadow-sm mt-4 transition-all duration-300 ${
+      className={`select-none bg-white border rounded-xl p-6 shadow-sm mt-4 transition-all duration-300 ${
         isSubmitted
           ? isCorrect
             ? "border-green-400 bg-green-50"
@@ -102,17 +104,17 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           alt={`Question ${number}`}
           width={500}
           height={500}
-          className="rounded-lg mb-4 w-full max-h-64 object-cover"
+          className="rounded-lg mb-4 w-full max-h-64 object-cover pointer-events-none"
         />
       )}
 
       {question.type === "passage" && question.passage && (
-        <div className="bg-gray-50 border border-dashed rounded-lg p-4 mb-4">
+        <div className="bg-gray-50 border border-dashed rounded-lg p-4 mb-4 select-none">
           <p className="text-gray-700">{question.passage}</p>
         </div>
       )}
 
-      <p className="text-gray-800 font-semibold mb-3">
+      <p className="text-gray-800 font-semibold mb-3 select-none">
         {number}. {question.questionText}
       </p>
 
@@ -126,7 +128,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           return (
             <label
               key={idx}
-              className={`flex items-center space-x-3 cursor-pointer p-2 rounded-lg border transition-all duration-200
+              className={`flex items-center space-x-3 cursor-pointer p-2 rounded-lg border transition-all duration-200 select-none
                 ${
                   showAnswerColors
                     ? isRightAnswer
@@ -138,19 +140,20 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                       ? "border-[#dd6b01] bg-[#fff4e6]"
                       : "border-gray-300 hover:border-[#dd6b01]"
                 }
-                ${isAnswered || isLocked ? "opacity-80 cursor-not-allowed" : ""}
+                ${isAnswered && !isSubmitted ? "opacity-90" : ""}
+                ${isSubmitted ? "opacity-80 cursor-not-allowed" : ""}
               `}
             >
               <input
                 type="radio"
-                name={question.id}
+                name={question.id.toString()}
                 value={opt}
                 checked={isUserChoice}
                 onChange={() =>
-                  !isAnswered && !isLocked && onAnswerChange(question.id, opt)
+                  !isSubmitted && onAnswerChange(question.id.toString(), opt)
                 }
                 className="hidden"
-                disabled={isAnswered || isLocked}
+                disabled={isSubmitted}
               />
               <span
                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
@@ -201,63 +204,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 // --- INFO ITEM ---
 const InfoItem = ({ label, value }: { label: string; value: string }) => (
   <div>
-    <span className="text-sm">{label}</span>
-    <p className="border border-[#dd6b01] rounded text-sm px-3 py-1">{value}</p>
+    <span className="text-sm font-semibold text-gray-600">{label}</span>
+    <p className="border border-[#dd6b01] rounded text-sm px-3 py-1 font-bold text-[#dd6b01] bg-orange-50">{value}</p>
   </div>
 );
-
-// --- MOCK DATA ---
-const examQuestions: QuestionData[] = [
-  {
-    id: "q1",
-    type: "mcq",
-    questionText: "What is the capital of France?",
-    options: ["Paris", "London", "Berlin", "Madrid"],
-    correctAnswer: "Paris",
-  },
-  {
-    id: "q2",
-    type: "passage",
-    questionText: "According to the passage, which is true?",
-    passage: "The sun rises in the east and sets in the west.",
-    options: [
-      "Sun rises in west",
-      "Sun rises in east",
-      "Sun rises in north",
-      "Sun rises in south",
-    ],
-    correctAnswer: "Sun rises in east",
-  },
-  {
-    id: "q3",
-    type: "picture",
-    questionText: "Identify this animal in the picture.",
-    pictureUrl: "/global/drought.jpg",
-    options: ["Cat", "Dog", "Elephant", "Tiger"],
-    correctAnswer: "Dog",
-  },
-  {
-    id: "q4",
-    type: "passage",
-    questionText: "According to the passage, which is true?",
-    passage: "The sun rises in the east and sets in the west.",
-    options: [
-      "Sun rises in west",
-      "Sun rises in east",
-      "Sun rises in north",
-      "Sun rises in south",
-    ],
-    correctAnswer: "Sun rises in east",
-  },
-  {
-    id: "q5",
-    type: "picture",
-    questionText: "Identify this animal in the picture.",
-    pictureUrl: "/global/drought.jpg",
-    options: ["Cat", "Dog", "Elephant", "Tiger"],
-    correctAnswer: "Dog",
-  },
-];
 
 // --- RESULT MODAL ---
 const ResultModal = ({
@@ -265,20 +215,24 @@ const ResultModal = ({
   result,
   message,
   onClose,
+  totalMarks,
 }: {
   show: boolean;
-  result: {
-    total: number;
-    correct: number;
-    wrong: number;
-    negative: number;
-    finalScore: number;
-    passed: boolean;
-  };
+  result: any;
   message: string;
   onClose: () => void;
+  totalMarks?: number;
 }) => {
-  if (!show) return null;
+  if (!show || !result) return null;
+
+  const finalResult = {
+    total: result.total || 0,
+    correct: result.correct || 0,
+    wrong: result.wrong || 0,
+    negative: result.negative || 0,
+    finalScore: result.finalScore || 0,
+    passed: result.passed || false,
+  };
 
   return (
     <AnimatePresence>
@@ -295,43 +249,38 @@ const ResultModal = ({
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
-          {/* Header */}
           <h2 className="text-2xl font-bold text-gray-900 mb-1">
             Exam Submission Complete
           </h2>
           <div className="h-1 w-16 bg-[#dd6b01] mx-auto mb-6 rounded-full" />
 
-          {/* Message */}
           {message && (
             <p className="text-red-500 font-medium text-xs mb-4 bg-red-50 px-3 py-1.5 rounded-md inline-block">
               ⚠️ {message}
             </p>
           )}
 
-          {/* Reusable Premium Scorecard */}
           <div className="text-left mb-6">
-            <Scorecard result={result} />
+            <Scorecard result={finalResult} totalMarks={totalMarks} />
           </div>
 
-          {/* Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-5">
             <button
-              className="bg-[#dd6b01] text-white px-5 py-2.5 rounded-lg shadow hover:bg-[#c35f00] transition-all duration-200"
+              className="bg-[#dd6b01] text-white px-5 py-2.5 rounded-lg shadow hover:bg-[#c35f00] transition-all duration-200 cursor-pointer font-bold"
               onClick={() => window.print()}
             >
-              Download Result
+              Download Result / Certificate
             </button>
             <button
-              className="border border-[#dd6b01] text-[#dd6b01] px-5 py-2.5 rounded-lg hover:bg-[#fff4e6] transition-all duration-200"
+              className="border border-[#dd6b01] text-[#dd6b01] px-5 py-2.5 rounded-lg hover:bg-[#fff4e6] transition-all duration-200 cursor-pointer font-bold"
               onClick={onClose}
             >
               Close
             </button>
           </div>
 
-          {/* Auto Redirect Note */}
           <p className="text-xs text-gray-500 mt-5 italic">
-            Redirecting to dashboard in 10 seconds...
+            Press &apos;Close&apos; to return to the exam dashboard.
           </p>
         </motion.div>
       </motion.div>
@@ -341,154 +290,386 @@ const ResultModal = ({
 
 // --- MAIN EXAM PAGE ---
 export default function ExamPage() {
+  const params = useParams();
+  const router = useRouter();
+  const examId = params.id as string;
+
+  const [examInfo, setExamInfo] = useState<any>(null);
+  const [questions, setQuestions] = useState<QuestionData[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [answers, setAnswers] = useState<Record<string, Answer | null>>({});
+  const [isStarted, setIsStarted] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [securityMessage, setSecurityMessage] = useState("");
 
+  // Proctoring States
+  const [warnings, setWarnings] = useState(0);
+  const [warningToast, setWarningToast] = useState("");
+  const [result, setResult] = useState<any>(null);
+
+  useEffect(() => {
+    async function loadExamData() {
+      try {
+        const info = await getExamDetailsAction(examId);
+        setExamInfo(info);
+
+        const qs = await getQuestionsAction(examId);
+        setQuestions(qs || []);
+      } catch (err) {
+        console.error("Failed to load exam details:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadExamData();
+  }, [examId]);
+
   const handleAnswerChange = (id: string, ans: Answer) => {
+    if (isSubmitted) return;
     setAnswers((prev) => ({ ...prev, [id]: ans }));
   };
 
-  const calculateResult = () => {
-    const total = examQuestions.length;
-    const correct = examQuestions.filter(
-      (q) => answers[q.id] === q.correctAnswer,
-    ).length;
-    const wrong = total - correct;
-    const negative = wrong * 0.5;
-    const finalScore = correct * 1 - negative;
-    const passed = finalScore >= 1.5; // for example
-    return { total, correct, wrong, negative, finalScore, passed };
+  const handleStartExam = async () => {
+    try {
+      // Enforce fullscreen
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        await docEl.requestFullscreen();
+      }
+      setIsStarted(true);
+    } catch (err) {
+      console.warn("Fullscreen request rejected, starting anyway.", err);
+      setIsStarted(true);
+    }
   };
 
-  const handleSubmit = (message?: string) => {
+  const handleSubmit = async (message?: string) => {
+    if (isSubmitted) return;
     setIsSubmitted(true);
     setSecurityMessage(message || "");
-    setShowModal(true);
+
+    // Exit fullscreen
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
+
+    try {
+      const res = await submitExamAction(examId, answers, warnings, message || "");
+      if (res.success && res.result) {
+        setResult(res.result);
+        setShowModal(true);
+      } else {
+        alert(res.error || "Failed to submit exam results.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred during submission.");
+    }
   };
 
-  // ---- Security Events ----
-  useEffect(() => {
-    const triggerSecurity = (msg: string) => !isSubmitted && handleSubmit(msg);
+  // Trigger proctoring warning
+  const triggerWarning = (msg: string) => {
+    if (isSubmitted || !isStarted) return;
+    setWarnings((prev) => {
+      const nextWarn = prev + 1;
+      setWarningToast(`Warning ${nextWarn}/3: ${msg}`);
+      
+      // Auto submit on 3rd warning
+      if (nextWarn >= 3) {
+        handleSubmit(`Exam auto-submitted due to repeated proctoring violations: ${msg}`);
+      }
+      return nextWarn;
+    });
+  };
 
-    const preventKeys = (e: KeyboardEvent) => {
-      if (
-        (e.ctrlKey &&
-          ["c", "v", "x", "a", "u"].includes(e.key.toLowerCase())) ||
-        e.key === "F12"
-      ) {
-        e.preventDefault();
-        triggerSecurity("Developer tools or copy action detected!");
+  // Hide toast after timeout
+  useEffect(() => {
+    if (warningToast) {
+      const t = setTimeout(() => setWarningToast(""), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [warningToast]);
+
+  // ---- Advanced Exam Security Enforcements ----
+  useEffect(() => {
+    if (!isStarted || isSubmitted) return;
+
+    // 1) Tab Switch/Loss of Focus Detection
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        triggerWarning("Tab switch detected! Do not leave the exam screen.");
+      }
+    };
+    const handleWindowBlur = () => {
+      triggerWarning("Focus lost! Do not click outside the browser window.");
+    };
+
+    // 2) Screen Resize Check
+    const handleResize = () => {
+      if (window.innerWidth < 768 || window.innerHeight < 500) {
+        triggerWarning("Screen resizing detected! Keep browser maximized.");
       }
     };
 
-    const visibilityChange = () => {
-      if (document.hidden) triggerSecurity("You left the exam tab!");
+    // 3) Mouse Leaves Window
+    const handleMouseLeave = () => {
+      triggerWarning("Mouse cursor left the exam screen.");
     };
 
-    const resize = () => {
-      if (window.innerWidth < 800 || window.innerHeight < 600)
-        triggerSecurity("Screen resize detected!");
+    // 4) Block Context Menu (Right-Click)
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      triggerWarning("Right-click context menu is disabled.");
     };
 
+    // 5) Block Copy, Paste, Cut
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      triggerWarning("Copying is disabled during the exam.");
+    };
+    const handlePaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+      triggerWarning("Pasting is disabled during the exam.");
+    };
+    const handleCut = (e: ClipboardEvent) => {
+      e.preventDefault();
+      triggerWarning("Cutting content is disabled.");
+    };
+
+    // 6) Drag & Drop Prevention
+    const handleDragStart = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    // 7) Keyboard Shortcuts (F12, DevTools, print screen, search shortcuts)
+    const preventKeys = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (
+        (e.ctrlKey && ["c", "v", "x", "a", "u", "s", "p"].includes(key)) ||
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(key))
+      ) {
+        e.preventDefault();
+        triggerWarning("Restricted developer shortcut or copy keyboard layout detected.");
+      }
+    };
+
+    // 8) Fullscreen exit check
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        triggerWarning("Exited fullscreen mode! Fullscreen is required for this exam.");
+      }
+    };
+
+    window.addEventListener("blur", handleWindowBlur);
+    window.addEventListener("resize", handleResize);
     window.addEventListener("keydown", preventKeys);
-    window.addEventListener("resize", resize);
-    document.addEventListener("visibilitychange", visibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("mouseleave", handleMouseLeave);
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handlePaste);
+    document.addEventListener("cut", handleCut);
+    document.addEventListener("dragstart", handleDragStart);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
+      window.removeEventListener("blur", handleWindowBlur);
+      window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", preventKeys);
-      window.removeEventListener("resize", resize);
-      document.removeEventListener("visibilitychange", visibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("paste", handlePaste);
+      document.removeEventListener("cut", handleCut);
+      document.removeEventListener("dragstart", handleDragStart);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [isSubmitted]);
+  }, [isStarted, isSubmitted]);
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#dd6b01]"></div>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (!examInfo) {
+    return (
+      <PageContainer>
+        <div className="min-h-[50vh] flex flex-col items-center justify-center bg-white border border-red-100 rounded-3xl p-10 text-center shadow-lg">
+          <h2 className="text-2xl font-bold text-red-600 mb-2">Exam Not Found</h2>
+          <p className="text-gray-500 mb-6">The exam details could not be found or are expired.</p>
+          <button
+            onClick={() => router.push("/dashboard/exam-pack")}
+            className="px-6 py-3 bg-[#dd6b01] text-white font-bold rounded-xl shadow hover:bg-[#c35f00] transition cursor-pointer"
+          >
+            Back to Exam Packs
+          </button>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  // --- START SCREEN FOR ENFORCING PROCTORING & FULLSCREEN ---
+  if (!isStarted) {
+    return (
+      <PageContainer>
+        <div className="max-w-2xl mx-auto bg-white border border-gray-100 shadow-xl rounded-3xl p-8 md:p-12 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#dd6b01] to-[#f0b176]" />
+          
+          <Image src="/global/logo2.png" alt="Portal Logo" width={250} height={100} className="mx-auto mb-8" />
+          
+          <h2 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">
+            Security Agreement & Proctoring
+          </h2>
+          <p className="text-sm text-[#dd6b01] font-bold uppercase tracking-wider mb-6">
+            Exam: {examInfo.name} ({examInfo.id})
+          </p>
+
+          <div className="bg-red-50 border border-red-100 rounded-2xl p-6 text-left mb-8 space-y-4">
+            <h3 className="text-sm font-extrabold text-red-800 flex items-center gap-2">
+              ⚠️ PROCTORING PROTOCOLS ENABLED:
+            </h3>
+            <ul className="text-xs text-red-700 list-disc pl-5 space-y-2 font-medium">
+              <li>You must take this exam in **Fullscreen Mode**. Exiting fullscreen triggers a security warning.</li>
+              <li>Switching tabs, opening other applications, or minimizing the browser is prohibited.</li>
+              <li>Right-clicking, copy-pasting questions, and keyboard layout shortcuts are disabled.</li>
+              <li>Moving the mouse cursor outside the browser screen will trigger a warning.</li>
+              <li>**WARNING THRESHOLD**: If you trigger **3 security warnings**, the exam will be **auto-submitted** immediately.</li>
+            </ul>
+          </div>
+
+          <button
+            onClick={handleStartExam}
+            className="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-black rounded-2xl shadow-lg hover:shadow-[#dd6b01]/20 transition-all transform active:scale-98 cursor-pointer text-lg"
+          >
+            Enter Fullscreen & Start Exam
+          </button>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
+      {/* Reusable warning toasts */}
+      {warningToast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] bg-red-600 text-white font-bold px-6 py-4 rounded-xl shadow-xl flex items-center gap-3 border border-red-500 animate-bounce">
+          <span className="text-xl">⚠️</span>
+          <span>{warningToast}</span>
+        </div>
+      )}
+
       <div className="print:hidden space-y-6">
         <Timer
-          duration={3 * 60}
+          duration={30 * 60} // 30 minutes
           onTimeUp={() => handleSubmit("Time up!")}
           isRunning={!isSubmitted}
         />
 
         {/* Exam Header */}
         <div className="bg-white border border-[#dd6b01] rounded-xl shadow-md p-5 flex items-center justify-between">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
             <div className="flex items-center gap-3">
               <Image
                 src="/global/no-picture.jpg"
                 alt="subject image"
                 width={200}
                 height={38}
-                className="rounded-md"
+                className="rounded-md h-auto object-cover"
               />
               <div>
                 <h1 className="text-2xl font-bold text-[#dd6b01]">
-                  Science Explorer
+                  {examInfo.name}
                 </h1>
-                <p className="text-gray-400 max-w-md line-clamp-3 my-2">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                <p className="text-gray-400 text-xs mt-1">
+                  Proctoring system active. Remain focused.
                 </p>
-                <span className="font-semibold">
-                  10:30 AM | Sunday 5th, 2025
-                </span>
+                <div className="mt-2 text-xs font-semibold text-gray-700 bg-amber-50 px-2 py-1 rounded inline-block border border-amber-200">
+                  Warnings: <span className="text-red-600 font-extrabold">{warnings} / 3</span>
+                </div>
               </div>
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <InfoItem label="Level" value="HSC" />
-                <InfoItem label="Batch" value="2019 - 2020" />
-                <InfoItem label="Exam Pack" value="Science Explorer" />
+                <InfoItem label="Level" value={examInfo.level || "HSC"} />
+                <InfoItem label="Batch" value={examInfo.batch || "2019 - 2020"} />
+                <InfoItem label="Exam ID" value={examInfo.id} />
               </div>
-              <p className="text-sm mt-3 text-[#dd6b01]">Marks</p>
-              <div className="flex items-center gap-3">
-                <InfoItem label="Total Marks" value="10" />
-                <InfoItem label="Per Question" value="01" />
-                <InfoItem label="Passing Marks" value="05" />
-                <InfoItem label="Negative Marks" value="-0.5" />
+              <p className="text-sm mt-3 font-semibold text-[#dd6b01]">Marking Schema</p>
+              <div className="flex items-center gap-3 mt-1">
+                <InfoItem label="Total Marks" value={examInfo.totalMarks?.toString() || "10"} />
+                <InfoItem label="Per Question" value={examInfo.perQuestionMarks?.toString() || "2"} />
+                <InfoItem label="Passing Marks" value={examInfo.passingMarks?.toString() || "5"} />
+                <InfoItem label="Negative Marks" value={examInfo.negativeMarks?.toString() || "-0.5"} />
               </div>
             </div>
           </div>
         </div>
 
         {/* Questions */}
-        {examQuestions.map((q, idx) => (
-          <QuestionCard
-            key={q.id}
-            question={q}
-            number={idx + 1}
-            selected={answers[q.id] || null}
-            onAnswerChange={handleAnswerChange}
-            isLocked={isSubmitted}
-          />
-        ))}
+        {questions.length > 0 ? (
+          questions.map((q, idx) => (
+            <QuestionCard
+              key={q.id}
+              question={q}
+              number={idx + 1}
+              selected={answers[q.id.toString()] || null}
+              onAnswerChange={handleAnswerChange}
+              isLocked={isSubmitted}
+            />
+          ))
+        ) : (
+          <p className="text-center text-gray-500 py-12">No questions loaded for this exam.</p>
+        )}
 
-        {/* Submit */}
+        {/* Submit Button */}
         {!isSubmitted && (
           <div className="flex justify-center pt-6">
             <button
               onClick={() => handleSubmit()}
-              className="bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-bold py-3 px-16 rounded-lg shadow-lg cursor-pointer"
+              className="bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-black py-4 px-20 rounded-xl shadow-lg hover:shadow-orange-500/20 hover:-translate-y-0.5 active:translate-y-0 transition cursor-pointer text-lg"
             >
-              Submit Exam
+              Submit Exam Answers
             </button>
           </div>
         )}
-        {/* Modal */}
+
+        {/* Result Modal */}
         <ResultModal
           show={showModal}
-          result={calculateResult()}
+          result={result}
           message={securityMessage}
-          onClose={() => setShowModal(false)}
+          totalMarks={examInfo.totalMarks}
+          onClose={() => {
+            setShowModal(false);
+            router.push("/dashboard");
+          }}
         />
       </div>
 
       {/* Official Certificate & Transcript PDF/Print Layout */}
-      <CertificatePrintLayout
-        examName="Science Explorer"
-        result={calculateResult()}
-      />
+      {result && (
+        <CertificatePrintLayout
+          examName={examInfo.name}
+          totalMarks={examInfo.totalMarks}
+          result={{
+            total: result.total,
+            correct: result.correct,
+            wrong: result.wrong,
+            negative: result.negative,
+            finalScore: result.finalScore,
+            passed: result.passed,
+          }}
+        />
+      )}
     </PageContainer>
   );
 }

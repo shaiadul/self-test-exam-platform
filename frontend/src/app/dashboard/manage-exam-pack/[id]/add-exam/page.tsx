@@ -1,16 +1,30 @@
 "use client";
 
-import React, { useRef, useState, DragEvent } from "react";
+import React, { useRef, useState, useEffect, DragEvent } from "react";
 import Image from "next/image";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import CustomSelect from "../../../../../components/ui/CustomSelect";
+import { Input } from "../../../../../components/ui/Input";
 import DateTimePicker from "../../../../../components/ui/DateTimePicker";
 import ToggleSwitch from "../../../../../components/ui/ToggleSwitch";
 import { PageContainer } from "../../../../../components/common/PageContainer";
 
+import { createExamAction, getSystemAssetsAction } from "../../../../../lib/actions";
+import { useParams, useRouter } from "next/navigation";
+
 export default function AddExamPage() {
+  const params = useParams();
+  const router = useRouter();
+  const idStr = params.id as string;
+  const packId = idStr ? parseInt(idStr) : 0;
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Dynamic options from system assets
+  const [levelOptions, setLevelOptions] = useState<string[]>([]);
+  const [batchOptions, setBatchOptions] = useState<string[]>([]);
   const [examPackData, setExamPackData] = useState({
     name: "",
     details: "",
@@ -18,9 +32,9 @@ export default function AddExamPage() {
     batch: "",
     image: "",
     pack: "Science Explorer",
-    totalMarks: 0,
-    perQuestionMark: 0,
-    passMark: 0,
+    totalMarks: 10,
+    perQuestionMark: 2,
+    passMark: 5,
     startDate: "",
     endDate: "",
   });
@@ -30,7 +44,7 @@ export default function AddExamPage() {
     scoreLimit: false,
     scoreValue: 0,
     negativeMarking: false,
-    negativeValue: 0,
+    negativeValue: 0.5,
     totalTime: false,
     totalTimeValue: 0,
     privateExam: false,
@@ -60,10 +74,51 @@ export default function AddExamPage() {
     if (file) handleFileChange(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Load system assets for dynamic select options
+  useEffect(() => {
+    async function loadAssets() {
+      try {
+        const assets = await getSystemAssetsAction();
+        if (Array.isArray(assets)) {
+          setLevelOptions(assets.filter((a: any) => a.type === "level").map((a: any) => a.value));
+          setBatchOptions(assets.filter((a: any) => a.type === "batch").map((a: any) => a.value));
+        }
+      } catch (err) {
+        console.error("Failed to load system assets:", err);
+      }
+    }
+    loadAssets();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Exam Pack Submitted:", examPackData);
-    // TODO: Submit to API
+    setLoading(true);
+    try {
+      const generatedID = "EX-" + Math.floor(1000 + Math.random() * 9000);
+      const res = await createExamAction(packId, {
+        id: generatedID,
+        name: examPackData.name,
+        startDate: new Date(examPackData.startDate).toISOString(),
+        endDate: new Date(examPackData.endDate).toISOString(),
+        level: examPackData.level || "General",
+        batch: examPackData.batch || "2025",
+        totalMarks: examPackData.totalMarks || 10,
+        passingMarks: examPackData.passMark || 5,
+        perQuestionMarks: examPackData.perQuestionMark || 2,
+        negativeMarks: examSettings.negativeMarking ? -Math.abs(examSettings.negativeValue) : 0,
+      });
+      if (res.success) {
+        alert("Exam created successfully. Click OK to redirect to Question Bank to add questions.");
+        // Redirect to question add page
+        router.push(`/dashboard/question/add?examId=${generatedID}`);
+      } else {
+        alert(res.error || "Failed to create exam.");
+      }
+    } catch (err) {
+      alert("Failed to create exam.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -122,28 +177,22 @@ export default function AddExamPage() {
               }}
             />
           </div>
+          <Input
+            label="Exam Name"
+            placeholder="Exam Pack Name*"
+            value={examPackData.name}
+            onChange={(e) =>
+              setExamPackData({ ...examPackData, name: e.target.value })
+            }
+            required
+          />
           <div>
-            <label className="text-sm font-semibold text-gray-800 block mb-1">
-              Exam Name
-            </label>
-            <input
-              type="text"
-              placeholder="Exam Pack Name*"
-              className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
-              value={examPackData.name}
-              onChange={(e) =>
-                setExamPackData({ ...examPackData, name: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-gray-800 block mb-1">
+            <label className="text-sm font-bold text-gray-700 ml-1 block mb-2">
               Details (Description)
             </label>
             <textarea
               placeholder="Details*"
-              className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg resize-none focus:ring-2 focus:ring-[#f97a00] min-h-[120px]"
+              className="w-full px-4 py-3.5 text-base outline-none border-2 border-gray-200 rounded-xl resize-none focus:border-[#dd6b01] min-h-[120px] bg-white transition-all font-medium text-gray-700 focus:ring-4 focus:ring-[#dd6b01]/10 outline-none"
               value={examPackData.details}
               onChange={(e) =>
                 setExamPackData({ ...examPackData, details: e.target.value })
@@ -182,17 +231,7 @@ export default function AddExamPage() {
               </label>
               <CustomSelect
                 label="Select Level"
-                options={[
-                  "PSC",
-                  "SSC",
-                  "HSC",
-                  "BCS",
-                  "BS",
-                  "BA",
-                  "BBA",
-                  "MA",
-                  "PHD",
-                ]}
+                options={levelOptions}
                 value={examPackData.level}
                 onChange={(val) =>
                   setExamPackData({ ...examPackData, level: val })
@@ -206,9 +245,7 @@ export default function AddExamPage() {
               </label>
               <CustomSelect
                 label="Select Batch"
-                options={Array.from({ length: 20 }, (_, i) =>
-                  (2010 + i).toString(),
-                )}
+                options={batchOptions}
                 value={examPackData.batch}
                 onChange={(val) =>
                   setExamPackData({ ...examPackData, batch: val })
@@ -403,9 +440,10 @@ export default function AddExamPage() {
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold text-base py-3 rounded-full hover:opacity-90 transition-all duration-500 cursor-pointer"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold text-base py-3 rounded-full hover:opacity-90 transition-all duration-500 cursor-pointer disabled:opacity-50"
           >
-            Save Exam
+            {loading ? "Saving..." : "Save Exam"}
           </button>
         </div>
       </form>

@@ -1,31 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { FaBookOpen, FaImage, FaListUl, FaPlusCircle } from "react-icons/fa";
+import { FaBookOpen, FaImage, FaListUl, FaPlusCircle, FaArrowLeft } from "react-icons/fa";
 import CustomSelect from "../../../../components/ui/CustomSelect";
 import ImageUploader from "../../../../components/ui/ImageUploader";
 import { MdOutlineDeleteSweep } from "react-icons/md";
 import { PageContainer } from "../../../../components/common/PageContainer";
+import { useSearchParams, useRouter } from "next/navigation";
+import {
+  getExamDetailsAction,
+  getExamPackDetailsAction,
+  getExamPacksAction,
+  getExamsAction,
+  createQuestionAction,
+  getQuestionsAction
+} from "../../../../lib/actions";
 
 // --- TYPES ---
 type QuestionType = "mcq" | "passage" | "picture";
 
 interface Question {
-  id: string;
+  id: number | string;
   type: QuestionType;
   questionText: string;
   options: string[];
   correctAnswer: string;
   passage?: string;
   pictureUrl?: string | null;
-}
-
-interface ExamData {
-  examName: string;
-  examPack: string;
-  questions: Question[];
 }
 
 // --- COMPONENTS ---
@@ -50,9 +53,9 @@ const OptionInput = ({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full border rounded-md p-2 text-sm focus:outline-[#dd6b01]"
+      className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-[#dd6b01] focus:ring-1 focus:ring-[#dd6b01]"
     />
-    {optionCount > 4 && (
+    {optionCount > 2 && (
       <button
         type="button"
         onClick={onRemove}
@@ -67,8 +70,10 @@ const OptionInput = ({
 // Question Form Component
 const QuestionForm = ({
   onAddQuestion,
+  disabled,
 }: {
-  onAddQuestion: (q: Question) => void;
+  onAddQuestion: (q: Omit<Question, "id">) => Promise<boolean>;
+  disabled: boolean;
 }) => {
   const [type, setType] = useState<QuestionType>("mcq");
   const [questionText, setQuestionText] = useState("");
@@ -76,6 +81,7 @@ const QuestionForm = ({
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
   const [options, setOptions] = useState<string[]>(["", "", "", ""]);
   const [correctAnswer, setCorrectAnswer] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleAddOption = () => setOptions([...options, ""]);
   const handleRemoveOption = (index: number) =>
@@ -85,19 +91,18 @@ const QuestionForm = ({
 
   const handleImageUpload = (base64: string | null) => {
     setPictureUrl(base64);
-    console.log("Uploaded image base64:", base64);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (disabled) return alert("Please select an exam pack and exam first.");
     if (!questionText.trim()) return alert("Question text is required!");
     if (options.filter(Boolean).length < 2)
       return alert("Please provide at least 2 options!");
     if (!correctAnswer.trim()) return alert("Please select a correct answer!");
 
-    const newQuestion: Question = {
-      id: Date.now().toString(),
+    const newQuestion = {
       type,
       questionText,
       options: options.filter(Boolean),
@@ -106,20 +111,24 @@ const QuestionForm = ({
       pictureUrl: type === "picture" ? pictureUrl : undefined,
     };
 
-    onAddQuestion(newQuestion);
+    setSubmitting(true);
+    const success = await onAddQuestion(newQuestion);
+    setSubmitting(false);
 
-    // Reset
-    setQuestionText("");
-    setPassage("");
-    setPictureUrl("");
-    setOptions(["", ""]);
-    setCorrectAnswer("");
+    if (success) {
+      // Reset form
+      setQuestionText("");
+      setPassage("");
+      setPictureUrl(null);
+      setOptions(["", "", "", ""]);
+      setCorrectAnswer("");
+    }
   };
 
   return (
     <motion.form
       onSubmit={handleSubmit}
-      className="bg-white border border-gray-200 rounded-2xl shadow-md p-6 space-y-4"
+      className={`bg-white border border-gray-200 rounded-2xl shadow-md p-6 space-y-4 ${disabled ? "opacity-60 pointer-events-none" : ""}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
     >
@@ -201,7 +210,7 @@ const QuestionForm = ({
         <button
           type="button"
           onClick={handleAddOption}
-          className="text-[#dd6b01] text-sm font-semibold mt-1 hover:underline"
+          className="text-[#dd6b01] text-sm font-semibold mt-1 hover:underline cursor-pointer"
         >
           + Add Option
         </button>
@@ -224,120 +233,267 @@ const QuestionForm = ({
       <div className="pt-3">
         <button
           type="submit"
-          className="bg-[#dd6b01] text-white px-5 py-2 rounded-md font-semibold hover:bg-[#c25b00] transition"
+          disabled={submitting}
+          className="bg-[#dd6b01] text-white px-5 py-2 rounded-md font-semibold hover:bg-[#c25b00] transition disabled:opacity-50 cursor-pointer"
         >
-          Add Question
+          {submitting ? "Adding Question..." : "Add Question"}
         </button>
       </div>
     </motion.form>
   );
 };
 
-// --- MAIN ADD EXAM PAGE ---
-export default function AddExamPage() {
-  const [examData, setExamData] = useState<ExamData>({
-    examName: "",
-    examPack: "",
-    questions: [],
-  });
+// --- MAIN ADD QUESTION PAGE ---
+export default function AddQuestionPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const examIdParam = searchParams.get("examId") || "";
 
-  const handleAddQuestion = (question: Question) => {
-    setExamData((prev) => ({
-      ...prev,
-      questions: [...prev.questions, question],
-    }));
+  // Dynamic States
+  const [examId, setExamId] = useState<string>(examIdParam);
+  const [examName, setExamName] = useState<string>("");
+  const [examPackTitle, setExamPackTitle] = useState<string>("");
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Dropdown options when selecting manually
+  const [examPacks, setExamPacks] = useState<any[]>([]);
+  const [exams, setExams] = useState<any[]>([]);
+  const [selectedPackId, setSelectedPackId] = useState<number | "">("");
+
+  // Load initial data
+  useEffect(() => {
+    async function initData() {
+      setLoading(true);
+      if (examIdParam) {
+        try {
+          const exam = await getExamDetailsAction(examIdParam);
+          if (exam) {
+            setExamId(examIdParam);
+            setExamName(exam.name);
+            // Fetch pack details
+            const pack = await getExamPackDetailsAction(exam.examPackId);
+            if (pack) {
+              setExamPackTitle(pack.title);
+            }
+            // Fetch existing questions
+            const qList = await getQuestionsAction(examIdParam);
+            setQuestions(qList || []);
+          } else {
+            alert("Specified exam not found. You can select an exam pack and exam manually.");
+            setExamId("");
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      
+      // Fetch all packs for manual selection dropdown (always useful to have as fallback)
+      try {
+        const packs = await getExamPacksAction();
+        setExamPacks(packs || []);
+      } catch (err) {
+        console.error(err);
+      }
+      setLoading(false);
+    }
+    initData();
+  }, [examIdParam]);
+
+  // Load exams when pack is manually selected
+  useEffect(() => {
+    async function loadExams() {
+      if (selectedPackId) {
+        try {
+          const examList = await getExamsAction(Number(selectedPackId));
+          setExams(examList || []);
+          setExamId("");
+          setQuestions([]);
+          setExamName("");
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        setExams([]);
+      }
+    }
+    loadExams();
+  }, [selectedPackId]);
+
+  // Load questions when exam is manually selected
+  const handleExamChange = async (examNameOption: string) => {
+    const matchedExam = exams.find(e => e.name === examNameOption);
+    if (matchedExam) {
+      setExamId(matchedExam.id);
+      setExamName(matchedExam.name);
+      setLoading(true);
+      try {
+        const qList = await getQuestionsAction(matchedExam.id);
+        setQuestions(qList || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
   };
+
+  const handleAddQuestion = async (qData: Omit<Question, "id">) => {
+    if (!examId) {
+      alert("Please select an exam first!");
+      return false;
+    }
+
+    try {
+      const res = await createQuestionAction(examId, qData);
+      if (res.success) {
+        // Refresh question list
+        const qList = await getQuestionsAction(examId);
+        setQuestions(qList || []);
+        return true;
+      } else {
+        alert(res.error || "Failed to add question to backend.");
+        return false;
+      }
+    } catch (err) {
+      alert("Failed to save question.");
+      return false;
+    }
+  };
+
+  if (loading && examIdParam) {
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="w-12 h-12 border-4 border-[#dd6b01] border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600 font-medium">Loading Exam details...</p>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#dd6b01]">
-          🧾 Create New Question
-        </h1>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-600 hover:text-[#dd6b01] font-semibold transition cursor-pointer"
+          >
+            <FaArrowLeft /> Back
+          </button>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#dd6b01]">
+            🧾 Create New Question
+          </h1>
+        </div>
+        {examId && (
+          <button
+            onClick={() => {
+              if (selectedPackId) {
+                router.push(`/dashboard/manage-exam-pack/${selectedPackId}`);
+              } else {
+                router.push("/dashboard/manage-exam-pack");
+              }
+            }}
+            className="px-5 py-2 bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold rounded-lg hover:opacity-90 transition cursor-pointer"
+          >
+            Finish & View Exam
+          </button>
+        )}
       </div>
 
-      {/* Exam Info */}
-      <div className="grid md:grid-cols-2 gap-5 bg-white border border-gray-200 p-6 rounded-2xl shadow-md">
-        <div>
-          <label className="text-sm font-semibold text-gray-700 block mb-1">
-            Exam Pack Name
-          </label>
-          <CustomSelect
-            label="Select Exam Pack Name"
-            options={[
-              "Science Explorer",
-              "Math Master",
-              "Bangla Literature",
-              "History Genius",
-            ]}
-            value={examData.examPack}
-            onChange={(val) => setExamData({ ...examData, examPack: val })}
-          />
-        </div>
+      {/* Exam Info Selectors */}
+      <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-md">
+        {examIdParam && examName ? (
+          <div className="text-gray-800">
+            <span className="font-semibold text-gray-500">Exam Pack:</span>{" "}
+            <span className="font-bold text-lg text-[#dd6b01] mr-6">{examPackTitle || `Pack #${selectedPackId || "Preselected"}`}</span>
+            <span className="font-semibold text-gray-500">Exam Name:</span>{" "}
+            <span className="font-bold text-lg text-[#dd6b01]">{examName}</span>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-5">
+            <div>
+              <label className="text-sm font-semibold text-gray-700 block mb-1">
+                Exam Pack Name
+              </label>
+              <CustomSelect
+                label="Select Exam Pack Name"
+                options={examPacks.map(p => p.title)}
+                value={examPacks.find(p => p.id === selectedPackId)?.title || ""}
+                onChange={(val) => {
+                  const matched = examPacks.find(p => p.title === val);
+                  if (matched) {
+                    setSelectedPackId(matched.id);
+                  }
+                }}
+              />
+            </div>
 
-        <div>
-          <label className="text-sm font-semibold text-gray-700 block mb-1">
-            Exam Name
-          </label>
-          <CustomSelect
-            label="Select Exam Name"
-            options={[
-              "Science 1st Grade",
-              "Math 1st Grade",
-              "English 1st Grade",
-              "History 1st Grade",
-            ]}
-            value={examData.examName}
-            onChange={(val) => setExamData({ ...examData, examName: val })}
-          />
-        </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700 block mb-1">
+                Exam Name
+              </label>
+              <CustomSelect
+                label="Select Exam Name"
+                options={exams.map(e => e.name)}
+                value={examName}
+                onChange={handleExamChange}
+                disabled={!selectedPackId}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add Question Form */}
-      <QuestionForm onAddQuestion={handleAddQuestion} />
+      <QuestionForm onAddQuestion={handleAddQuestion} disabled={!examId} />
 
       {/* Preview Section */}
-      {examData.questions.length > 0 && (
+      {questions.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-6 mt-8">
           <h3 className="text-lg font-semibold text-[#dd6b01] mb-4">
-            Preview ({examData.questions.length})
+            Preview ({questions.length})
           </h3>
-          <div className="space-y-3">
-            {examData.questions.map((q, i) => (
+          <div className="space-y-4">
+            {questions.map((q, i) => (
               <div
                 key={q.id}
-                className="border rounded-md p-3 bg-gray-50 text-sm"
+                className="border border-gray-200 rounded-xl p-4 bg-gray-50 text-sm"
               >
-                <p className="font-semibold text-gray-800">
+                <p className="font-semibold text-gray-800 text-base">
                   {i + 1}. {q.questionText}
                 </p>
 
-                {q.type === "passage" && (
-                  <p className="text-gray-500 mt-1">{q.passage}</p>
+                {q.type === "passage" && q.passage && (
+                  <div className="mt-2 p-3 bg-white border border-gray-100 rounded-lg text-gray-600 italic">
+                    {q.passage}
+                  </div>
                 )}
                 {q.type === "picture" && q.pictureUrl && (
-                  <Image
-                    src={q.pictureUrl}
-                    alt="preview"
-                    width={200}
-                    height={200}
-                    className="rounded-md mt-2"
-                  />
+                  <div className="relative w-48 h-32 mt-2 rounded-lg overflow-hidden border border-gray-200">
+                    <Image
+                      src={q.pictureUrl}
+                      alt="Question attachment"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                 )}
 
                 {/* Options Preview */}
-                <ul className="mt-2 list-disc list-inside text-gray-700">
+                <ul className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 text-gray-700">
                   {q.options.map((opt, idx) => (
                     <li
                       key={idx}
-                      className={`${
+                      className={`px-3 py-1.5 rounded-lg border text-sm ${
                         opt === q.correctAnswer
-                          ? "text-green-600 font-medium"
-                          : ""
+                          ? "bg-green-50 border-green-200 text-green-700 font-semibold"
+                          : "bg-white border-gray-200"
                       }`}
                     >
-                      {opt}
+                      <span className="font-bold mr-1.5">{String.fromCharCode(65 + idx)})</span> {opt}
                     </li>
                   ))}
                 </ul>
@@ -346,6 +502,7 @@ export default function AddExamPage() {
           </div>
         </div>
       )}
+
       {/* --- Relevant Rules Section --- */}
       <div className="mt-14 w-full bg-orange-50 border border-[#fcd6aa] rounded-2xl p-6 md:p-10 shadow-sm">
         <h2 className="text-xl md:text-2xl font-semibold text-[#dd6b01] mb-4">

@@ -15,6 +15,11 @@ type User struct {
 	Board       *string    `json:"board" db:"board"`
 	Institution *string    `json:"institution" db:"institution"`
 	Address     *string    `json:"address" db:"address"`
+	Subject     *string    `json:"subject" db:"subject"`
+	Designation *string    `json:"designation" db:"designation"`
+	AdminTier   *string    `json:"adminTier" db:"admin_tier"`
+	AdminDept   *string    `json:"adminDept" db:"admin_dept"`
+	AdminBase   *string    `json:"adminBase" db:"admin_base"`
 	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
 }
@@ -44,4 +49,10 @@ type CompleteProfileRequest struct {
 	Board       string `json:"board"`
 	Institution string `json:"institution"`
 	Address     string `json:"address"`
+	Subject     string `json:"subject"`
+	Designation string `json:"designation"`
+	AdminTier   string `json:"adminTier"`
+	AdminDept   string `json:"adminDept"`
+	AdminBase   string `json:"adminBase"`
 }
+

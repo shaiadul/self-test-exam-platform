@@ -12,13 +12,14 @@ interface ScorecardProps {
     finalScore: number;
     passed: boolean;
   };
+  totalMarks?: number;
 }
 
-export default function Scorecard({ result }: ScorecardProps) {
+export default function Scorecard({ result, totalMarks }: ScorecardProps) {
   const { total, correct, wrong, negative, finalScore, passed } = result;
 
-  // Prevent division by zero
-  const rawPercentage = total > 0 ? (finalScore / total) * 100 : 0;
+  const maxMarks = totalMarks || total;
+  const rawPercentage = maxMarks > 0 ? (finalScore / maxMarks) * 100 : 0;
   const percentage = Math.max(0, Math.min(100, Math.round(rawPercentage)));
   
   // Calculate SVG circle properties
@@ -128,7 +129,7 @@ export default function Scorecard({ result }: ScorecardProps) {
           <div>
             <span className="text-[10px] text-gray-500 font-medium">Final Score</span>
             <p className="text-xl font-black text-gray-900 leading-tight">
-              {finalScore.toFixed(2)} <span className="text-xs font-semibold text-gray-500">/ {total}</span>
+              {finalScore.toFixed(2)} <span className="text-xs font-semibold text-gray-500">/ {maxMarks}</span>
             </p>
           </div>
           <div className="flex items-center gap-1 text-[10px] font-semibold text-[#dd6b01] bg-orange-100/50 px-2 py-1 rounded-lg border border-orange-200">

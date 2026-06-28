@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   FaSearch,
   FaSortAmountDown,
@@ -10,98 +10,79 @@ import {
   FaDownload,
 } from "react-icons/fa";
 import { PageContainer } from "../../../components/common/PageContainer";
+import { getUserAttemptsAction } from "../../../lib/actions";
 
 type Report = {
-  id: string;
-  name: string;
-  startDate: string;
-  score: number;
+  id: number;
+  examId: string;
+  examName: string;
+  packName: string;
+  answers: string;
   total: number;
-  average: number;
-  negativeMark: number; // 🆕 new field
+  correct: number;
+  wrong: number;
+  negative: number;
+  finalScore: number;
+  passed: boolean;
+  warningCount: number;
+  securityMessage: string;
+  createdAt: string;
 };
-
-const reportData: Report[] = [
-  {
-    id: "HSC2341",
-    name: "Algebra Basics",
-    startDate: "2025-10-05T10:30",
-    score: 14,
-    total: 20,
-    average: 65,
-    negativeMark: -2,
-  },
-  {
-    id: "SSC2341",
-    name: "Physics Fundamentals",
-    startDate: "2025-09-25T09:00",
-    score: 18,
-    total: 20,
-    average: 85,
-    negativeMark: -1,
-  },
-  {
-    id: "BCSS2341",
-    name: "Chemistry Lab",
-    startDate: "2025-10-01T14:00",
-    score: 12,
-    total: 20,
-    average: 70,
-    negativeMark: -3,
-  },
-  {
-    id: "HSC2342",
-    name: "Biology Concepts",
-    startDate: "2025-10-07T13:00",
-    score: 19,
-    total: 20,
-    average: 80,
-    negativeMark: -1,
-  },
-  {
-    id: "SSC2342",
-    name: "Geography Basics",
-    startDate: "2025-09-28T09:00",
-    score: 16,
-    total: 20,
-    average: 77,
-    negativeMark: -2,
-  },
-  {
-    id: "BCSS2342",
-    name: "Physics Lab",
-    startDate: "2025-10-03T15:00",
-    score: 13,
-    total: 20,
-    average: 72,
-    negativeMark: -3,
-  },
-];
 
 export default function ExamReportPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"score" | "date">("score");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch attempts on mount
+  useEffect(() => {
+    async function loadReports() {
+      setLoading(true);
+      try {
+        const data = await getUserAttemptsAction();
+        setReports(data || []);
+      } catch (err) {
+        console.error("Failed to load reports:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadReports();
+  }, []);
 
   // ---- Filtered & Sorted Data ----
   const filteredReports = useMemo(() => {
-    const filtered = reportData.filter(
+    const filtered = reports.filter(
       (r) =>
-        r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.id.toLowerCase().includes(searchTerm.toLowerCase()),
+        r.examName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.examId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.id.toString().includes(searchTerm),
     );
 
     return filtered.sort((a, b) => {
       if (sortBy === "score") {
-        return sortOrder === "asc" ? a.score - b.score : b.score - a.score;
+        return sortOrder === "asc" ? a.finalScore - b.finalScore : b.finalScore - a.finalScore;
       } else {
         return sortOrder === "asc"
-          ? new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-          : new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+          ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }
     });
-  }, [searchTerm, sortBy, sortOrder]);
+  }, [reports, searchTerm, sortBy, sortOrder]);
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center min-h-[400px]">
+          <div className="w-12 h-12 border-4 border-[#dd6b01] border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600 font-medium">Loading reports...</p>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer className="space-y-6">
@@ -116,7 +97,7 @@ export default function ExamReportPage() {
           <FaSearch className="text-[#dd6b01] mr-2" />
           <input
             type="text"
-            placeholder="Search by Exam Name or ID"
+            placeholder="Search by Exam Name, ID or Attempt ID"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full outline-none text-sm"
@@ -189,13 +170,13 @@ export default function ExamReportPage() {
           <thead className="bg-amber-50 text-gray-400">
             <tr>
               <th className="px-6 py-4 text-left uppercase tracking-wide text-sm font-semibold">
-                Exam ID
+                Attempt ID
               </th>
               <th className="px-6 py-4 text-left uppercase tracking-wide text-sm font-semibold">
                 Exam Name
               </th>
               <th className="px-6 py-4 text-left uppercase tracking-wide text-sm font-semibold">
-                Start Date & Time
+                Attempt Date & Time
               </th>
               <th className="px-6 py-4 text-left uppercase tracking-wide text-sm font-semibold">
                 Your Score
@@ -204,7 +185,7 @@ export default function ExamReportPage() {
                 Negative Mark
               </th>
               <th className="px-6 py-4 text-left uppercase tracking-wide text-sm font-semibold">
-                Average Mark
+                Final Score
               </th>
               <th className="px-6 py-4 text-left uppercase tracking-wide text-sm font-semibold">
                 Action
@@ -218,21 +199,21 @@ export default function ExamReportPage() {
                 key={r.id}
                 className="border-b border-gray-200 hover:bg-[#ffedd5]/50 transition-colors"
               >
-                {/* Exam ID */}
+                {/* Attempt ID */}
                 <td className="px-6 py-4 font-mono text-sm text-gray-600 bg-amber-50">
-                  {r.id}
+                  ATT-{r.id}
                 </td>
 
                 {/* Exam Name */}
                 <td className="px-6 py-4 text-[#dd6b01] font-semibold underline cursor-pointer">
-                  <Link href={`/dashboard/reporting/${r.id}`}> {r.name}</Link>
+                  <Link href={`/dashboard/reporting/${r.id}`}> {r.examName}</Link>
                 </td>
 
-                {/* Start Date */}
+                {/* Attempt Date */}
                 <td className="px-6 py-4 text-gray-700 text-sm">
                   <div className="flex flex-col">
                     <span className="font-semibold">
-                      {new Date(r.startDate).toLocaleDateString("en-US", {
+                      {new Date(r.createdAt).toLocaleDateString("en-US", {
                         weekday: "short",
                         day: "numeric",
                         month: "short",
@@ -240,7 +221,7 @@ export default function ExamReportPage() {
                       })}
                     </span>
                     <span className="text-gray-500 text-xs">
-                      {new Date(r.startDate).toLocaleTimeString("en-US", {
+                      {new Date(r.createdAt).toLocaleTimeString("en-US", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
@@ -251,30 +232,36 @@ export default function ExamReportPage() {
                 {/* Score / Total */}
                 <td
                   className={`px-6 py-4 font-bold ${
-                    (r.score / r.total) * 100 >= 80
+                    (r.correct / r.total) * 100 >= 80
                       ? "text-green-600"
-                      : (r.score / r.total) * 100 >= 60
+                      : (r.correct / r.total) * 100 >= 60
                         ? "text-yellow-600"
                         : "text-red-600"
                   }`}
                 >
-                  {r.score}/{r.total}
+                  {r.correct}/{r.total}
                 </td>
 
                 {/* Negative Mark */}
                 <td className="px-6 py-4 text-red-600 font-semibold">
-                  {r.negativeMark}
+                  {r.negative}
                 </td>
 
-                {/* Average */}
-                <td className="px-6 py-4 text-gray-700">{r.average}%</td>
+                {/* Final Score */}
+                <td className="px-6 py-4 text-gray-700 font-bold">{r.finalScore} / {r.total * 1}</td>
 
                 {/* Actions */}
                 <td className="px-6 py-4 flex items-center gap-3">
-                  <button className="flex items-center gap-1 border border-[#dd6b01] text-[#dd6b01] px-3 py-1.5 rounded-lg text-sm hover:bg-[#dd6b01] hover:text-white transition cursor-pointer">
+                  <Link
+                    href={`/dashboard/reporting/${r.id}`}
+                    className="flex items-center gap-1 border border-[#dd6b01] text-[#dd6b01] px-3 py-1.5 rounded-lg text-sm hover:bg-[#dd6b01] hover:text-white transition cursor-pointer"
+                  >
                     <FaEye /> View
-                  </button>
-                  <button className="flex items-center gap-1 border border-green-600 text-green-600 px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 hover:text-white transition cursor-pointer">
+                  </Link>
+                  <button
+                    onClick={() => window.print()}
+                    className="flex items-center gap-1 border border-green-600 text-green-600 px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 hover:text-white transition cursor-pointer"
+                  >
                     <FaDownload /> Download
                   </button>
                 </td>

@@ -9,7 +9,7 @@ import { Input } from "../../../components/ui/Input";
 import { FaEnvelope, FaLock, FaArrowLeft, FaUser } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-import { register } from "../../../lib/auth";
+import { registerAction } from "../../../lib/actions";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -27,8 +27,17 @@ export default function Register() {
     setError("");
 
     try {
-      await register(name, email, password);
-      router.push("/auth/verify");
+      const res = await registerAction(name, email, password);
+      if (res.success && res.user) {
+        localStorage.setItem("token", res.token || "");
+        localStorage.setItem("userRole", res.user.role || "student");
+        localStorage.setItem("userName", res.user.name || "");
+        localStorage.setItem("userEmail", res.user.email || "");
+        localStorage.setItem("userID", res.user.id.toString());
+        router.push("/dashboard");
+      } else {
+        setError(res.error || "Failed to register account.");
+      }
     } catch (err) {
       const errorObj = err as Error;
       setError(errorObj.message || "Failed to connect to backend server.");

@@ -15,6 +15,7 @@ interface CertificatePrintLayoutProps {
     finalScore: number;
     passed: boolean;
   };
+  totalMarks?: number;
 }
 
 export default function CertificatePrintLayout({
@@ -27,19 +28,22 @@ export default function CertificatePrintLayout({
     day: "numeric",
   }),
   result,
+  totalMarks,
 }: CertificatePrintLayoutProps) {
   const { total, correct, wrong, negative, finalScore, passed } = result;
-  const rawPercentage = total > 0 ? (finalScore / total) * 100 : 0;
+  
+  const maxMarks = totalMarks || total;
+  const rawPercentage = maxMarks > 0 ? (finalScore / maxMarks) * 100 : 0;
   const percentage = Math.max(0, Math.min(100, Math.round(rawPercentage)));
 
   return (
     <div className="hidden print:block w-full h-[100vh] print-single-page bg-white text-black p-8 font-serif box-border">
-      {/* Dynamic Print Style Rules */}
+      {/* Dynamic Print Style Rules to guarantee exactly one PDF page */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           @page {
             size: A4 landscape;
-            margin: 0mm !important;
+            margin: 0 !important;
           }
           body {
             margin: 0 !important;
@@ -49,19 +53,25 @@ export default function CertificatePrintLayout({
             print-color-adjust: exact !important;
           }
           .print-single-page {
-            page-break-inside: avoid !important;
-            page-break-after: always !important;
-            page-break-before: avoid !important;
-            height: 100vh !important;
-            max-height: 100vh !important;
+            width: 297mm !important;
+            height: 210mm !important;
+            max-width: 297mm !important;
+            max-height: 210mm !important;
             overflow: hidden !important;
             box-sizing: border-box !important;
+            position: relative !important;
+            page-break-inside: avoid !important;
+            page-break-after: avoid !important;
+            page-break-before: avoid !important;
+            margin: 0 !important;
+            padding: 10mm !important;
+            background-color: white !important;
           }
         }
       `}} />
 
       {/* Decorative Ornate Frame */}
-      <div className="border-8 border-double border-[#dd6b01] rounded-3xl p-6 h-[calc(100vh-4rem)] flex flex-col justify-between relative bg-white box-border">
+      <div className="border-8 border-double border-[#dd6b01] rounded-3xl p-6 h-full flex flex-col justify-between relative bg-white box-border">
         
         {/* Certificate Corners */}
         <div className="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-[#dd6b01]" />
@@ -127,7 +137,7 @@ export default function CertificatePrintLayout({
             <div className="text-red-600">{wrong}</div>
             <div>{percentage}%</div>
             <div className="text-base font-black text-gray-900">
-              {finalScore.toFixed(2)} <span className="text-[10px] font-normal text-gray-500">/ {total}</span>
+              {finalScore.toFixed(2)} <span className="text-[10px] font-normal text-gray-500">/ {maxMarks}</span>
             </div>
           </div>
         </div>

@@ -20,8 +20,14 @@
     ],
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    /* Force errors when types are missing or default to 'any' */
+    "noImplicitAny": true,             // Throws an error if a variable/parameter lacks a type and defaults to 'any'
+    "noImplicitThis": true,            // Throws an error if the 'this' keyword implicitly gets an 'any' type
+    "strictNullChecks": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
+  // rule
+
 }

@@ -4,11 +4,21 @@ import React, { useRef, useState, DragEvent, useEffect } from "react";
 import Image from "next/image";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import CustomSelect from "../../../../components/ui/CustomSelect"; // adjust path if needed
+import { Input } from "../../../../components/ui/Input";
 import { PageContainer } from "../../../../components/common/PageContainer";
 
+import { getExamPackDetailsAction, updateExamPackAction } from "../../../../lib/actions";
+import { useSearchParams, useRouter } from "next/navigation";
+
 export default function EditExamPackPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const packIdVal = searchParams.get("packId");
+  const packId = packIdVal ? parseInt(packIdVal) : 0;
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [examPackData, setExamPackData] = useState({
     id: "",
     name: "",
@@ -18,20 +28,28 @@ export default function EditExamPackPage() {
     image: "",
   });
 
-  // ✅ Simulate fetching existing data
+  // ✅ Fetch existing data on mount
   useEffect(() => {
-    // Replace this with an API call (e.g., fetch(`/api/exam-pack/${id}`))
-    const existingData = {
-      id: "EP-101",
-      name: "SSC Exam Preparation 2025",
-      details:
-        "A complete mock test package designed to prepare SSC students for board exams. Includes practice sets, previous year questions, and detailed solutions.",
-      level: "SSC",
-      batch: "2025",
-      image: "/global/test.png", // existing image
-    };
-    setExamPackData(existingData);
-  }, []);
+    async function loadPack() {
+      if (!packId) return;
+      try {
+        const pack = await getExamPackDetailsAction(packId);
+        if (pack) {
+          setExamPackData({
+            id: pack.id.toString(),
+            name: pack.title,
+            details: pack.description,
+            level: pack.category,
+            batch: "",
+            image: pack.image,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load exam pack:", err);
+      }
+    }
+    loadPack();
+  }, [packId]);
 
   // --- Image Upload Handlers ---
   const handleFileChange = (file: File) => {
@@ -56,10 +74,27 @@ export default function EditExamPackPage() {
     if (file) handleFileChange(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Updated Exam Pack:", examPackData);
-    // TODO: call PUT API endpoint here
+    setLoading(true);
+    try {
+      const res = await updateExamPackAction(packId, {
+        title: examPackData.name,
+        description: examPackData.details,
+        category: examPackData.level || "General",
+        image: examPackData.image || "/global/test.png",
+      });
+      if (res.success) {
+        alert("Exam pack updated successfully.");
+        router.push("/dashboard/manage-exam-pack");
+      } else {
+        alert(res.error || "Failed to update exam pack.");
+      }
+    } catch (err) {
+      alert("Failed to update exam pack.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -130,28 +165,23 @@ export default function EditExamPackPage() {
 
         {/* --- Form Inputs --- */}
         <div className="space-y-5">
+          <Input
+            label="Exam Pack Name"
+            placeholder="Exam Pack Name*"
+            value={examPackData.name}
+            onChange={(e) =>
+              setExamPackData({ ...examPackData, name: e.target.value })
+            }
+            required
+          />
+
           <div>
-            <label className="text-sm font-semibold text-gray-800 block mb-1">
-              Exam Pack Name
-            </label>
-            <input
-              type="text"
-              placeholder="Exam Pack Name*"
-              className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00]"
-              value={examPackData.name}
-              onChange={(e) =>
-                setExamPackData({ ...examPackData, name: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-gray-800 block mb-1">
+            <label className="text-sm font-bold text-gray-700 ml-1 block mb-2">
               Details (description)
             </label>
             <textarea
               placeholder="Details*"
-              className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg resize-none focus:ring-2 focus:ring-[#f97a00] min-h-[120px]"
+              className="w-full px-4 py-3.5 text-base outline-none border-2 border-gray-200 rounded-xl resize-none focus:border-[#dd6b01] min-h-[120px] bg-white transition-all font-medium text-gray-700 focus:ring-4 focus:ring-[#dd6b01]/10 outline-none"
               value={examPackData.details}
               onChange={(e) =>
                 setExamPackData({ ...examPackData, details: e.target.value })
@@ -161,51 +191,45 @@ export default function EditExamPackPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-semibold text-gray-800 block mb-1">
-                Level
-              </label>
-              <CustomSelect
-                label="Select Level"
-                options={[
-                  "PSC",
-                  "SSC",
-                  "HSC",
-                  "BCS",
-                  "BS",
-                  "BA",
-                  "BBA",
-                  "MA",
-                  "PHD",
-                ]}
-                value={examPackData.level}
-                onChange={(val) =>
-                  setExamPackData({ ...examPackData, level: val })
-                }
-              />
-            </div>
-            <div>
-              <label className="text-sm font-semibold text-gray-800 block mb-1">
-                Batch
-              </label>
-              <CustomSelect
-                label="Select Batch"
-                options={Array.from({ length: 20 }, (_, i) =>
-                  (2010 + i).toString(),
-                )}
-                value={examPackData.batch}
-                onChange={(val) =>
-                  setExamPackData({ ...examPackData, batch: val })
-                }
-              />
-            </div>
+            <CustomSelect
+              label="Level"
+              placeholder="Select Level"
+              options={[
+                "PSC",
+                "SSC",
+                "HSC",
+                "BCS",
+                "BS",
+                "BA",
+                "BBA",
+                "MA",
+                "PHD",
+              ]}
+              value={examPackData.level}
+              onChange={(val) =>
+                setExamPackData({ ...examPackData, level: val })
+              }
+            />
+
+            <CustomSelect
+              label="Batch"
+              placeholder="Select Batch"
+              options={Array.from({ length: 20 }, (_, i) =>
+                (2010 + i).toString(),
+              )}
+              value={examPackData.batch}
+              onChange={(val) =>
+                setExamPackData({ ...examPackData, batch: val })
+              }
+            />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold text-base py-3 rounded-full hover:opacity-90 transition-all duration-500 cursor-pointer"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold text-base py-3 rounded-full hover:opacity-90 transition-all duration-500 cursor-pointer disabled:opacity-50"
           >
-            Update Exam Pack
+            {loading ? "Updating..." : "Update Exam Pack"}
           </button>
         </div>
       </form>

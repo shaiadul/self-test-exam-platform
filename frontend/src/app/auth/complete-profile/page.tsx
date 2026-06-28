@@ -10,6 +10,8 @@ import { FaEdit } from "react-icons/fa";
 
 import { completeProfile } from "../../../lib/auth";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+
 export default function Verify() {
   const [profileData, setProfileData] = useState({
     image: "",
@@ -26,8 +28,37 @@ export default function Verify() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Dynamic options from system assets
+  const [levelOptions, setLevelOptions] = useState<string[]>([]);
+  const [batchOptions, setBatchOptions] = useState<string[]>([]);
+  const [boardOptions, setBoardOptions] = useState<string[]>([]);
+
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Load dynamic select options from system assets
+  useEffect(() => {
+    async function loadAssets() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await fetch(`${API_URL}/assets`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const assets = await res.json();
+          if (Array.isArray(assets)) {
+            setLevelOptions(assets.filter((a: any) => a.type === "level").map((a: any) => a.value));
+            setBatchOptions(assets.filter((a: any) => a.type === "batch").map((a: any) => a.value));
+            setBoardOptions(assets.filter((a: any) => a.type === "board").map((a: any) => a.value));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load system assets:", err);
+      }
+    }
+    loadAssets();
+  }, []);
 
   useEffect(() => {
     const savedName = localStorage.getItem("userName") || "";
@@ -195,17 +226,7 @@ export default function Verify() {
                 </label>
                 <CustomSelect
                   label="Enter your level*"
-                  options={[
-                    "PSC",
-                    "SSC",
-                    "HSC",
-                    "BCS",
-                    "BS",
-                    "BA",
-                    "BBA",
-                    "MA",
-                    "PHD",
-                  ]}
+                  options={levelOptions}
                   value={profileData.level}
                   onChange={(val) =>
                     setProfileData({ ...profileData, level: val })
@@ -219,29 +240,7 @@ export default function Verify() {
                 </label>
                 <CustomSelect
                   label="Enter your batch*"
-                  options={[
-                    "2010",
-                    "2011",
-                    "2012",
-                    "2013",
-                    "2014",
-                    "2015",
-                    "2016",
-                    "2017",
-                    "2018",
-                    "2019",
-                    "2020",
-                    "2021",
-                    "2022",
-                    "2023",
-                    "2024",
-                    "2025",
-                    "2026",
-                    "2027",
-                    "2028",
-                    "2029",
-                    "2030",
-                  ]}
+                  options={batchOptions}
                   value={profileData.batch}
                   onChange={(val) =>
                     setProfileData({ ...profileData, batch: val })
@@ -255,17 +254,7 @@ export default function Verify() {
                 </label>
                 <CustomSelect
                   label="Enter your board*"
-                  options={[
-                    "Dhaka",
-                    "Chattogram",
-                    "Rajshahi",
-                    "Khulna",
-                    "Barishal",
-                    "Rangpur",
-                    "Mymensingh",
-                    "Sylhet",
-                    "Comilla",
-                  ]}
+                  options={boardOptions}
                   value={profileData.board}
                   onChange={(val) =>
                     setProfileData({ ...profileData, board: val })
