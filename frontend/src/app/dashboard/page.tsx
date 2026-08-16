@@ -8,7 +8,6 @@ import StatsGrid from "../../components/dashboard/StatsGrid";
 import UpcomingExamCard from "../../components/dashboard/UpcomingExamCard";
 import UserCard from "../../components/dashboard/UserCard";
 import {
-  FaGraduationCap,
   FaAward,
   FaServer,
   FaCogs,
@@ -18,46 +17,21 @@ import {
 } from "react-icons/fa";
 import { PageContainer } from "../../components/common/PageContainer";
 
-// Mock datasets for dynamic role charts
-const studentChartData = [
-  { name: "Exam 1", value: 30 },
-  { name: "Exam 2", value: 55 },
-  { name: "Exam 3", value: 45 },
-  { name: "Exam 4", value: 70 },
-  { name: "Exam 5", value: 50 },
-];
-
-const teacherChartData = [
-  { name: "Oct", value: 20 },
-  { name: "Nov", value: 45 },
-  { name: "Dec", value: 35 },
-  { name: "Jan", value: 80 },
-  { name: "Feb", value: 65 },
-];
-
-const adminChartData = [
-  { name: "Oct", value: 45 },
-  { name: "Nov", value: 60 },
-  { name: "Dec", value: 55 },
-  { name: "Jan", value: 88 },
-  { name: "Feb", value: 95 },
-];
-
 import { getProfileAction, getDashboardStatsAction } from "../../lib/actions";
 
 export default function DashboardPage() {
   const [userRole, setUserRole] = useState<string>("student");
-  const [userName, setUserName] = useState("Md Saidul Basar");
+  const [userName, setUserName] = useState("");
   const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState<any>(null);
 
   // Synchronized Profile state loader
   const [profileData, setProfileData] = useState({
-    image: "/user/md-saidul.jpeg",
-    board: "Dhaka",
-    level: "BSS",
-    batch: "2019-2020",
-    institution: "Govt. Titumir College Dhaka",
+    image: "",
+    board: "",
+    level: "",
+    batch: "",
+    institution: "",
   });
 
   useEffect(() => {
@@ -67,14 +41,14 @@ export default function DashboardPage() {
         const liveStats = await getDashboardStatsAction();
 
         const role = profile?.role || localStorage.getItem("userRole") || "student";
-        const name = profile?.name || localStorage.getItem("userName") || "Md Saidul Basar";
+        const name = profile?.name || localStorage.getItem("userName") || "";
 
         setUserRole(role);
         setUserName(name);
         setStats(liveStats);
 
         const data = {
-          image: profile?.image || localStorage.getItem("userImage") || "/user/md-saidul.jpeg",
+          image: profile?.image || localStorage.getItem("userImage") || "",
           board: "",
           level: "",
           batch: "",
@@ -82,20 +56,20 @@ export default function DashboardPage() {
         };
 
         if (role === "student") {
-          data.board = profile?.board || "Dhaka";
-          data.level = profile?.level || "BSS";
-          data.batch = profile?.batch || "2019-2020";
-          data.institution = profile?.institution || "Govt. Titumir College Dhaka";
+          data.board = profile?.board || "";
+          data.level = profile?.level || "";
+          data.batch = profile?.batch || "";
+          data.institution = profile?.institution || "";
         } else if (role === "teacher") {
-          data.board = profile?.subject || "Physics Dept";
-          data.level = profile?.designation || "Lead Faculty";
-          data.batch = "LMS Faculty";
-          data.institution = profile?.institution || "Govt. Titumir College Dhaka";
+          data.board = profile?.subject || "";
+          data.level = profile?.designation || "";
+          data.batch = "";
+          data.institution = profile?.institution || "";
         } else if (role === "admin") {
-          data.board = profile?.adminTier || "Super Admin";
-          data.level = profile?.adminDept || "Global Control";
-          data.batch = profile?.adminBase || "Operations Control";
-          data.institution = "Self-Test Portal Central";
+          data.board = profile?.adminTier || "";
+          data.level = profile?.adminDept || "";
+          data.batch = profile?.adminBase || "";
+          data.institution = "";
         }
 
         setProfileData(data);
@@ -107,6 +81,7 @@ export default function DashboardPage() {
     }
     loadDashboard();
   }, []);
+
 
   if (!mounted) {
     return (
@@ -181,9 +156,9 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-bold text-orange-50/80 uppercase tracking-widest mb-1">
                   Overall Rank
                 </h3>
-                <p className="text-5xl font-black tracking-tight mb-2">#{stats?.rank || 42}</p>
+                <p className="text-5xl font-black tracking-tight mb-2">#{stats?.rank || 0}</p>
                 <p className="text-orange-100 text-xs font-semibold">
-                  {stats?.institutionRank || `Top 5% of ${profileData.institution || "Govt. Titumir College"}`}
+                  {stats?.institutionRank || "Complete exams to get ranked"}
                 </p>
               </div>
               <Link href="/dashboard/reporting" className="relative z-10 mt-4 w-full py-2.5 bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/25 rounded-2xl font-bold transition-all text-xs cursor-pointer text-center block">
@@ -205,7 +180,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <ChartCard
-                  data={stats?.accuracyData || studentChartData}
+                  data={stats?.accuracyData || []}
                   color="#dd6b01"
                   strokeColor="#f59e0b"
                   avgLabel="Avg Mark"
@@ -294,9 +269,9 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-bold text-blue-50/80 uppercase tracking-widest mb-1">
                   Class Average
                 </h3>
-                <p className="text-5xl font-black tracking-tight mb-2">78.4%</p>
+                <p className="text-5xl font-black tracking-tight mb-2">{stats?.classAverage || "0%"}</p>
                 <p className="text-blue-100 text-xs font-semibold">
-                  Average Accuracy Across 8 Active Batches
+                  Average Accuracy Across {stats?.activePacks || 0} Active Packs
                 </p>
               </div>
               <Link href="/dashboard/report" className="relative z-10 mt-4 w-full py-2.5 bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/25 rounded-2xl font-bold transition-all text-xs cursor-pointer text-center block">
@@ -318,7 +293,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <ChartCard
-                  data={stats?.activityData || teacherChartData}
+                  data={stats?.activityData || []}
                   color="#3b82f6"
                   strokeColor="#6366f1"
                   avgLabel="Questions/Mo"
@@ -331,7 +306,7 @@ export default function DashboardPage() {
                   { label: "Active Exam Packs", value: stats?.activePacks?.toString() || "0" },
                   { label: "Questions Created", value: stats?.questionsCount?.toString() || "0" },
                   { label: "Graded Scripts", value: stats?.gradedScripts?.toString() || "0" },
-                  { label: "Instructor Rating", value: stats?.rating || "4.9 / 5" },
+                  { label: "Instructor Rating", value: stats?.rating || "N/A" },
                 ]}
               />
             </div>
@@ -415,7 +390,7 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-bold text-purple-50/80 uppercase tracking-widest mb-1">
                   Server Status
                 </h3>
-                <p className="text-5xl font-black tracking-tight mb-2">{stats?.serverStatus || "99.9%"}</p>
+                <p className="text-5xl font-black tracking-tight mb-2">{stats?.serverStatus || "--"}</p>
                 <p className="text-purple-100 text-xs font-semibold flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   All Nodes Online & Healthy
@@ -440,7 +415,7 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <ChartCard
-                  data={stats?.activityData || adminChartData}
+                  data={stats?.activityData || []}
                   color="#7c3aed"
                   strokeColor="#8b5cf6"
                   avgLabel="Total Attempts"
@@ -453,7 +428,7 @@ export default function DashboardPage() {
                   { label: "Registered Students", value: stats?.registeredCount || "0" },
                   { label: "Educator Accounts", value: stats?.educatorsCount || "0" },
                   { label: "Maintained Packs", value: stats?.maintainedPacks || "0" },
-                  { label: "Sync Status", value: stats?.syncStatus || "100% Synced" },
+                  { label: "Sync Status", value: stats?.syncStatus || "--" },
                 ]}
               />
             </div>
