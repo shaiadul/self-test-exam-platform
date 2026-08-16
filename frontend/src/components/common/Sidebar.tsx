@@ -80,7 +80,7 @@ export const Sidebar = () => {
 
   return (
     <aside className="hidden lg:flex flex-col w-72 h-screen sticky top-0 bg-[#f8f9fa] border-r border-gray-200 shadow-sm z-30">
-      <div className="p-6">
+      <div className="px-6">
         <Link href="/">
           <Image
             src="/global/logo2.png"
@@ -88,7 +88,7 @@ export const Sidebar = () => {
             width={180}
             height={40}
             priority
-            className="w-auto h-10"
+            className="w-auto"
           />
         </Link>
       </div>

@@ -16,6 +16,8 @@ type UserRepository interface {
 	GetAll() ([]model.User, error)
 	UpdateRole(id int, role string) error
 	Delete(id int) error
+	GetUserCountByRole(role string) (int, error)
+	GetStudentRank(userID int) (int, error)
 }
 
 type SQLUserRepository struct {
@@ -224,4 +226,33 @@ func (r *SQLUserRepository) UpdateRole(id int, role string) error {
 func (r *SQLUserRepository) Delete(id int) error {
 	_, err := r.db.Exec("DELETE FROM users WHERE id = $1", id)
 	return err
+}
+
+func (r *SQLUserRepository) GetUserCountByRole(role string) (int, error) {
+	var count int
+	err := r.db.QueryRow(`SELECT COUNT(*) FROM users WHERE role = $1`, role).Scan(&count)
+	return count, err
+}
+
+func (r *SQLUserRepository) GetStudentRank(userID int) (int, error) {
+	// Rank = number of students with a higher average final_score + 1
+	query := `
+		SELECT COUNT(DISTINCT ea2.user_id) + 1
+		FROM (
+			SELECT user_id, AVG(final_score) AS avg_score
+			FROM exam_attempts
+			GROUP BY user_id
+		) ea2
+		WHERE ea2.avg_score > COALESCE((
+			SELECT AVG(final_score)
+			FROM exam_attempts
+			WHERE user_id = $1
+		), 0)`
+
+	var rank int
+	err := r.db.QueryRow(query, userID).Scan(&rank)
+	if err != nil {
+		return 0, err
+	}
+	return rank, nil
 }

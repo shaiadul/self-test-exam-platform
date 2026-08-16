@@ -509,11 +509,11 @@ func (h *ExamHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) 
 
 		average := "0%"
 		if completed > 0 {
-			average = fmt.Sprintf("%.0f%%", (totalScores/float64(completed*10))*100) // Mock scale or relative accuracy
-			if totalScores/float64(completed*10) > 1.0 {
+			avgVal := totalScores / float64(completed*10)
+			if avgVal > 1.0 {
 				average = fmt.Sprintf("%.1f/10 average", totalScores/float64(completed))
 			} else {
-				average = fmt.Sprintf("%.0f%%", (totalScores/float64(completed*10))*100)
+				average = fmt.Sprintf("%.0f%%", avgVal*100)
 			}
 		}
 
@@ -537,7 +537,7 @@ func (h *ExamHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) 
 			if exam != nil {
 				examName = exam.Name
 			} else {
-				examName = "Practice Exam"
+				examName = "Exam " + a.ExamID
 			}
 
 			accuracyData = append(accuracyData, model.ChartDataPoint{
@@ -553,7 +553,7 @@ func (h *ExamHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) 
 			if exam != nil {
 				examName = exam.Name
 			} else {
-				examName = "Practice Exam"
+				examName = "Exam " + a.ExamID
 			}
 			recentExams = append(recentExams, model.RecentExamAttempt{
 				ID:          "#" + a.ExamID,
@@ -564,19 +564,23 @@ func (h *ExamHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) 
 			})
 		}
 
-		// Fallback mock chart data if no attempts yet
-		if len(accuracyData) == 0 {
-			accuracyData = []model.ChartDataPoint{
-				{Name: "Algebra Prep", Value: 30},
-				{Name: "General Prep", Value: 55},
-				{Name: "Science Intro", Value: 45},
-				{Name: "Math Mock", Value: 70},
-			}
+		// Compute real rank from DB
+		rank, err := h.userRepo.GetStudentRank(userID)
+		if err != nil || rank == 0 {
+			rank = 0 // No rank available yet
+		}
+
+		institutionName := valOrDefault(user.Institution, "your institution")
+		institutionRank := ""
+		if rank > 0 {
+			institutionRank = fmt.Sprintf("Rank #%d at %s", rank, institutionName)
+		} else {
+			institutionRank = fmt.Sprintf("Complete exams to get ranked at %s", institutionName)
 		}
 
 		stats := model.StudentStats{
-			Rank:            42,
-			InstitutionRank: fmt.Sprintf("Top 5%% of %s", valOrDefault(user.Institution, "Govt. Titumir College")),
+			Rank:            rank,
+			InstitutionRank: institutionRank,
 			CompletedCount:  completed,
 			AverageMark:     average,
 			PassedRatio:     passRatio,
@@ -596,11 +600,6 @@ func (h *ExamHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) 
 					Title:    e.Name,
 					DateTime: dtStr,
 				})
-			}
-		} else {
-			upcomingDetails = []model.UpcomingExamDetail{
-				{"HSC2341", "/global/no-picture.jpg", "Algebra Basics (Active Mock)", "10:30 AM | Sunday, 14th May"},
-				{"HSC2342", "/global/no-picture.jpg", "Physics 1st Paper Prep", "12:30 PM | Monday, 15th May"},
 			}
 		}
 		stats.UpcomingExams = upcomingDetails
@@ -629,9 +628,89 @@ func (h *ExamHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) 
 			sumScores += a.FinalScore
 			totalWeight += float64(a.Total * 2)
 		}
-		avgStr := "78.4%"
+		avgStr := "0%"
 		if totalWeight > 0 {
 			avgStr = fmt.Sprintf("%.1f%%", (sumScores/totalWeight)*100)
+		}
+
+		// Compute pass rate as "rating"
+		totalAttempts := len(allAttempts)
+		passedCount := 0
+		for _, a := range allAttempts {
+			if a.Passed {
+				passedCount++
+			}
+		}
+		rating := "N/A"
+		if totalAttempts > 0 {
+			passRate := (float64(passedCount) / float64(totalAttempts)) * 5.0
+			rating = fmt.Sprintf("%.1f / 5", passRate)
+		}
+
+		// Compute real monthly activity data from attempts (last 5 months)
+		activityData := []model.ChartDataPoint{}
+		now := time.Now()
+		for i := 4; i >= 0; i-- {
+			monthTime := now.AddDate(0, -i, 0)
+			monthName := monthTime.Format("Jan")
+			monthStart := time.Date(monthTime.Year(), monthTime.Month(), 1, 0, 0, 0, 0, time.UTC)
+			monthEnd := monthStart.AddDate(0, 1, 0)
+			count := 0
+			for _, a := range allAttempts {
+				if !a.CreatedAt.Before(monthStart) && a.CreatedAt.Before(monthEnd) {
+					count++
+				}
+			}
+			activityData = append(activityData, model.ChartDataPoint{
+				Name:  monthName,
+				Value: float64(count),
+			})
+		}
+
+		// Build real assigned packs with submission counts
+		assignedPacks := []model.AssignedPackDetail{}
+		for _, p := range packs {
+			exams, _ := h.examRepo.GetExamsByPackID(p.ID)
+			submitCount := 0
+			hasNeg := false
+			for _, e := range exams {
+				ea, _ := h.examRepo.GetExamAttemptsByExamID(e.ID)
+				submitCount += len(ea)
+				if e.NegativeMarks > 0 {
+					hasNeg = true
+				}
+			}
+			negLabel := "No Negatives"
+			if hasNeg {
+				negLabel = "Negative Marking"
+			}
+			assignedPacks = append(assignedPacks, model.AssignedPackDetail{
+				ID:          fmt.Sprintf("#TCH%d", p.ID),
+				Name:        p.Title,
+				Score:       fmt.Sprintf("%d Submits", submitCount),
+				Negative:    negLabel,
+				AnswerSheet: "#",
+			})
+		}
+
+		// Build pending tasks from recent unreviewed submissions
+		pendingTasks := []model.PendingTask{}
+		recentLimit := 5
+		if len(allAttempts) < recentLimit {
+			recentLimit = len(allAttempts)
+		}
+		for i := 0; i < recentLimit; i++ {
+			a := allAttempts[i]
+			exam, _ := h.examRepo.GetExamByID(a.ExamID)
+			examName := "Exam"
+			if exam != nil {
+				examName = exam.Name
+			}
+			pendingTasks = append(pendingTasks, model.PendingTask{
+				Type:  "time",
+				Title: fmt.Sprintf("Review: %s", examName),
+				Desc:  fmt.Sprintf("Student #%d submitted on %s", a.UserID, a.CreatedAt.Format("Jan 02, 2006")),
+			})
 		}
 
 		stats := model.TeacherStats{
@@ -639,50 +718,100 @@ func (h *ExamHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) 
 			ActivePacks:    len(packs),
 			QuestionsCount: totalQuestions,
 			GradedScripts:  len(allAttempts),
-			Rating:         "4.9 / 5",
-			ActivityData: []model.ChartDataPoint{
-				{Name: "Oct", Value: 20},
-				{Name: "Nov", Value: 45},
-				{Name: "Dec", Value: 35},
-				{Name: "Jan", Value: 80},
-				{Name: "Feb", Value: 65},
-			},
-			AssignedPacks: []model.AssignedPackDetail{
-				{"#TCH8820", "Physics Mechanics Part-01", "48 Submits", "No Negatives", "#"},
-				{"#TCH2390", "Modern Physics & Quantum", "35 Submits", "-0.25 Marking", "#"},
-			},
-			PendingTasks: []model.PendingTask{
-				{"time", "Grade Physics-02 Papers", "12 student submissions pending scorecards"},
-				{"cog", "Verify Question Options", "Check correctness of Organic Chemistry answers"},
-			},
+			Rating:         rating,
+			ActivityData:   activityData,
+			AssignedPacks:  assignedPacks,
+			PendingTasks:   pendingTasks,
 		}
 		json.NewEncoder(w).Encode(stats)
 
 	case "admin":
 		packs, _ := h.examRepo.GetExamPacks()
-		// Retrieve user counts using a simple mock query or counting in Go (safer to do simple counts on User Table)
-		// For simplicity, return reasonable counts
+
+		// Real user counts from DB
+		studentCount, _ := h.userRepo.GetUserCountByRole("student")
+		teacherCount, _ := h.userRepo.GetUserCountByRole("teacher")
+
+		// Compute monthly activity data from all attempts
+		allAttempts, _ := h.examRepo.GetAllExamAttempts()
+		activityData := []model.ChartDataPoint{}
+		now := time.Now()
+		for i := 4; i >= 0; i-- {
+			monthTime := now.AddDate(0, -i, 0)
+			monthName := monthTime.Format("Jan")
+			monthStart := time.Date(monthTime.Year(), monthTime.Month(), 1, 0, 0, 0, 0, time.UTC)
+			monthEnd := monthStart.AddDate(0, 1, 0)
+			count := 0
+			for _, a := range allAttempts {
+				if !a.CreatedAt.Before(monthStart) && a.CreatedAt.Before(monthEnd) {
+					count++
+				}
+			}
+			activityData = append(activityData, model.ChartDataPoint{
+				Name:  monthName,
+				Value: float64(count),
+			})
+		}
+
+		// Build audit logs from recent attempts
+		auditLogs := []model.AuditLogDetail{}
+		auditLimit := 5
+		if len(allAttempts) < auditLimit {
+			auditLimit = len(allAttempts)
+		}
+		for i := 0; i < auditLimit; i++ {
+			a := allAttempts[i]
+			exam, _ := h.examRepo.GetExamByID(a.ExamID)
+			examName := "Exam"
+			if exam != nil {
+				examName = exam.Name
+			}
+			status := "Failed"
+			if a.Passed {
+				status = "Passed"
+			}
+			auditLogs = append(auditLogs, model.AuditLogDetail{
+				ID:          fmt.Sprintf("#ATT-%d", a.ID),
+				Name:        examName,
+				Score:       fmt.Sprintf("%.1f/%d", a.FinalScore, a.Total*2),
+				Negative:    status,
+				AnswerSheet: "#",
+			})
+		}
+
+		// Build pending audits from users without complete profiles
+		pendingAudits := []model.PendingAudit{}
+		allUsers, _ := h.userRepo.GetAll()
+		incompleteCount := 0
+		for _, u := range allUsers {
+			if u.Role == "teacher" && (u.Subject == nil || *u.Subject == "") {
+				incompleteCount++
+			}
+		}
+		if incompleteCount > 0 {
+			pendingAudits = append(pendingAudits, model.PendingAudit{
+				Type:  "user",
+				Title: "Review Educator Profiles",
+				Desc:  fmt.Sprintf("%d educators have incomplete profiles", incompleteCount),
+			})
+		}
+		if len(allAttempts) > 100 {
+			pendingAudits = append(pendingAudits, model.PendingAudit{
+				Type:  "server",
+				Title: "Database Optimization",
+				Desc:  fmt.Sprintf("%d total attempts — consider archiving old records", len(allAttempts)),
+			})
+		}
+
 		stats := model.AdminStats{
-			ServerStatus:    "99.9%",
-			RegisteredCount: "12,850",
-			EducatorsCount:  "450",
+			ServerStatus:    "Online",
+			RegisteredCount: strconv.Itoa(studentCount),
+			EducatorsCount:  strconv.Itoa(teacherCount),
 			MaintainedPacks: strconv.Itoa(len(packs)),
-			SyncStatus:      "100% Synced",
-			ActivityData: []model.ChartDataPoint{
-				{Name: "Oct", Value: 45},
-				{Name: "Nov", Value: 60},
-				{Name: "Dec", Value: 55},
-				{Name: "Jan", Value: 88},
-				{Name: "Feb", Value: 95},
-			},
-			AuditLogs: []model.AuditLogDetail{
-				{"#SYS-90021", "Backup Database Operations", "Success", "System Action", "#"},
-				{"#SYS-11090", "Regrade Physics Mechanics Batch", "Completed", "Admin Action", "#"},
-			},
-			PendingAudits: []model.PendingAudit{
-				{"user", "Review Educator Credentials", "4 new physics tutors awaiting dashboard permissions"},
-				{"server", "Clear Server Cached Logs", "Cache exceeds 4.2GB, needs manual system flush"},
-			},
+			SyncStatus:      "Synced",
+			ActivityData:    activityData,
+			AuditLogs:       auditLogs,
+			PendingAudits:   pendingAudits,
 		}
 		json.NewEncoder(w).Encode(stats)
 

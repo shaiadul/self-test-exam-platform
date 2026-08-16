@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+import { loginAction, registerAction, updateProfileAction } from "./actions";
 
 export interface User {
   id: number;
@@ -55,65 +55,31 @@ export function clearSession() {
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Invalid credentials. Please try again.");
+  const result = await loginAction(email, password);
+  if (!result.success || !result.token) {
+    throw new Error(result.error || "Invalid credentials. Please try again.");
   }
-
-  setSession(data.token, data.user);
-  return data;
+  setSession(result.token, result.user);
+  return { token: result.token, user: result.user };
 }
 
 export async function register(name: string, email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch(`${API_URL}/auth/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name, email, password }),
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Registration failed. Please try again.");
+  const result = await registerAction(name, email, password);
+  if (!result.success || !result.token) {
+    throw new Error(result.error || "Registration failed. Please try again.");
   }
-
-  if (data.token) {
-    setSession(data.token, data.user);
-  }
-  return data;
+  setSession(result.token, result.user);
+  return { token: result.token, user: result.user };
 }
 
 export async function completeProfile(profileData: CompleteProfileInput): Promise<User> {
-  const token = getAuthToken();
-  if (!token) {
-    throw new Error("No authentication token found. Please sign in.");
+  const result = await updateProfileAction(profileData);
+  if (!result.success || !result.user) {
+    throw new Error(result.error || "Failed to update profile.");
   }
-
-  const response = await fetch(`${API_URL}/auth/complete-profile`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(profileData),
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error || "Failed to update profile.");
-  }
-
   if (typeof window !== "undefined") {
-    localStorage.setItem("userName", data.name);
+    localStorage.setItem("userName", result.user.name);
   }
-  return data;
+  return result.user;
 }
+
