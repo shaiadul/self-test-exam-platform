@@ -293,7 +293,7 @@ export default function ExamInfoPage() {
                   </div>
                 ) : (
                   <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-red-800 text-xs">
-                    💡 <span className="font-bold">Don't lose heart!</span> Review the materials and attempt the exam again to boost your score.
+                    💡 <span className="font-bold">Don&apos;t lose heart!</span> Review the materials and attempt the exam again to boost your score.
                   </div>
                 )}
               </div>
