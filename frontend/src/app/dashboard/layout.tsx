@@ -8,22 +8,19 @@ import { DashboardHeader } from "../../components/common/DashboardHeader";
 import { MobileNav } from "../../components/common/MobileNav";
 import { FaLock, FaExclamationTriangle } from "react-icons/fa";
 
-// Helper function to check role authorization per route
 function isRouteAllowed(role: string, pathname: string): boolean {
   const normRole = role.toLowerCase();
 
   if (normRole === "admin") {
-    return true; // admin can access all routes
+    return true;
   }
 
   if (normRole === "teacher") {
-    // teacher cannot access admin settings
     if (pathname.startsWith("/dashboard/settings")) return false;
     return true;
   }
 
   if (normRole === "student") {
-    // student cannot access settings, manage-exam-pack, question-bank, and exam reports
     if (pathname.startsWith("/dashboard/settings")) return false;
     if (pathname.startsWith("/dashboard/manage-exam-pack")) return false;
     if (pathname.startsWith("/dashboard/question")) return false;
@@ -31,7 +28,7 @@ function isRouteAllowed(role: string, pathname: string): boolean {
     return true;
   }
 
-  return true; // default fallback
+  return true;
 }
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -40,41 +37,35 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Retrieve role from localStorage
     const role = localStorage.getItem("userRole") || "student";
     setUserRole(role);
     setLoading(false);
-  }, [pathname]); // refresh auth state on navigate
+  }, [pathname]);
 
   const allowed = isRouteAllowed(userRole, pathname);
   const isExamPage = pathname.includes("/dashboard/exam-pack/exam-pack-details/");
 
   return (
     <div className={`min-h-screen flex flex-col bg-[#fafafa] print:bg-white print:p-0 ${!isExamPage ? "lg:flex-row" : ""}`}>
-      {/* Sidebar for Desktop */}
       {!isExamPage && (
         <div className="print:hidden">
           <Sidebar />
         </div>
       )}
 
-      {/* Mobile Navigation */}
       {!isExamPage && (
         <div className="print:hidden">
           <MobileNav />
         </div>
       )}
 
-      {/* Main content area */}
       <div className="flex-1 flex flex-col min-h-screen print:p-0 relative">
-        {/* Header for Desktop/Mobile */}
         {!isExamPage && (
           <div className="print:hidden">
             <DashboardHeader />
           </div>
         )}
 
-        {/* Added pt-20 to offset the fixed DashboardHeader height (h-20) when header is visible */}
         <main className={`flex-1 overflow-y-auto print:overflow-visible ${!isExamPage ? "pt-20" : "pt-0"}`}>
           <div className="p-6 max-w-7xl mx-auto print:p-0 print:max-w-none">
             {loading ? (
@@ -84,13 +75,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             ) : allowed ? (
               children
             ) : (
-              /* Premium Access Denied Screen */
               <div className="min-h-[70vh] flex items-center justify-center p-4">
                 <div className="bg-white border border-gray-100 rounded-3xl p-10 shadow-xl max-w-lg w-full text-center relative overflow-hidden">
-                  {/* Decorative background gradients */}
                   <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-orange-500"></div>
 
-                  {/* Lock Indicator */}
                   <div className="w-20 h-20 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-3xl mx-auto mb-6 border border-red-100 shadow-inner relative">
                     <FaLock />
                     <FaExclamationTriangle className="absolute bottom-4 right-4 text-xs text-amber-500" />
