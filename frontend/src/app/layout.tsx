@@ -1,22 +1,29 @@
 import type { Metadata } from "next";
-import { Poppins, JetBrains_Mono } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 
-const poppins = Poppins({
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
 });
 
 const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Self Test",
-  description: "Best online exam platform for students", //des
+  description: "Best online exam platform for students",
 };
 
 export default function RootLayout({
@@ -25,7 +32,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} ${jetbrainsMono.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
+    >
       <body className="antialiased font-sans">
         {children}
         <Toaster richColors position="top-right" />
@@ -33,3 +43,4 @@ export default function RootLayout({
     </html>
   );
 }
+
