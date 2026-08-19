@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Self Test",
-  description: "Best online exam platform for students",
+  description: "Best online exam platform for students", //des
 };
 
 export default function RootLayout({
