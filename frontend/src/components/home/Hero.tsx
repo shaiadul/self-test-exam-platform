@@ -40,7 +40,7 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-3xl sm:text-5xl lg:text-6xl font-black text-gray-900 leading-[1.15] tracking-tight"
+            className="text-3xl sm:text-5xl lg:text-5xl font-black text-gray-900 leading-[1.15] tracking-tight"
           >
             Test Your Knowledge. <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-amber-500 to-orange-600">
