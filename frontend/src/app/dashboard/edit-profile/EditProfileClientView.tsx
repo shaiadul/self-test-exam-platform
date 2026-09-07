@@ -17,6 +17,12 @@ import {
   FaBuilding,
   FaBriefcase,
   FaGlobe,
+  FaArrowLeft,
+  FaCamera,
+  FaCheckCircle,
+  FaShieldAlt,
+  FaGraduationCap,
+  FaChalkboardTeacher,
 } from "react-icons/fa";
 import { PageContainer } from "../../../components/common/PageContainer";
 
@@ -48,18 +54,18 @@ export default function EditProfileClientView({
     .filter((a: any) => a.type === "board")
     .map((a: any) => a.value);
 
-  // Core profile state mapping
+  // Core profile state — use actual values from profile, don't inject hardcoded defaults
   const [profileData, setProfileData] = useState({
-    image: initialProfile?.image || "/user/md-saidul.jpeg",
+    image: initialProfile?.image || "",
     name: initialProfile?.name || "",
     email: initialProfile?.email || "",
     phone: initialProfile?.phone || "",
     address: initialProfile?.address || "",
 
     // Student specific fields
-    level: initialProfile?.level || "HSC",
-    batch: initialProfile?.batch || "2023",
-    board: initialProfile?.board || "Dhaka",
+    level: initialProfile?.level || "",
+    batch: initialProfile?.batch || "",
+    board: initialProfile?.board || "",
     institution: initialProfile?.institution || "",
 
     // Teacher specific fields
@@ -72,35 +78,91 @@ export default function EditProfileClientView({
     adminBase: initialProfile?.adminBase || "",
   });
 
+  // Track if image was changed locally (base64 preview)
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   const handleChange = (field: string, value: string) => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileData((prev) => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file.");
+      return;
     }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setImagePreview(base64);
+      setProfileData((prev) => ({ ...prev, image: base64 }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!profileData.name.trim()) {
+      toast.error("Name is required.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await updateProfileAction(profileData);
+      // Build payload — exclude email (immutable) and only send changed fields
+      const payload: Record<string, string> = {};
+
+      // Always send name
+      payload.name = profileData.name;
+
+      // Only send image if it was changed
+      if (imagePreview) {
+        payload.image = profileData.image;
+      }
+
+      // Send optional fields only if they have values
+      if (profileData.phone) payload.phone = profileData.phone;
+      if (profileData.address) payload.address = profileData.address;
+
+      // Role-specific fields
+      const normRole = userRole.toLowerCase();
+      if (normRole === "student") {
+        if (profileData.level) payload.level = profileData.level;
+        if (profileData.batch) payload.batch = profileData.batch;
+        if (profileData.board) payload.board = profileData.board;
+        if (profileData.institution) payload.institution = profileData.institution;
+      } else if (normRole === "teacher") {
+        if (profileData.subject) payload.subject = profileData.subject;
+        if (profileData.designation) payload.designation = profileData.designation;
+        if (profileData.institution) payload.institution = profileData.institution;
+      } else if (normRole === "admin") {
+        if (profileData.adminTier) payload.adminTier = profileData.adminTier;
+        if (profileData.adminDept) payload.adminDept = profileData.adminDept;
+        if (profileData.adminBase) payload.adminBase = profileData.adminBase;
+      }
+
+      const res = await updateProfileAction(payload);
       if (res.success) {
-        toast.success("Profile saved successfully!");
+        toast.success("Profile updated successfully!");
         router.push("/dashboard");
+        router.refresh();
       } else {
         toast.error(res.error || "Failed to update profile.");
       }
     } catch {
-      toast.error("Failed to update profile.");
+      toast.error("An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -108,207 +170,285 @@ export default function EditProfileClientView({
 
   const normRole = userRole.toLowerCase();
 
+  // Role badge config
+  const roleBadgeMap: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+    student: { icon: <FaGraduationCap />, label: "Student", color: "bg-blue-50 text-blue-600 border-blue-200" },
+    teacher: { icon: <FaChalkboardTeacher />, label: "Instructor", color: "bg-emerald-50 text-emerald-600 border-emerald-200" },
+    admin: { icon: <FaShieldAlt />, label: "Administrator", color: "bg-purple-50 text-purple-600 border-purple-200" },
+  };
+  const roleBadge = roleBadgeMap[normRole] || { icon: <FaUser />, label: userRole, color: "bg-gray-50 text-gray-600 border-gray-200" };
+
+  // Resolve display image
+  const displayImage = imagePreview || profileData.image || "/global/no-picture.jpg";
+
   return (
-    <PageContainer>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8 mb-8">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Edit Profile</h1>
-          <p className="text-gray-500 font-semibold text-sm mt-1">
-            Update your account details and profile information.
-          </p>
+    <PageContainer className="space-y-8 animate-fadeIn">
+      {/* Header with back navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+        <div className="flex items-center gap-3">
+          <OutlineBtn
+            link="/dashboard"
+            className="!p-2.5 !rounded-xl !text-slate-600 hover:!text-[#dd6b01] shadow-xs"
+            title="Back to Dashboard"
+          >
+            <FaArrowLeft className="text-xs" />
+          </OutlineBtn>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Edit Profile
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Update your account details and personal information.
+            </p>
+          </div>
+        </div>
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold ${roleBadge.color}`}>
+          {roleBadge.icon}
+          <span>{roleBadge.label} Account</span>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Profile Picture Upload */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md flex flex-col sm:flex-row items-center gap-6">
-          <div className="relative">
-            <Image
-              src={profileData.image}
-              alt="Profile Picture"
-              width={100}
-              height={100}
-              className="rounded-full object-cover w-24 h-24 border-4 border-[#dd6b01]/20 shadow"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 p-2 bg-[#dd6b01] text-white rounded-full shadow hover:bg-orange-600 transition"
-              title="Upload Photo"
-            >
-              <FaEdit className="text-xs" />
-            </button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              className="hidden"
-            />
-          </div>
-          <div className="text-center sm:text-left space-y-1">
-            <h3 className="font-bold text-gray-900 text-lg">{profileData.name || "User"}</h3>
-            <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">{userRole} Account</p>
-            <p className="text-xs text-gray-400">Click icon to upload a new profile photo</p>
-          </div>
-        </div>
-
-        {/* Basic Personal Information */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md space-y-6">
-          <h3 className="text-lg font-black text-gray-900 border-b border-gray-100 pb-3">Personal Information</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Full Name</label>
-              <Input
-                icon={<FaUser className="text-gray-400" />}
-                value={profileData.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-                required
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Profile Picture + Identity Card */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="p-6 flex flex-col sm:flex-row items-center gap-6">
+            <div className="relative group">
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#dd6b01]/15 shadow-md">
+                <Image
+                  src={displayImage}
+                  alt="Profile Picture"
+                  width={96}
+                  height={96}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-0 right-0 p-2 bg-[#dd6b01] text-white rounded-full shadow-lg hover:bg-orange-700 transition-all duration-200 group-hover:scale-110"
+                title="Upload Photo"
+              >
+                <FaCamera className="text-xs" />
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
               />
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Email Address</label>
-              <Input
-                icon={<FaEnvelope className="text-gray-400" />}
-                type="email"
-                value={profileData.email}
-                onChange={(e) => handleChange("email", e.target.value)}
-                disabled
-              />
+            <div className="text-center sm:text-left space-y-1.5 flex-1">
+              <h3 className="font-black text-slate-900 text-lg tracking-tight">
+                {profileData.name || "Your Name"}
+              </h3>
+              <p className="text-xs text-slate-500 font-semibold flex items-center gap-1.5 justify-center sm:justify-start">
+                <FaEnvelope className="text-[10px] text-slate-400" />
+                {profileData.email}
+              </p>
+              <p className="text-[11px] text-slate-400 font-medium">
+                JPG, PNG or WebP • Max 2MB
+              </p>
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Phone Number</label>
-              <Input
-                icon={<FaPhoneAlt className="text-gray-400" />}
-                value={profileData.phone}
-                onChange={(e) => handleChange("phone", e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Address / Location</label>
-              <Input
-                icon={<FaMapMarkerAlt className="text-gray-400" />}
-                value={profileData.address}
-                onChange={(e) => handleChange("address", e.target.value)}
-              />
-            </div>
+            {imagePreview && (
+              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0">
+                <FaCheckCircle className="text-[10px]" />
+                New photo selected
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Role Specific Additional Fields */}
+        {/* Personal Information */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100">
+            <h3 className="text-lg font-black text-slate-900 tracking-tight">Personal Information</h3>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Your basic account details</p>
+          </div>
+
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Input
+              label="Full Name"
+              icon={<FaUser className="text-gray-400" />}
+              value={profileData.name}
+              onChange={(e) => handleChange("name", e.target.value)}
+              placeholder="Enter your full name"
+              required
+            />
+
+            <Input
+              label="Email Address"
+              icon={<FaEnvelope className="text-gray-400" />}
+              type="email"
+              value={profileData.email}
+              disabled
+            />
+
+            <Input
+              label="Phone Number"
+              icon={<FaPhoneAlt className="text-gray-400" />}
+              value={profileData.phone}
+              onChange={(e) => handleChange("phone", e.target.value)}
+              placeholder="01XXXXXXXXX"
+            />
+
+            <Input
+              label="Address / Location"
+              icon={<FaMapMarkerAlt className="text-gray-400" />}
+              value={profileData.address}
+              onChange={(e) => handleChange("address", e.target.value)}
+              placeholder="City, District"
+            />
+          </div>
+        </div>
+
+        {/* Student Academic Fields */}
         {normRole === "student" && (
-          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md space-y-6">
-            <h3 className="text-lg font-black text-gray-900 border-b border-gray-100 pb-3">Academic Configuration</h3>
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h3 className="text-lg font-black text-slate-900 tracking-tight">Academic Configuration</h3>
+              <p className="text-[11px] text-slate-400 font-medium mt-0.5">Your education board, level, and institution details</p>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Academic Level</label>
-                <CustomSelect
-                  options={levelOptions.length ? levelOptions : ["Class 10", "HSC", "Admission", "Undergraduate"]}
-                  value={profileData.level}
-                  onChange={(val) => handleChange("level", val)}
-                  placeholder="Select Academic Level"
-                />
-              </div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <CustomSelect
+                label="Academic Level"
+                options={levelOptions.length ? levelOptions : ["Class 10", "HSC", "Admission", "Undergraduate"]}
+                value={profileData.level}
+                onChange={(val) => handleChange("level", val)}
+                placeholder="Select Academic Level"
+              />
 
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Target Batch Year</label>
-                <CustomSelect
-                  options={batchOptions.length ? batchOptions : ["2023", "2024", "2025", "2026"]}
-                  value={profileData.batch}
-                  onChange={(val) => handleChange("batch", val)}
-                  placeholder="Select Target Batch"
-                />
-              </div>
+              <CustomSelect
+                label="Target Batch Year"
+                options={batchOptions.length ? batchOptions : ["2023", "2024", "2025", "2026"]}
+                value={profileData.batch}
+                onChange={(val) => handleChange("batch", val)}
+                placeholder="Select Target Batch"
+              />
 
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Education Board</label>
-                <CustomSelect
-                  options={boardOptions.length ? boardOptions : ["Dhaka", "Rajshahi", "Chittagong", "Cambridge"]}
-                  value={profileData.board}
-                  onChange={(val) => handleChange("board", val)}
-                  placeholder="Select Education Board"
-                />
-              </div>
+              <CustomSelect
+                label="Education Board"
+                options={boardOptions.length ? boardOptions : ["Dhaka", "Rajshahi", "Chittagong", "Cambridge"]}
+                value={profileData.board}
+                onChange={(val) => handleChange("board", val)}
+                placeholder="Select Education Board"
+              />
 
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Educational Institution</label>
-                <Input
-                  icon={<FaBuilding className="text-gray-400" />}
-                  value={profileData.institution}
-                  onChange={(e) => handleChange("institution", e.target.value)}
-                  placeholder="Titiumir College, NDC, etc."
-                />
-              </div>
+              <Input
+                label="Educational Institution"
+                icon={<FaBuilding className="text-gray-400" />}
+                value={profileData.institution}
+                onChange={(e) => handleChange("institution", e.target.value)}
+                placeholder="e.g. Dhaka College"
+              />
             </div>
           </div>
         )}
 
+        {/* Teacher Faculty Fields */}
         {normRole === "teacher" && (
-          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md space-y-6">
-            <h3 className="text-lg font-black text-gray-900 border-b border-gray-100 pb-3">Faculty Details</h3>
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h3 className="text-lg font-black text-slate-900 tracking-tight">Faculty Details</h3>
+              <p className="text-[11px] text-slate-400 font-medium mt-0.5">Your department, subject expertise, and designation</p>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Department / Subject</label>
-                <Input
-                  icon={<FaBriefcase className="text-gray-400" />}
-                  value={profileData.subject}
-                  onChange={(e) => handleChange("subject", e.target.value)}
-                  placeholder="Physics, Mathematics, etc."
-                />
-              </div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Input
+                label="Department / Subject"
+                icon={<FaBriefcase className="text-gray-400" />}
+                value={profileData.subject}
+                onChange={(e) => handleChange("subject", e.target.value)}
+                placeholder="Physics, Mathematics, etc."
+              />
 
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Designation</label>
-                <Input
-                  icon={<FaGlobe className="text-gray-400" />}
-                  value={profileData.designation}
-                  onChange={(e) => handleChange("designation", e.target.value)}
-                  placeholder="Senior Instructor, Lecturer"
-                />
-              </div>
+              <Input
+                label="Designation"
+                icon={<FaGlobe className="text-gray-400" />}
+                value={profileData.designation}
+                onChange={(e) => handleChange("designation", e.target.value)}
+                placeholder="Senior Instructor, Lecturer"
+              />
+
+              <Input
+                label="Institution"
+                icon={<FaBuilding className="text-gray-400" />}
+                value={profileData.institution}
+                onChange={(e) => handleChange("institution", e.target.value)}
+                placeholder="University / College Name"
+              />
             </div>
           </div>
         )}
 
+        {/* Admin Fields */}
         {normRole === "admin" && (
-          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md space-y-6">
-            <h3 className="text-lg font-black text-gray-900 border-b border-gray-100 pb-3">Admin Diagnostics</h3>
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h3 className="text-lg font-black text-slate-900 tracking-tight">Admin Configuration</h3>
+              <p className="text-[11px] text-slate-400 font-medium mt-0.5">Administrative role and operations details</p>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Admin Tier</label>
-                <Input
-                  value={profileData.adminTier}
-                  onChange={(e) => handleChange("adminTier", e.target.value)}
-                />
-              </div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Input
+                label="Admin Tier"
+                value={profileData.adminTier}
+                onChange={(e) => handleChange("adminTier", e.target.value)}
+                placeholder="Super Admin, Moderator, etc."
+              />
 
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Operations Node</label>
-                <Input
-                  value={profileData.adminDept}
-                  onChange={(e) => handleChange("adminDept", e.target.value)}
-                />
-              </div>
+              <Input
+                label="Operations Department"
+                value={profileData.adminDept}
+                onChange={(e) => handleChange("adminDept", e.target.value)}
+                placeholder="IT, Academic, Finance"
+              />
+
+              <Input
+                label="Administrative Base"
+                value={profileData.adminBase}
+                onChange={(e) => handleChange("adminBase", e.target.value)}
+                placeholder="Headquarters, Branch, etc."
+              />
             </div>
           </div>
         )}
 
         {/* Submit Actions */}
-        <div className="flex justify-end gap-4">
-          <OutlineBtn type="button" onClick={() => router.back()}>
-            Cancel
-          </OutlineBtn>
-          <PrimaryBtn type="submit" disabled={loading}>
-            {loading ? "Saving Profile..." : "Save Changes"}
-          </PrimaryBtn>
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
+            Fields marked with * are required
+          </p>
+
+          <div className="flex items-center gap-3 ml-auto">
+            <OutlineBtn
+              type="button"
+              onClick={() => router.back()}
+              className="!text-sm !py-2.5 !px-5"
+            >
+              Cancel
+            </OutlineBtn>
+            <PrimaryBtn
+              type="submit"
+              disabled={loading}
+              className="!text-sm !py-2.5 !px-6 gap-2 shadow-md"
+            >
+              {loading ? (
+                <>
+                  <span className="animate-spin inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <FaCheckCircle className="text-xs" />
+                  Save Changes
+                </>
+              )}
+            </PrimaryBtn>
+          </div>
         </div>
       </form>
     </PageContainer>

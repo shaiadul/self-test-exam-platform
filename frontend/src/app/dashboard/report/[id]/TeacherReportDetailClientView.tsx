@@ -87,7 +87,7 @@ export default function TeacherReportDetailClientView({
   }, [report, searchTerm, sortBy, sortOrder]);
 
   const sortOptions = [
-    { label: "Merit Position (1st → Last)", value: "merit" },
+    { label: "Merit Position", value: "merit" },
     { label: "Marks Scored", value: "score" },
     { label: "Student Name", value: "name" },
     { label: "Institution", value: "institution" },

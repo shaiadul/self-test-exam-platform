@@ -94,7 +94,7 @@ export async function updateProfileAction(profileData: any) {
 		}
 
 		const response = await fetch(`${API_URL}/auth/complete-profile`, {
-			method: "POST",
+			method: "PUT",
 			headers: {
 				"Content-Type": "application/json",
 				...authHeader,
@@ -102,10 +102,12 @@ export async function updateProfileAction(profileData: any) {
 			body: JSON.stringify(profileData),
 		});
 
-		const data = await response.json();
 		if (!response.ok) {
+			const data = await response.json().catch(() => ({}));
 			throw new Error(data.error || "Failed to update profile.");
 		}
+
+		const data = await response.json();
 
 		revalidatePath("/dashboard");
 		revalidatePath("/dashboard/edit-profile");
@@ -114,3 +116,4 @@ export async function updateProfileAction(profileData: any) {
 		return { success: false, error: error.message };
 	}
 }
+
