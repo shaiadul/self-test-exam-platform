@@ -2,18 +2,18 @@
 
 import React, { useState } from "react";
 import { toast } from "sonner";
-import Image from "next/image";
 import { motion } from "framer-motion";
-import { FaBookOpen, FaImage, FaListUl, FaPlusCircle, FaArrowLeft } from "react-icons/fa";
+import { FaBookOpen, FaImage, FaListUl, FaPlusCircle, FaArrowLeft, FaCheckCircle } from "react-icons/fa";
 import CustomSelect from "../../../../components/ui/CustomSelect";
 import ImageUploader from "../../../../components/ui/ImageUploader";
-import { MdOutlineDeleteSweep } from "react-icons/md";
+import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
+import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import { useRouter } from "next/navigation";
 import {
   getExamsAction,
   createQuestionAction,
-  getQuestionsAction
+  getQuestionsAction,
 } from "../../../../lib/actions";
 
 type QuestionType = "mcq" | "passage" | "picture";
@@ -27,40 +27,6 @@ interface Question {
   passage?: string;
   pictureUrl?: string | null;
 }
-
-const OptionInput = ({
-  value,
-  onChange,
-  onRemove,
-  placeholder,
-  optionCount,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  onRemove: () => void;
-  placeholder: string;
-  optionCount: number;
-}) => (
-  <div className="flex items-center gap-2">
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-[#dd6b01] focus:ring-1 focus:ring-[#dd6b01]"
-    />
-    {optionCount > 2 && (
-      <button
-        type="button"
-        onClick={onRemove}
-        className="text-red-500 hover:text-red-700 text-sm font-bold p-1 cursor-pointer"
-        title="Remove Option"
-      >
-        ✕
-      </button>
-    )}
-  </div>
-);
 
 interface AddQuestionClientViewProps {
   examIdParam: string;
@@ -95,6 +61,7 @@ export default function AddQuestionClientView({
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [passage, setPassage] = useState("");
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const handlePackSelect = async (packIdStr: string) => {
     const pId = parseInt(packIdStr);
@@ -129,14 +96,25 @@ export default function AddQuestionClientView({
   };
 
   const handleOptionChange = (index: number, val: string) => {
+    const oldVal = options[index];
     const updated = [...options];
     updated[index] = val;
     setOptions(updated);
+
+    // If edited option was the chosen correct answer, update it
+    if (correctAnswer === oldVal) {
+      setCorrectAnswer(val);
+    }
   };
 
   const handleRemoveOption = (index: number) => {
     if (options.length > 2) {
-      setOptions(options.filter((_, i) => i !== index));
+      const removedVal = options[index];
+      const updated = options.filter((_, i) => i !== index);
+      setOptions(updated);
+      if (correctAnswer === removedVal) {
+        setCorrectAnswer(updated[0] || "");
+      }
     }
   };
 
@@ -153,23 +131,23 @@ export default function AddQuestionClientView({
     }
     const cleanOptions = options.map((o) => o.trim()).filter(Boolean);
     if (cleanOptions.length < 2) {
-      toast.error("At least 2 options are required.");
+      toast.error("At least 2 non-empty options are required.");
       return;
     }
-    if (!correctAnswer) {
-      toast.error("Please select the correct answer.");
-      return;
-    }
+    const targetCorrect = correctAnswer.trim() || cleanOptions[0];
+    const correctIndex = cleanOptions.indexOf(targetCorrect);
 
-    const correctIndex = cleanOptions.indexOf(correctAnswer);
-
+    setSubmitting(true);
     try {
       const res = await createQuestionAction(examId, {
-        text: questionText,
+        questionText: questionText.trim(),
+        text: questionText.trim(),
         type,
         options: cleanOptions,
+        correctAnswer: targetCorrect,
         correctIndex: correctIndex >= 0 ? correctIndex : 0,
-        explanation: passage || "",
+        passage: passage.trim() || undefined,
+        pictureUrl: pictureUrl || undefined,
       });
 
       if (res.success) {
@@ -187,6 +165,8 @@ export default function AddQuestionClientView({
       }
     } catch {
       toast.error("Failed to create question.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -237,7 +217,10 @@ export default function AddQuestionClientView({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Question Creator Form */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
-          <h2 className="text-lg font-extrabold text-[#dd6b01]">Create New Question</h2>
+          <div className="border-b border-gray-100 pb-3">
+            <h2 className="text-lg font-extrabold text-[#dd6b01]">Create New Question</h2>
+            <p className="text-xs text-gray-400 font-medium">Add questions, specify choices, and mark the correct answer key.</p>
+          </div>
 
           {/* Question Type Selector */}
           <div className="flex gap-2">
@@ -261,31 +244,32 @@ export default function AddQuestionClientView({
             ))}
           </div>
 
-          <form onSubmit={handleCreateQuestion} className="space-y-4">
+          <form onSubmit={handleCreateQuestion} className="space-y-5">
             {type === "passage" && (
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Passage Text</label>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Passage Context *</label>
                 <textarea
-                  className="w-full p-3 border border-gray-300 rounded-xl text-sm outline-none focus:border-[#dd6b01] min-h-[100px]"
-                  placeholder="Enter passage context..."
+                  className="w-full p-3.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-[#dd6b01] min-h-[100px] transition font-medium"
+                  placeholder="Paste or type the reading passage here..."
                   value={passage}
                   onChange={(e) => setPassage(e.target.value)}
+                  required
                 />
               </div>
             )}
 
             {type === "picture" && (
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Question Image</label>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Question Image *</label>
                 <ImageUploader preview={pictureUrl} onUpload={(url) => setPictureUrl(url)} />
               </div>
             )}
 
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Question Prompt</label>
+              <label className="text-xs font-bold text-gray-700 block mb-1">Question Prompt *</label>
               <textarea
-                className="w-full p-3 border border-gray-300 rounded-xl text-sm outline-none focus:border-[#dd6b01] min-h-[80px]"
-                placeholder="Type your question prompt here..."
+                className="w-full p-3.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-[#dd6b01] min-h-[85px] transition font-medium"
+                placeholder="Type the question statement here..."
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
                 required
@@ -294,23 +278,65 @@ export default function AddQuestionClientView({
 
             {/* Options */}
             <div className="space-y-3">
-              <label className="text-xs font-bold text-gray-700 block">Answer Choices</label>
-              {options.map((opt, idx) => (
-                <OptionInput
-                  key={idx}
-                  value={opt}
-                  onChange={(val) => handleOptionChange(idx, val)}
-                  onRemove={() => handleRemoveOption(idx)}
-                  placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-                  optionCount={options.length}
-                />
-              ))}
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-700 block">
+                  Answer Choices (Click checkmark or select below to set correct key)
+                </label>
+                <span className="text-[11px] text-gray-400 font-semibold">{options.length} options</span>
+              </div>
+
+              {options.map((opt, idx) => {
+                const label = String.fromCharCode(65 + idx);
+                const isCorrect = correctAnswer !== "" && correctAnswer === opt;
+
+                return (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200 text-[#dd6b01] font-bold text-xs flex items-center justify-center shrink-0">
+                      {label}
+                    </span>
+                    <input
+                      type="text"
+                      value={opt}
+                      onChange={(e) => handleOptionChange(idx, e.target.value)}
+                      placeholder={`Choice ${label} option text`}
+                      className={`w-full border-2 rounded-xl p-2.5 text-sm font-medium outline-none transition ${
+                        isCorrect
+                          ? "border-emerald-500 bg-emerald-50/20 text-emerald-900"
+                          : "border-gray-200 focus:border-[#dd6b01]"
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      title="Set as correct answer"
+                      onClick={() => opt.trim() && setCorrectAnswer(opt)}
+                      disabled={!opt.trim()}
+                      className={`p-2 rounded-lg text-sm border transition cursor-pointer shrink-0 ${
+                        isCorrect
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                          : "bg-gray-50 text-gray-400 border-gray-200 hover:border-emerald-400 hover:text-emerald-600"
+                      }`}
+                    >
+                      <FaCheckCircle />
+                    </button>
+                    {options.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveOption(idx)}
+                        className="text-gray-400 hover:text-red-600 text-sm font-bold p-2 shrink-0 cursor-pointer"
+                        title="Remove Option"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
 
               {options.length < 6 && (
                 <button
                   type="button"
                   onClick={handleAddOption}
-                  className="text-xs font-bold text-[#dd6b01] hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-bold text-[#dd6b01] hover:underline flex items-center gap-1 cursor-pointer pt-1"
                 >
                   <FaPlusCircle /> Add Choice Option
                 </button>
@@ -319,7 +345,7 @@ export default function AddQuestionClientView({
 
             {/* Correct Answer Select */}
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Correct Answer Choice</label>
+              <label className="text-xs font-bold text-gray-700 block mb-1">Designated Correct Answer Choice *</label>
               <CustomSelect
                 options={options.filter((o) => o.trim() !== "")}
                 value={correctAnswer}
@@ -328,13 +354,15 @@ export default function AddQuestionClientView({
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={!examId}
-              className="w-full py-3 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-sm rounded-xl shadow transition disabled:opacity-50 cursor-pointer"
-            >
-              Add Question to Bank
-            </button>
+            <div className="pt-2">
+              <PrimaryBtn
+                type="submit"
+                disabled={!examId || submitting}
+                className="w-full cursor-pointer disabled:opacity-50"
+              >
+                {submitting ? "Saving Question..." : "Add Question to Bank"}
+              </PrimaryBtn>
+            </div>
           </form>
         </div>
 
@@ -362,14 +390,15 @@ export default function AddQuestionClientView({
                 </div>
 
                 <div className="space-y-1 text-gray-600 pl-2">
-                  {q.options && q.options.map((opt, oIdx) => (
-                    <div
-                      key={oIdx}
-                      className={opt === q.correctAnswer ? "font-bold text-emerald-700" : ""}
-                    >
-                      • {String.fromCharCode(65 + oIdx)}. {opt} {opt === q.correctAnswer && "✓"}
-                    </div>
-                  ))}
+                  {q.options &&
+                    q.options.map((opt, oIdx) => (
+                      <div
+                        key={oIdx}
+                        className={opt === q.correctAnswer ? "font-bold text-emerald-700 flex items-center gap-1" : ""}
+                      >
+                        • {String.fromCharCode(65 + oIdx)}. {opt} {opt === q.correctAnswer && "✓ (Correct)"}
+                      </div>
+                    ))}
                 </div>
               </motion.div>
             ))}

@@ -2,16 +2,17 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/selftest/backend/middleware"
 	"github.com/selftest/backend/model"
 	"github.com/selftest/backend/repository"
-	"github.com/google/uuid"
 )
 
 
@@ -247,34 +248,157 @@ func (h *ExamHandler) GetExam(w http.ResponseWriter, r *http.Request, id string)
 	json.NewEncoder(w).Encode(exam)
 }
 
+func parseFlexibleTime(val interface{}) (time.Time, error) {
+	if val == nil {
+		return time.Time{}, errors.New("date is nil")
+	}
+	switch v := val.(type) {
+	case string:
+		str := strings.TrimSpace(v)
+		if str == "" {
+			return time.Time{}, errors.New("date is empty")
+		}
+		formats := []string{
+			time.RFC3339Nano,
+			time.RFC3339,
+			"2006-01-02T15:04:05.000Z",
+			"2006-01-02T15:04:05Z07:00",
+			"2006-01-02T15:04:05",
+			"2006-01-02T15:04",
+			"2006-01-02 15:04:05",
+			"2006-01-02 15:04",
+			"2006-01-02",
+		}
+		for _, f := range formats {
+			if t, err := time.Parse(f, str); err == nil {
+				return t, nil
+			}
+		}
+		return time.Time{}, fmt.Errorf("unable to parse date string: %s", str)
+	case float64:
+		sec := int64(v)
+		if sec > 1e11 {
+			return time.UnixMilli(sec), nil
+		}
+		return time.Unix(sec, 0), nil
+	default:
+		return time.Time{}, fmt.Errorf("unsupported date format: %v", val)
+	}
+}
+
+type CreateExamInput struct {
+	ID               string      `json:"id"`
+	Name             string      `json:"name"`
+	StartDate        interface{} `json:"startDate"`
+	EndDate          interface{} `json:"endDate"`
+	Level            string      `json:"level"`
+	Batch            string      `json:"batch"`
+	TotalMarks       *int        `json:"totalMarks"`
+	PassingMarks     *int        `json:"passingMarks"`
+	PassMark         *int        `json:"passMark"`
+	PerQuestionMarks *int        `json:"perQuestionMarks"`
+	PerQuestionMark  *int        `json:"perQuestionMark"`
+	NegativeMarks    *float64    `json:"negativeMarks"`
+	NegativeMarking  *bool       `json:"negativeMarking"`
+	NegativeValue    *float64    `json:"negativeValue"`
+}
+
 func (h *ExamHandler) CreateExam(w http.ResponseWriter, r *http.Request, packID int) {
-	var exam model.Exam
-	if err := json.NewDecoder(r.Body).Decode(&exam); err != nil {
+	var input CreateExamInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
 		return
 	}
 
-	if exam.Name == "" || exam.StartDate.IsZero() || exam.EndDate.IsZero() {
-		http.Error(w, `{"error": "Name, StartDate, and EndDate are required"}`, http.StatusBadRequest)
+	name := strings.TrimSpace(input.Name)
+	if name == "" {
+		http.Error(w, `{"error": "Exam Name is required"}`, http.StatusBadRequest)
 		return
 	}
-	if exam.ID == "" {
-		// generate a UUID for the exam ID if not provided
-		exam.ID = uuid.New().String()
+
+	startDate, err := parseFlexibleTime(input.StartDate)
+	if err != nil || startDate.IsZero() {
+		http.Error(w, `{"error": "Valid Start Date is required"}`, http.StatusBadRequest)
+		return
 	}
 
-	exam.ExamPackID = packID
-	if exam.TotalMarks == 0 {
+	endDate, err := parseFlexibleTime(input.EndDate)
+	if err != nil || endDate.IsZero() {
+		http.Error(w, `{"error": "Valid End Date is required"}`, http.StatusBadRequest)
+		return
+	}
+
+	if endDate.Before(startDate) {
+		http.Error(w, `{"error": "End Date must be after Start Date"}`, http.StatusBadRequest)
+		return
+	}
+
+	examID := strings.TrimSpace(input.ID)
+	if examID == "" {
+		examID = uuid.New().String()
+	}
+
+	exam := model.Exam{
+		ID:         examID,
+		ExamPackID: packID,
+		Name:       name,
+		StartDate:  startDate,
+		EndDate:    endDate,
+		Level:      strings.TrimSpace(input.Level),
+		Batch:      strings.TrimSpace(input.Batch),
+	}
+
+	if exam.Level == "" {
+		exam.Level = "HSC"
+	}
+	if exam.Batch == "" {
+		exam.Batch = "2024"
+	}
+
+	// Marks
+	if input.TotalMarks != nil && *input.TotalMarks > 0 {
+		exam.TotalMarks = *input.TotalMarks
+	} else {
 		exam.TotalMarks = 10
 	}
-	if exam.PassingMarks == 0 {
+
+	if input.PassingMarks != nil && *input.PassingMarks > 0 {
+		exam.PassingMarks = *input.PassingMarks
+	} else if input.PassMark != nil && *input.PassMark > 0 {
+		exam.PassingMarks = *input.PassMark
+	} else {
 		exam.PassingMarks = 5
 	}
-	if exam.PerQuestionMarks == 0 {
+
+	if input.PerQuestionMarks != nil && *input.PerQuestionMarks > 0 {
+		exam.PerQuestionMarks = *input.PerQuestionMarks
+	} else if input.PerQuestionMark != nil && *input.PerQuestionMark > 0 {
+		exam.PerQuestionMarks = *input.PerQuestionMark
+	} else {
 		exam.PerQuestionMarks = 2
 	}
-	if exam.NegativeMarks == 0 {
+
+	// Negative marks logic:
+	if input.NegativeMarking != nil && !*input.NegativeMarking {
+		exam.NegativeMarks = 0.0
+	} else if input.NegativeMarks != nil {
+		val := *input.NegativeMarks
+		if val > 0 {
+			exam.NegativeMarks = -val
+		} else {
+			exam.NegativeMarks = val
+		}
+	} else if input.NegativeValue != nil {
+		val := *input.NegativeValue
+		if val > 0 {
+			exam.NegativeMarks = -val
+		} else {
+			exam.NegativeMarks = 0.0
+		}
+	} else if input.NegativeMarking != nil && *input.NegativeMarking {
 		exam.NegativeMarks = -0.5
+	} else {
+		exam.NegativeMarks = 0.0
 	}
 
 	if err := h.examRepo.CreateExam(&exam); err != nil {
@@ -287,9 +411,25 @@ func (h *ExamHandler) CreateExam(w http.ResponseWriter, r *http.Request, packID 
 	json.NewEncoder(w).Encode(exam)
 }
 
+type UpdateExamInput struct {
+	Name             string      `json:"name"`
+	StartDate        interface{} `json:"startDate"`
+	EndDate          interface{} `json:"endDate"`
+	Level            string      `json:"level"`
+	Batch            string      `json:"batch"`
+	TotalMarks       *int        `json:"totalMarks"`
+	PassingMarks     *int        `json:"passingMarks"`
+	PassMark         *int        `json:"passMark"`
+	PerQuestionMarks *int        `json:"perQuestionMarks"`
+	PerQuestionMark  *int        `json:"perQuestionMark"`
+	NegativeMarks    *float64    `json:"negativeMarks"`
+	NegativeMarking  *bool       `json:"negativeMarking"`
+	NegativeValue    *float64    `json:"negativeValue"`
+}
+
 func (h *ExamHandler) UpdateExam(w http.ResponseWriter, r *http.Request, id string) {
-	var req model.Exam
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	var input UpdateExamInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
 		return
 	}
@@ -304,32 +444,56 @@ func (h *ExamHandler) UpdateExam(w http.ResponseWriter, r *http.Request, id stri
 		return
 	}
 
-	if req.Name != "" {
-		exam.Name = req.Name
+	if strings.TrimSpace(input.Name) != "" {
+		exam.Name = strings.TrimSpace(input.Name)
 	}
-	if !req.StartDate.IsZero() {
-		exam.StartDate = req.StartDate
+	if input.StartDate != nil {
+		if st, err := parseFlexibleTime(input.StartDate); err == nil && !st.IsZero() {
+			exam.StartDate = st
+		}
 	}
-	if !req.EndDate.IsZero() {
-		exam.EndDate = req.EndDate
+	if input.EndDate != nil {
+		if et, err := parseFlexibleTime(input.EndDate); err == nil && !et.IsZero() {
+			exam.EndDate = et
+		}
 	}
-	if req.Level != "" {
-		exam.Level = req.Level
+	if strings.TrimSpace(input.Level) != "" {
+		exam.Level = strings.TrimSpace(input.Level)
 	}
-	if req.Batch != "" {
-		exam.Batch = req.Batch
+	if strings.TrimSpace(input.Batch) != "" {
+		exam.Batch = strings.TrimSpace(input.Batch)
 	}
-	if req.TotalMarks != 0 {
-		exam.TotalMarks = req.TotalMarks
+	if input.TotalMarks != nil && *input.TotalMarks > 0 {
+		exam.TotalMarks = *input.TotalMarks
 	}
-	if req.PassingMarks != 0 {
-		exam.PassingMarks = req.PassingMarks
+	if input.PassingMarks != nil && *input.PassingMarks > 0 {
+		exam.PassingMarks = *input.PassingMarks
+	} else if input.PassMark != nil && *input.PassMark > 0 {
+		exam.PassingMarks = *input.PassMark
 	}
-	if req.PerQuestionMarks != 0 {
-		exam.PerQuestionMarks = req.PerQuestionMarks
+	if input.PerQuestionMarks != nil && *input.PerQuestionMarks > 0 {
+		exam.PerQuestionMarks = *input.PerQuestionMarks
+	} else if input.PerQuestionMark != nil && *input.PerQuestionMark > 0 {
+		exam.PerQuestionMarks = *input.PerQuestionMark
 	}
-	if req.NegativeMarks != 0 {
-		exam.NegativeMarks = req.NegativeMarks
+
+	// Negative marks
+	if input.NegativeMarking != nil && !*input.NegativeMarking {
+		exam.NegativeMarks = 0.0
+	} else if input.NegativeMarks != nil {
+		val := *input.NegativeMarks
+		if val > 0 {
+			exam.NegativeMarks = -val
+		} else {
+			exam.NegativeMarks = val
+		}
+	} else if input.NegativeValue != nil {
+		val := *input.NegativeValue
+		if val > 0 {
+			exam.NegativeMarks = -val
+		} else {
+			exam.NegativeMarks = 0.0
+		}
 	}
 
 	if err := h.examRepo.UpdateExam(exam); err != nil {
@@ -359,21 +523,82 @@ func (h *ExamHandler) GetQuestions(w http.ResponseWriter, r *http.Request, examI
 	json.NewEncoder(w).Encode(questions)
 }
 
+type QuestionInput struct {
+	Type          string   `json:"type"`
+	QuestionText  string   `json:"questionText"`
+	Text          string   `json:"text"`
+	Options       []string `json:"options"`
+	CorrectAnswer string   `json:"correctAnswer"`
+	CorrectIndex  *int     `json:"correctIndex"`
+	Passage       *string  `json:"passage"`
+	Explanation   *string  `json:"explanation"`
+	PictureURL    *string  `json:"pictureUrl"`
+}
+
 func (h *ExamHandler) CreateQuestion(w http.ResponseWriter, r *http.Request, examID string) {
-	var q model.Question
-	if err := json.NewDecoder(r.Body).Decode(&q); err != nil {
+	var input QuestionInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
 		return
 	}
 
-	if q.QuestionText == "" || len(q.Options) == 0 || q.CorrectAnswer == "" {
-		http.Error(w, `{"error": "QuestionText, options, and CorrectAnswer are required"}`, http.StatusBadRequest)
+	qText := strings.TrimSpace(input.QuestionText)
+	if qText == "" {
+		qText = strings.TrimSpace(input.Text)
+	}
+	if qText == "" {
+		http.Error(w, `{"error": "Question text is required"}`, http.StatusBadRequest)
 		return
 	}
 
-	q.ExamID = examID
-	if q.Type == "" {
-		q.Type = "mcq"
+	var cleanOptions []string
+	for _, opt := range input.Options {
+		trimmed := strings.TrimSpace(opt)
+		if trimmed != "" {
+			cleanOptions = append(cleanOptions, trimmed)
+		}
+	}
+	if len(cleanOptions) < 2 {
+		http.Error(w, `{"error": "At least 2 options are required"}`, http.StatusBadRequest)
+		return
+	}
+
+	correct := strings.TrimSpace(input.CorrectAnswer)
+	if correct == "" && input.CorrectIndex != nil && *input.CorrectIndex >= 0 && *input.CorrectIndex < len(cleanOptions) {
+		correct = cleanOptions[*input.CorrectIndex]
+	}
+	if correct == "" {
+		correct = cleanOptions[0]
+	}
+
+	qType := strings.TrimSpace(input.Type)
+	if qType == "" {
+		qType = "mcq"
+	}
+
+	var passage *string
+	if input.Passage != nil && strings.TrimSpace(*input.Passage) != "" {
+		p := strings.TrimSpace(*input.Passage)
+		passage = &p
+	} else if input.Explanation != nil && strings.TrimSpace(*input.Explanation) != "" {
+		p := strings.TrimSpace(*input.Explanation)
+		passage = &p
+	}
+
+	var pictureURL *string
+	if input.PictureURL != nil && strings.TrimSpace(*input.PictureURL) != "" {
+		pic := strings.TrimSpace(*input.PictureURL)
+		pictureURL = &pic
+	}
+
+	q := model.Question{
+		ExamID:        examID,
+		Type:          qType,
+		QuestionText:  qText,
+		Options:       cleanOptions,
+		CorrectAnswer: correct,
+		Passage:       passage,
+		PictureURL:    pictureURL,
 	}
 
 	if err := h.examRepo.CreateQuestion(&q); err != nil {
