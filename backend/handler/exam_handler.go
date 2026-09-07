@@ -11,7 +11,10 @@ import (
 	"github.com/selftest/backend/middleware"
 	"github.com/selftest/backend/model"
 	"github.com/selftest/backend/repository"
+	"github.com/google/uuid"
 )
+
+
 
 type ExamHandler struct {
 	examRepo repository.ExamRepository
@@ -251,9 +254,13 @@ func (h *ExamHandler) CreateExam(w http.ResponseWriter, r *http.Request, packID 
 		return
 	}
 
-	if exam.ID == "" || exam.Name == "" || exam.StartDate.IsZero() || exam.EndDate.IsZero() {
-		http.Error(w, `{"error": "ID, Name, StartDate, and EndDate are required"}`, http.StatusBadRequest)
+	if exam.Name == "" || exam.StartDate.IsZero() || exam.EndDate.IsZero() {
+		http.Error(w, `{"error": "Name, StartDate, and EndDate are required"}`, http.StatusBadRequest)
 		return
+	}
+	if exam.ID == "" {
+		// generate a UUID for the exam ID if not provided
+		exam.ID = uuid.New().String()
 	}
 
 	exam.ExamPackID = packID

@@ -13,6 +13,7 @@ import {
   FaTimesCircle,
   FaQuestionCircle,
   FaLightbulb,
+  FaFilter,
 } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import Scorecard from "../../../../components/dashboard/Scorecard";
@@ -67,6 +68,12 @@ export default function ReportingDetailClientView({
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"score" | "name">("score");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const sortOptions = [
+    { label: "Marks Scored", value: "score" },
+    { label: "Candidate Name", value: "name" },
+  ];
 
   // Compute peers and rank from initialReportDetails
   const { peers, myRank } = useMemo(() => {
@@ -435,6 +442,42 @@ export default function ReportingDetailClientView({
                 />
               </div>
 
+              {/* Custom Sort Dropdown */}
+              <div className="relative w-full sm:w-44">
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-xs bg-white hover:border-[#dd6b01] transition text-gray-700 cursor-pointer"
+                >
+                  <span className="flex items-center gap-1">
+                    <FaFilter className="text-[10px] text-gray-400 mr-1" />
+                    {sortOptions.find((o) => o.value === sortBy)?.label}
+                  </span>
+                  <span className="text-[10px] text-gray-400">▼</span>
+                </button>
+
+                {showDropdown && (
+                  <div className="absolute right-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                    {sortOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setSortBy(option.value as "score" | "name");
+                          setShowDropdown(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs hover:bg-orange-50 transition cursor-pointer ${
+                          sortBy === option.value
+                            ? "font-bold text-[#dd6b01] bg-orange-50/50"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Order Toggle */}
               <button
                 onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
                 className="flex items-center justify-center border border-gray-300 rounded-lg p-2.5 bg-white hover:border-[#dd6b01] transition text-gray-700 cursor-pointer"
