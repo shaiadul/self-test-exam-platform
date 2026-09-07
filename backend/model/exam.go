@@ -25,6 +25,9 @@ type Exam struct {
 	PassingMarks     int       `json:"passingMarks" db:"passing_marks"`
 	PerQuestionMarks int       `json:"perQuestionMarks" db:"per_question_marks"`
 	NegativeMarks    float64   `json:"negativeMarks" db:"negative_marks"`
+	IsPrivate        bool      `json:"isPrivate" db:"is_private"`
+	Passcode         string    `json:"passcode" db:"passcode"`
+	DurationMinutes  int       `json:"durationMinutes" db:"duration_minutes"`
 	CreatedAt        time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -58,9 +61,9 @@ type ExamAttempt struct {
 }
 
 type SubmitExamRequest struct {
-	Answers         map[string]string `json:"answers"`
-	WarningCount    int               `json:"warningCount"`
-	SecurityMessage string            `json:"securityMessage"`
+	Answers         map[string]interface{} `json:"answers"`
+	WarningCount    int                    `json:"warningCount"`
+	SecurityMessage string                 `json:"securityMessage"`
 }
 
 type StudentStats struct {

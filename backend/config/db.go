@@ -101,13 +101,16 @@ func createUsersTable() {
 		log.Fatalf("Failed to create users table: %v", err)
 	}
 
-	// Alter users table to add new columns if they do not exist
+	// Alter users and exams table to add new columns if they do not exist
 	alterQueries := []string{
 		"ALTER TABLE users ADD COLUMN IF NOT EXISTS subject VARCHAR(100)",
 		"ALTER TABLE users ADD COLUMN IF NOT EXISTS designation VARCHAR(100)",
 		"ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_tier VARCHAR(100)",
 		"ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_dept VARCHAR(100)",
 		"ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_base VARCHAR(100)",
+		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT false",
+		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS passcode VARCHAR(100) DEFAULT ''",
+		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS duration_minutes INT DEFAULT 30",
 	}
 	for _, aq := range alterQueries {
 		if _, err := DB.Exec(aq); err != nil {

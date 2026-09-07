@@ -166,7 +166,7 @@ func (r *SQLExamRepository) DeleteExamPack(id int) error {
 
 func (r *SQLExamRepository) GetExamsByPackID(packID int) ([]model.Exam, error) {
 	query := `
-		SELECT id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, created_at, updated_at
+		SELECT id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, COALESCE(is_private, false), COALESCE(passcode, ''), COALESCE(duration_minutes, 30), created_at, updated_at
 		FROM exams
 		WHERE exam_pack_id = $1
 		ORDER BY start_date ASC`
@@ -192,6 +192,9 @@ func (r *SQLExamRepository) GetExamsByPackID(packID int) ([]model.Exam, error) {
 			&e.PassingMarks,
 			&e.PerQuestionMarks,
 			&e.NegativeMarks,
+			&e.IsPrivate,
+			&e.Passcode,
+			&e.DurationMinutes,
 			&e.CreatedAt,
 			&e.UpdatedAt,
 		)
@@ -206,7 +209,7 @@ func (r *SQLExamRepository) GetExamsByPackID(packID int) ([]model.Exam, error) {
 
 func (r *SQLExamRepository) GetExamByID(id string) (*model.Exam, error) {
 	query := `
-		SELECT id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, created_at, updated_at
+		SELECT id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, COALESCE(is_private, false), COALESCE(passcode, ''), COALESCE(duration_minutes, 30), created_at, updated_at
 		FROM exams
 		WHERE id = $1`
 
@@ -223,6 +226,9 @@ func (r *SQLExamRepository) GetExamByID(id string) (*model.Exam, error) {
 		&e.PassingMarks,
 		&e.PerQuestionMarks,
 		&e.NegativeMarks,
+		&e.IsPrivate,
+		&e.Passcode,
+		&e.DurationMinutes,
 		&e.CreatedAt,
 		&e.UpdatedAt,
 	)
@@ -238,7 +244,7 @@ func (r *SQLExamRepository) GetExamByID(id string) (*model.Exam, error) {
 
 func (r *SQLExamRepository) GetUpcomingExamsForUser(userID int, now time.Time) ([]model.Exam, error) {
 	query := `
-		SELECT e.id, e.exam_pack_id, e.name, e.start_date, e.end_date, e.level, e.batch, e.total_marks, e.passing_marks, e.per_question_marks, e.negative_marks, e.created_at, e.updated_at
+		SELECT e.id, e.exam_pack_id, e.name, e.start_date, e.end_date, e.level, e.batch, e.total_marks, e.passing_marks, e.per_question_marks, e.negative_marks, COALESCE(e.is_private, false), COALESCE(e.passcode, ''), COALESCE(e.duration_minutes, 30), e.created_at, e.updated_at
 		FROM exams e
 		LEFT JOIN exam_attempts a ON e.id = a.exam_id AND a.user_id = $1
 		WHERE a.id IS NULL AND e.end_date > $2
@@ -266,6 +272,9 @@ func (r *SQLExamRepository) GetUpcomingExamsForUser(userID int, now time.Time) (
 			&e.PassingMarks,
 			&e.PerQuestionMarks,
 			&e.NegativeMarks,
+			&e.IsPrivate,
+			&e.Passcode,
+			&e.DurationMinutes,
 			&e.CreatedAt,
 			&e.UpdatedAt,
 		)
@@ -280,8 +289,8 @@ func (r *SQLExamRepository) GetUpcomingExamsForUser(userID int, now time.Time) (
 
 func (r *SQLExamRepository) CreateExam(exam *model.Exam) error {
 	query := `
-		INSERT INTO exams (id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
+		INSERT INTO exams (id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, is_private, passcode, duration_minutes, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`
 
 	now := time.Now()
 	exam.CreatedAt = now
@@ -300,6 +309,9 @@ func (r *SQLExamRepository) CreateExam(exam *model.Exam) error {
 		exam.PassingMarks,
 		exam.PerQuestionMarks,
 		exam.NegativeMarks,
+		exam.IsPrivate,
+		exam.Passcode,
+		exam.DurationMinutes,
 		exam.CreatedAt,
 		exam.UpdatedAt,
 	)
@@ -309,8 +321,8 @@ func (r *SQLExamRepository) CreateExam(exam *model.Exam) error {
 func (r *SQLExamRepository) UpdateExam(exam *model.Exam) error {
 	query := `
 		UPDATE exams
-		SET name = $1, start_date = $2, end_date = $3, level = $4, batch = $5, total_marks = $6, passing_marks = $7, per_question_marks = $8, negative_marks = $9, updated_at = $10
-		WHERE id = $11`
+		SET name = $1, start_date = $2, end_date = $3, level = $4, batch = $5, total_marks = $6, passing_marks = $7, per_question_marks = $8, negative_marks = $9, is_private = $10, passcode = $11, duration_minutes = $12, updated_at = $13
+		WHERE id = $14`
 
 	exam.UpdatedAt = time.Now()
 	_, err := r.db.Exec(
@@ -324,6 +336,9 @@ func (r *SQLExamRepository) UpdateExam(exam *model.Exam) error {
 		exam.PassingMarks,
 		exam.PerQuestionMarks,
 		exam.NegativeMarks,
+		exam.IsPrivate,
+		exam.Passcode,
+		exam.DurationMinutes,
 		exam.UpdatedAt,
 		exam.ID,
 	)

@@ -301,6 +301,12 @@ type CreateExamInput struct {
 	NegativeMarks    *float64    `json:"negativeMarks"`
 	NegativeMarking  *bool       `json:"negativeMarking"`
 	NegativeValue    *float64    `json:"negativeValue"`
+	IsPrivate        *bool       `json:"isPrivate"`
+	PrivateExam      *bool       `json:"privateExam"`
+	Passcode         *string     `json:"passcode"`
+	PrivatePassword  *string     `json:"privatePassword"`
+	DurationMinutes  *int        `json:"durationMinutes"`
+	Duration         *int        `json:"duration"`
 }
 
 func (h *ExamHandler) CreateExam(w http.ResponseWriter, r *http.Request, packID int) {
@@ -401,6 +407,27 @@ func (h *ExamHandler) CreateExam(w http.ResponseWriter, r *http.Request, packID 
 		exam.NegativeMarks = 0.0
 	}
 
+	// Private Exam and Passcode
+	if input.IsPrivate != nil {
+		exam.IsPrivate = *input.IsPrivate
+	} else if input.PrivateExam != nil {
+		exam.IsPrivate = *input.PrivateExam
+	}
+	if input.Passcode != nil {
+		exam.Passcode = strings.TrimSpace(*input.Passcode)
+	} else if input.PrivatePassword != nil {
+		exam.Passcode = strings.TrimSpace(*input.PrivatePassword)
+	}
+
+	// Duration
+	if input.DurationMinutes != nil && *input.DurationMinutes > 0 {
+		exam.DurationMinutes = *input.DurationMinutes
+	} else if input.Duration != nil && *input.Duration > 0 {
+		exam.DurationMinutes = *input.Duration
+	} else {
+		exam.DurationMinutes = 30
+	}
+
 	if err := h.examRepo.CreateExam(&exam); err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "Failed to create exam: %v"}`, err), http.StatusInternalServerError)
 		return
@@ -425,6 +452,12 @@ type UpdateExamInput struct {
 	NegativeMarks    *float64    `json:"negativeMarks"`
 	NegativeMarking  *bool       `json:"negativeMarking"`
 	NegativeValue    *float64    `json:"negativeValue"`
+	IsPrivate        *bool       `json:"isPrivate"`
+	PrivateExam      *bool       `json:"privateExam"`
+	Passcode         *string     `json:"passcode"`
+	PrivatePassword  *string     `json:"privatePassword"`
+	DurationMinutes  *int        `json:"durationMinutes"`
+	Duration         *int        `json:"duration"`
 }
 
 func (h *ExamHandler) UpdateExam(w http.ResponseWriter, r *http.Request, id string) {
@@ -494,6 +527,25 @@ func (h *ExamHandler) UpdateExam(w http.ResponseWriter, r *http.Request, id stri
 		} else {
 			exam.NegativeMarks = 0.0
 		}
+	}
+
+	// Private Exam and Passcode
+	if input.IsPrivate != nil {
+		exam.IsPrivate = *input.IsPrivate
+	} else if input.PrivateExam != nil {
+		exam.IsPrivate = *input.PrivateExam
+	}
+	if input.Passcode != nil {
+		exam.Passcode = strings.TrimSpace(*input.Passcode)
+	} else if input.PrivatePassword != nil {
+		exam.Passcode = strings.TrimSpace(*input.PrivatePassword)
+	}
+
+	// Duration
+	if input.DurationMinutes != nil && *input.DurationMinutes > 0 {
+		exam.DurationMinutes = *input.DurationMinutes
+	} else if input.Duration != nil && *input.Duration > 0 {
+		exam.DurationMinutes = *input.Duration
 	}
 
 	if err := h.examRepo.UpdateExam(exam); err != nil {
@@ -639,19 +691,34 @@ func (h *ExamHandler) SubmitExam(w http.ResponseWriter, r *http.Request, examID 
 	// Calculate scores
 	var correct, wrong int
 	for _, q := range questions {
-		userAns, exists := req.Answers[strconv.Itoa(q.ID)]
+		var rawVal interface{}
+		var exists bool
+
+		rawVal, exists = req.Answers[strconv.Itoa(q.ID)]
 		if !exists {
-			// Try checking string key fallback or search
-			userAns, exists = req.Answers[fmt.Sprintf("q%d", q.ID)]
+			rawVal, exists = req.Answers[fmt.Sprintf("q%d", q.ID)]
 			if !exists {
-				// Search other keys
 				for key, val := range req.Answers {
 					if strings.Contains(key, strconv.Itoa(q.ID)) {
-						userAns = val
+						rawVal = val
 						exists = true
 						break
 					}
 				}
+			}
+		}
+
+		var userAns string
+		if exists && rawVal != nil {
+			switch v := rawVal.(type) {
+			case string:
+				userAns = strings.TrimSpace(v)
+			case float64:
+				userAns = strconv.Itoa(int(v))
+			case int:
+				userAns = strconv.Itoa(v)
+			default:
+				userAns = fmt.Sprintf("%v", v)
 			}
 		}
 
