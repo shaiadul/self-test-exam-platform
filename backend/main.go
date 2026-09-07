@@ -83,8 +83,8 @@ func main() {
 	mux.Handle("/api/transactions", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleTransactions)))
 	mux.Handle("/api/transactions/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleTransactions)))
 
-	// Apply CORS
-	handlerWithCORS := corsMiddleware(mux)
+	// Apply CORS and Logger middleware to capture all API requests
+	handlerWithMiddleware := middleware.LoggerMiddleware(corsMiddleware(mux))
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -92,5 +92,5 @@ func main() {
 	}
 
 	fmt.Printf("Go server started on port %s...\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, handlerWithCORS))
+	log.Fatal(http.ListenAndServe(":"+port, handlerWithMiddleware))
 }
