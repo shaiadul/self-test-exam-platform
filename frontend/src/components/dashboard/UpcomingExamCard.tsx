@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { FaCalendarAlt, FaClock, FaPlay, FaGraduationCap } from "react-icons/fa";
+import { PrimaryBtn } from "../ui/PrimaryBtn";
 
 type UpcomingExamCardProps = {
   id: string;
@@ -69,13 +69,13 @@ export default function UpcomingExamCard({
 
       {/* Action Button */}
       <div className="pt-2 border-t border-slate-100">
-        <Link
-          href={`/dashboard/exam-pack/exam-pack-details/${id}`}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-md shadow-orange-500/10 hover:shadow-orange-500/20 transition-all cursor-pointer"
+        <PrimaryBtn
+          link={`/dashboard/exam-pack/exam-pack-details/${id}`}
+          className="w-full !text-xs !py-2.5 shadow-sm gap-2"
         >
           <FaPlay className="text-[10px]" />
           <span>Launch Exam</span>
-        </Link>
+        </PrimaryBtn>
       </div>
     </div>
   );

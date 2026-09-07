@@ -424,7 +424,16 @@ func (h *ExamHandler) SubmitExam(w http.ResponseWriter, r *http.Request, examID 
 		}
 
 		if exists && userAns != "" {
+			isCorrect := false
 			if userAns == q.CorrectAnswer {
+				isCorrect = true
+			} else if idx, err := strconv.Atoi(userAns); err == nil && idx >= 0 && idx < len(q.Options) {
+				if q.Options[idx] == q.CorrectAnswer {
+					isCorrect = true
+				}
+			}
+
+			if isCorrect {
 				correct++
 			} else {
 				wrong++
@@ -470,9 +479,24 @@ func (h *ExamHandler) SubmitExam(w http.ResponseWriter, r *http.Request, examID 
 		return
 	}
 
+	userName := "Candidate"
+	if u, err := h.userRepo.GetByID(userID); err == nil && u != nil {
+		userName = u.Name
+	}
+
+	type SubmitExamResponse struct {
+		model.ExamAttempt
+		UserName string `json:"userName"`
+	}
+
+	res := SubmitExamResponse{
+		ExamAttempt: attempt,
+		UserName:    userName,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(attempt)
+	json.NewEncoder(w).Encode(res)
 }
 
 func (h *ExamHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) {
@@ -556,11 +580,13 @@ func (h *ExamHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) 
 				examName = "Exam " + a.ExamID
 			}
 			recentExams = append(recentExams, model.RecentExamAttempt{
-				ID:          "#" + a.ExamID,
+				ID:          fmt.Sprintf("#%d", a.ID),
+				ExamID:      a.ExamID,
+				AttemptID:   a.ID,
 				Name:        examName,
 				Score:       fmt.Sprintf("%.1f/%d", a.FinalScore, a.Total*2),
 				Negative:    fmt.Sprintf("%.1f", a.Negative),
-				AnswerSheet: "#",
+				AnswerSheet: fmt.Sprintf("/dashboard/reporting/%d", a.ID),
 			})
 		}
 
@@ -914,9 +940,16 @@ func (h *ExamHandler) GetAttemptDetails(w http.ResponseWriter, r *http.Request, 
 		}
 	}
 
+	user, err := h.userRepo.GetByID(attempt.UserID)
+	userName := "Candidate"
+	if err == nil && user != nil {
+		userName = user.Name
+	}
+
 	type AttemptDetailsResponse struct {
 		ID               int       `json:"id"`
 		UserID           int       `json:"userId"`
+		UserName         string    `json:"userName"`
 		ExamID           string    `json:"examId"`
 		ExamName         string    `json:"examName"`
 		ExamPackID       int       `json:"examPackId"`
@@ -944,6 +977,7 @@ func (h *ExamHandler) GetAttemptDetails(w http.ResponseWriter, r *http.Request, 
 	res := AttemptDetailsResponse{
 		ID:               attempt.ID,
 		UserID:           attempt.UserID,
+		UserName:         userName,
 		ExamID:           attempt.ExamID,
 		ExamName:         examName,
 		ExamPackID:       examPackID,

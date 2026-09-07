@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { HiMenuAlt3, HiX } from "react-icons/hi";
 import Image from "next/image";
@@ -16,16 +16,35 @@ const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: <FaHome /> },
   { name: "Exam Pack", href: "/dashboard/exam-pack", icon: <FaBoxOpen /> },
   { name: "Manage Exam Pack", href: "/dashboard/manage-exam-pack", icon: <SiGoogletagmanager /> },
-  { name: "Reporting", href: "/dashboard/reporting", icon: <FaChartBar /> },
+  { name: "My Reports", href: "/dashboard/reporting", icon: <FaChartBar /> },
   { name: "Question Bank", href: "/dashboard/question/add", icon: <MdQuestionAnswer /> },
-  { name: "Exam Reports", href: "/dashboard/report", icon: <TbMessageReportFilled /> },
+  { name: "Class Evaluations", href: "/dashboard/report", icon: <TbMessageReportFilled /> },
   { name: "Edit Profile", href: "/dashboard/edit-profile", icon: <FaUserCog /> },
   { name: "Settings", href: "/dashboard/settings", icon: <IoMdSettings /> },
 ];
 
+const roleAccess: Record<string, string[]> = {
+  "Manage Exam Pack": ["teacher", "admin"],
+  "Question Bank": ["teacher", "admin"],
+  "Class Evaluations": ["teacher", "admin"],
+  Settings: ["admin"],
+};
+
 export const MobileNav = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string>("student");
   const pathname = usePathname();
+
+  useEffect(() => {
+    const role = localStorage.getItem("userRole") || "student";
+    setUserRole(role);
+  }, []);
+
+  const visibleMenuItems = menuItems.filter((item) => {
+    const allowed = roleAccess[item.name];
+    if (!allowed) return true;
+    return allowed.includes(userRole);
+  });
 
   return (
     <div className="lg:hidden">
@@ -69,7 +88,7 @@ export const MobileNav = () => {
               </div>
 
               <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-                {menuItems.map((item) => {
+                {visibleMenuItems.map((item) => {
                   const active = pathname === item.href;
                   return (
                     <Link

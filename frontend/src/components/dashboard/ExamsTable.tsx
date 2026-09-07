@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { Exam } from "../../lib/types";
 import { FaFileAlt, FaEye, FaArrowRight, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { PrimaryBtn } from "../ui/PrimaryBtn";
+import { OutlineBtn } from "../ui/OutlineBtn";
 
 interface ExamsTableProps {
   exams: Exam[];
@@ -13,7 +14,7 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
   if (!exams || exams.length === 0) {
     return (
       <div className="py-12 px-4 text-center flex flex-col items-center justify-center">
-        <div className="w-16 h-16 rounded-3xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[#dd6b01] text-2xl mb-4 shadow-sm">
+        <div className="w-16 h-16 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[#dd6b01] text-2xl mb-4 shadow-xs">
           <FaFileAlt />
         </div>
         <h4 className="text-base font-bold text-slate-800 mb-1">
@@ -22,13 +23,13 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
         <p className="text-xs text-slate-500 max-w-sm mb-6">
           You haven&apos;t taken any mock exams yet. Start your first self-test to generate dynamic performance stats and merit ranking!
         </p>
-        <Link
-          href="/dashboard/exam-pack"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-xs shadow-md shadow-orange-500/10 transition-all cursor-pointer"
+        <PrimaryBtn
+          link="/dashboard/exam-pack"
+          className="!text-xs !py-2.5 !px-5 gap-2 shadow-xs"
         >
           <span>Explore Mock Exams</span>
           <FaArrowRight className="text-xs" />
-        </Link>
+        </PrimaryBtn>
       </div>
     );
   }
@@ -142,13 +143,24 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
 
                   {/* Actions */}
                   <td className="px-5 py-4 text-right whitespace-nowrap">
-                    <Link
-                      href="/dashboard/reporting"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#dd6b01] text-slate-700 hover:text-white text-xs font-bold transition-all shadow-xs"
-                    >
-                      <FaEye className="text-xs" />
-                      <span>Review</span>
-                    </Link>
+                    {(() => {
+                      const reportLink =
+                        exam.answerSheet && exam.answerSheet !== "#"
+                          ? exam.answerSheet
+                          : exam.attemptId
+                          ? `/dashboard/reporting/${exam.attemptId}`
+                          : `/dashboard/reporting/${exam.id.replace("#", "")}`;
+
+                      return (
+                        <OutlineBtn
+                          link={reportLink}
+                          className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs"
+                        >
+                          <FaEye className="text-xs text-[#dd6b01]" />
+                          <span className="text-slate-700 font-bold">View Report</span>
+                        </OutlineBtn>
+                      );
+                    })()}
                   </td>
                 </tr>
               );

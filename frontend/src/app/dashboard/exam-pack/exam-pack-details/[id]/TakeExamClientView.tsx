@@ -9,6 +9,9 @@ import { PageContainer } from "../../../../../components/common/PageContainer";
 import Scorecard from "../../../../../components/dashboard/Scorecard";
 import CertificatePrintLayout from "../../../../../components/dashboard/CertificatePrintLayout";
 import { submitExamAction } from "../../../../../lib/actions";
+import { FaEye } from "react-icons/fa";
+import { PrimaryBtn } from "../../../../../components/ui/PrimaryBtn";
+import { OutlineBtn } from "../../../../../components/ui/OutlineBtn";
 
 // --- TYPES ---
 type Answer = string;
@@ -201,18 +204,18 @@ export default function TakeExamClientView({
           </div>
 
           <div className="pt-6 border-t border-gray-100 flex gap-4">
-            <button
+            <OutlineBtn
               onClick={() => router.back()}
-              className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-2xl transition"
+              className="flex-1 !text-sm !py-3"
             >
               Back
-            </button>
-            <button
+            </OutlineBtn>
+            <PrimaryBtn
               onClick={() => setExamStatus("running")}
-              className="flex-1 py-3 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-sm rounded-2xl shadow-lg shadow-orange-500/20 transition cursor-pointer"
+              className="flex-1 !text-sm !py-3 shadow-lg shadow-orange-500/20"
             >
               Start Exam Now
-            </button>
+            </PrimaryBtn>
           </div>
         </div>
       </PageContainer>
@@ -263,19 +266,28 @@ export default function TakeExamClientView({
               totalMarks={examMeta.totalMarks}
             />
 
-            <div className="flex gap-4 pt-4">
-              <button
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              {examResult.id && (
+                <PrimaryBtn
+                  link={`/dashboard/reporting/${examResult.id}`}
+                  className="flex-1 !text-sm !py-3.5 shadow-lg shadow-orange-500/20 gap-2"
+                >
+                  <FaEye className="text-sm" />
+                  <span>View Detailed Report & Solutions</span>
+                </PrimaryBtn>
+              )}
+              <PrimaryBtn
                 onClick={() => window.print()}
-                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm rounded-2xl shadow transition"
+                className="flex-1 !text-sm !py-3.5 !from-purple-600 !to-indigo-600 shadow-lg shadow-purple-500/20"
               >
                 Print Official Certificate
-              </button>
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="flex-1 py-3 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-sm rounded-2xl shadow transition"
+              </PrimaryBtn>
+              <OutlineBtn
+                link="/dashboard"
+                className="flex-1 !text-sm !py-3.5"
               >
                 Back to Dashboard
-              </button>
+              </OutlineBtn>
             </div>
           </div>
         </div>

@@ -7,6 +7,8 @@ import ExamsTable from "../../components/dashboard/ExamsTable";
 import StatsGrid from "../../components/dashboard/StatsGrid";
 import UpcomingExamCard from "../../components/dashboard/UpcomingExamCard";
 import UserCard from "../../components/dashboard/UserCard";
+import { PrimaryBtn } from "../../components/ui/PrimaryBtn";
+import { OutlineBtn } from "../../components/ui/OutlineBtn";
 import {
   FaAward,
   FaServer,
@@ -136,58 +138,58 @@ export default function DashboardClientView({
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             {normRole === "student" && (
               <>
-                <Link
-                  href="/dashboard/exam-pack"
-                  className="px-5 py-3 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-orange-500/25 hover-lift transition-all cursor-pointer inline-flex items-center gap-2"
+                <PrimaryBtn
+                  link="/dashboard/exam-pack"
+                  className="!text-xs !py-2.5 !px-5 shadow-lg shadow-orange-500/20"
                 >
-                  <FaBookOpen className="text-xs" />
+                  <FaBookOpen className="mr-1.5 text-xs" />
                   <span>Browse Exam Packs</span>
-                </Link>
-                <Link
-                  href="/dashboard/reporting"
-                  className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs sm:text-sm rounded-2xl transition-all cursor-pointer inline-flex items-center gap-2"
+                </PrimaryBtn>
+                <OutlineBtn
+                  link="/dashboard/reporting"
+                  className="!text-xs !py-2.5 !px-5 !bg-white/10 !border-white/30 !text-white hover:!bg-white/20"
                 >
-                  <FaChartLine className="text-xs" />
+                  <FaChartLine className="mr-1.5 text-xs" />
                   <span>My Reports</span>
-                </Link>
+                </OutlineBtn>
               </>
             )}
 
             {normRole === "teacher" && (
               <>
-                <Link
-                  href="/dashboard/manage-exam-pack/add"
-                  className="px-5 py-3 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-orange-500/25 hover-lift transition-all cursor-pointer inline-flex items-center gap-2"
+                <PrimaryBtn
+                  link="/dashboard/manage-exam-pack/add"
+                  className="!text-xs !py-2.5 !px-5 shadow-lg shadow-orange-500/20"
                 >
-                  <FaCogs className="text-xs" />
+                  <FaCogs className="mr-1.5 text-xs" />
                   <span>+ Create Exam Pack</span>
-                </Link>
-                <Link
-                  href="/dashboard/question/add"
-                  className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs sm:text-sm rounded-2xl transition-all cursor-pointer inline-flex items-center gap-2"
+                </PrimaryBtn>
+                <OutlineBtn
+                  link="/dashboard/question/add"
+                  className="!text-xs !py-2.5 !px-5 !bg-white/10 !border-white/30 !text-white hover:!bg-white/20"
                 >
-                  <FaFileAlt className="text-xs" />
+                  <FaFileAlt className="mr-1.5 text-xs" />
                   <span>Question Bank</span>
-                </Link>
+                </OutlineBtn>
               </>
             )}
 
             {normRole === "admin" && (
               <>
-                <Link
-                  href="/dashboard/settings/user-management"
-                  className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-purple-500/25 hover-lift transition-all cursor-pointer inline-flex items-center gap-2"
+                <PrimaryBtn
+                  link="/dashboard/settings/user-management"
+                  className="!text-xs !py-2.5 !px-5 shadow-lg shadow-purple-500/20 !from-purple-600 !to-indigo-600"
                 >
-                  <FaUsers className="text-xs" />
+                  <FaUsers className="mr-1.5 text-xs" />
                   <span>Manage Users</span>
-                </Link>
-                <Link
-                  href="/dashboard/settings/assets-setup"
-                  className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs sm:text-sm rounded-2xl transition-all cursor-pointer inline-flex items-center gap-2"
+                </PrimaryBtn>
+                <OutlineBtn
+                  link="/dashboard/settings/assets-setup"
+                  className="!text-xs !py-2.5 !px-5 !bg-white/10 !border-white/30 !text-white hover:!bg-white/20"
                 >
-                  <FaCogs className="text-xs" />
+                  <FaCogs className="mr-1.5 text-xs" />
                   <span>System Assets</span>
-                </Link>
+                </OutlineBtn>
               </>
             )}
           </div>
@@ -246,12 +248,12 @@ export default function DashboardClientView({
               </div>
 
               <div className="relative z-10 pt-6">
-                <Link
-                  href="/dashboard/reporting"
-                  className="w-full py-3 px-4 rounded-2xl bg-white text-[#dd6b01] hover:bg-orange-50 font-bold text-xs text-center block shadow-lg shadow-black/5 hover-lift transition-all cursor-pointer"
+                <PrimaryBtn
+                  link="/dashboard/reporting"
+                  className="!w-full !text-xs !py-2.5 !px-4 !bg-white !from-white !to-white !text-[#dd6b01] hover:!bg-orange-50 shadow-md"
                 >
                   View Performance Scorecards
-                </Link>
+                </PrimaryBtn>
               </div>
             </div>
           </div>
@@ -381,12 +383,12 @@ export default function DashboardClientView({
                   <p className="text-[11px] text-slate-400 leading-normal mb-4">
                     Your educators have not scheduled any mandatory live tests today.
                   </p>
-                  <Link
-                    href="/dashboard/exam-pack"
-                    className="inline-block py-2 px-4 rounded-xl bg-slate-100 hover:bg-[#dd6b01] hover:text-white text-slate-700 text-xs font-bold transition-colors"
+                  <OutlineBtn
+                    link="/dashboard/exam-pack"
+                    className="!text-xs !py-1.5 !px-3.5 !rounded-xl"
                   >
                     Take Practice Mocks
-                  </Link>
+                  </OutlineBtn>
                 </div>
               )}
             </div>
@@ -434,21 +436,21 @@ export default function DashboardClientView({
               </div>
 
               <div className="relative z-10 pt-6">
-                <Link
-                  href="/dashboard/manage-exam-pack"
-                  className="w-full py-3 px-4 rounded-2xl bg-white text-blue-700 hover:bg-blue-50 font-bold text-xs text-center block shadow-lg shadow-black/5 hover-lift transition-all cursor-pointer"
+                <PrimaryBtn
+                  link="/dashboard/manage-exam-pack"
+                  className="!w-full !text-xs !py-3 !bg-white !from-white !to-white !text-blue-700 hover:!bg-blue-50 shadow-md"
                 >
                   Manage Curriculum Packs
-                </Link>
+                </PrimaryBtn>
               </div>
             </div>
           </div>
 
-          {/* Teacher KPI Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="rounded-3xl bg-white border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+          {/* Unified Teacher KPI Strip */}
+          <div className="rounded-3xl bg-white border border-slate-200/80 shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 overflow-hidden">
+            <div className="p-5 hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Class Average
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-orange-50 text-[#dd6b01] flex items-center justify-center text-xs">
@@ -463,9 +465,9 @@ export default function DashboardClientView({
               </p>
             </div>
 
-            <div className="rounded-3xl bg-white border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+            <div className="p-5 hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Active Packs
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
@@ -480,9 +482,9 @@ export default function DashboardClientView({
               </p>
             </div>
 
-            <div className="rounded-3xl bg-white border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+            <div className="p-5 hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Questions Built
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
@@ -497,9 +499,9 @@ export default function DashboardClientView({
               </p>
             </div>
 
-            <div className="rounded-3xl bg-white border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+            <div className="p-5 hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Graded Scripts
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
@@ -716,21 +718,21 @@ export default function DashboardClientView({
               </div>
 
               <div className="relative z-10 pt-6">
-                <Link
-                  href="/dashboard/settings/user-management"
-                  className="w-full py-3 px-4 rounded-2xl bg-white text-purple-800 hover:bg-purple-50 font-bold text-xs text-center block shadow-lg shadow-black/5 hover-lift transition-all cursor-pointer"
+                <PrimaryBtn
+                  link="/dashboard/settings/user-management"
+                  className="!w-full !text-xs !py-3 !bg-white !from-white !to-white !text-purple-800 hover:!bg-purple-50 shadow-md"
                 >
                   Manage Users & Roles
-                </Link>
+                </PrimaryBtn>
               </div>
             </div>
           </div>
 
-          {/* Admin KPI Counters */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="rounded-3xl bg-white border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+          {/* Unified Admin KPI Strip */}
+          <div className="rounded-3xl bg-white border border-slate-200/80 shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 overflow-hidden">
+            <div className="p-5 hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Registered Students
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-orange-50 text-[#dd6b01] flex items-center justify-center text-xs">
@@ -745,9 +747,9 @@ export default function DashboardClientView({
               </p>
             </div>
 
-            <div className="rounded-3xl bg-white border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+            <div className="p-5 hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Verified Educators
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
@@ -762,9 +764,9 @@ export default function DashboardClientView({
               </p>
             </div>
 
-            <div className="rounded-3xl bg-white border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+            <div className="p-5 hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Maintained Packs
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs">
@@ -779,9 +781,9 @@ export default function DashboardClientView({
               </p>
             </div>
 
-            <div className="rounded-3xl bg-white border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+            <div className="p-5 hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Sync Pipeline
                 </span>
                 <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">

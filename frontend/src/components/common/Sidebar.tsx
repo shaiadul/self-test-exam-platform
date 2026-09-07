@@ -28,7 +28,7 @@ const menuItems: MenuItem[] = [
     icon: <SiGoogletagmanager className="text-xl" />,
   },
   {
-    name: "Reporting",
+    name: "My Reports",
     href: "/dashboard/reporting",
     icon: <FaChartBar className="text-xl" />,
   },
@@ -38,7 +38,7 @@ const menuItems: MenuItem[] = [
     icon: <MdQuestionAnswer className="text-xl" />,
   },
   {
-    name: "Exam Reports",
+    name: "Class Evaluations",
     href: "/dashboard/report",
     icon: <TbMessageReportFilled className="text-xl" />,
   },
@@ -58,7 +58,7 @@ const menuItems: MenuItem[] = [
 const roleAccess: Record<string, string[]> = {
   "Manage Exam Pack": ["teacher", "admin"],
   "Question Bank": ["teacher", "admin"],
-  "Exam Reports": ["teacher", "admin"],
+  "Class Evaluations": ["teacher", "admin"],
   Settings: ["admin"],
 };
 

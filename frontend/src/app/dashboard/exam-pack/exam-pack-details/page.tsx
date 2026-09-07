@@ -1,4 +1,9 @@
-import { getExamPackDetailsAction, getExamsAction, getDashboardStatsAction } from "../../../../lib/actions";
+import {
+  getExamPackDetailsAction,
+  getExamsAction,
+  getDashboardStatsAction,
+  getUserAttemptsAction,
+} from "../../../../lib/actions";
 import ExamPackDetailsClientView from "./ExamPackDetailsClientView";
 
 export default async function ExamPackDetailPage({
@@ -9,10 +14,11 @@ export default async function ExamPackDetailPage({
   const { packId: packIdVal } = await searchParams;
   const packId = packIdVal ? parseInt(packIdVal) : 2;
 
-  const [pack, liveExams, stats] = await Promise.all([
+  const [pack, liveExams, stats, attempts] = await Promise.all([
     getExamPackDetailsAction(packId),
     getExamsAction(packId),
     getDashboardStatsAction(),
+    getUserAttemptsAction(),
   ]);
 
   return (
@@ -20,6 +26,7 @@ export default async function ExamPackDetailPage({
       initialPack={pack}
       initialExams={liveExams || []}
       initialStats={stats}
+      initialAttempts={attempts || []}
     />
   );
 }

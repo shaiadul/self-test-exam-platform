@@ -24,7 +24,8 @@ function isRouteAllowed(role: string, pathname: string): boolean {
     if (pathname.startsWith("/dashboard/settings")) return false;
     if (pathname.startsWith("/dashboard/manage-exam-pack")) return false;
     if (pathname.startsWith("/dashboard/question")) return false;
-    if (pathname.startsWith("/dashboard/report")) return false;
+    // Allow student reporting /dashboard/reporting, only block teacher evaluations /dashboard/report
+    if (pathname.startsWith("/dashboard/report") && !pathname.startsWith("/dashboard/reporting")) return false;
     return true;
   }
 

@@ -104,6 +104,8 @@ type ChartDataPoint struct {
 
 type RecentExamAttempt struct {
 	ID          string `json:"id"`
+	ExamID      string `json:"examId"`
+	AttemptID   int    `json:"attemptId"`
 	Name        string `json:"name"`
 	Score       string `json:"score"`
 	Negative    string `json:"negative"`

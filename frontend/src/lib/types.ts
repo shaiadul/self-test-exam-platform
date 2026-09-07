@@ -12,6 +12,8 @@ export interface User {
 
 export interface Exam {
   id: string;
+  attemptId?: number;
+  examId?: string;
   name: string;
   score?: string;
   negative?: string;
