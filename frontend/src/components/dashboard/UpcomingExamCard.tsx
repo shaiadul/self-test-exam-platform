@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FaCalendarAlt, FaClock } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaPlay, FaGraduationCap } from "react-icons/fa";
 
 type UpcomingExamCardProps = {
   id: string;
@@ -11,45 +11,71 @@ type UpcomingExamCardProps = {
   dateTime: string;
 };
 
-export default function UpcomingExamCard({ id, image, title, dateTime }: UpcomingExamCardProps) {
-  // Split dateTime if possible
-  const [time, date] = dateTime.split(" | ");
+export default function UpcomingExamCard({
+  id,
+  image,
+  title,
+  dateTime,
+}: UpcomingExamCardProps) {
+  // Parse dateTime: format usually "03:04 PM | Monday, 02nd Jan 2006" or similar
+  const parts = dateTime ? dateTime.split(" | ") : ["Scheduled", "Upcoming"];
+  const time = parts.length > 1 ? parts[0] : "";
+  const date = parts.length > 1 ? parts[1] : dateTime;
+
+  const hasValidImage =
+    image &&
+    image !== "/global/no-picture.jpg" &&
+    (image.startsWith("/") || image.startsWith("http"));
 
   return (
-    <div className="group flex flex-col gap-4 p-4 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-gray-50">
-        <Image
-          src={image}
-          alt={title}
-          fill
-          className="object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-          <Link
-            href={`/dashboard/exam-pack/exam-pack-details/${id}`}
-            className="w-full text-center py-2 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold rounded-lg text-sm shadow-lg transition-colors cursor-pointer"
-          >
-            Start Exam
-          </Link>
+    <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 p-5 shadow-sm hover:shadow-lg hover:border-orange-200 transition-all duration-300 flex flex-col justify-between gap-4 group">
+      {/* Top row: Badge & icon */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-50 border border-orange-200/80 text-[#dd6b01] text-[10px] font-extrabold uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#dd6b01] animate-pulse"></span>
+            Upcoming
+          </span>
+          <span className="text-[11px] font-mono font-bold text-slate-400">
+            #{id}
+          </span>
+        </div>
+
+        <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-[#dd6b01] group-hover:bg-orange-50 transition-colors">
+          <FaGraduationCap className="text-sm" />
         </div>
       </div>
-      
-      <div className="space-y-2">
-        <h3 className="text-lg font-bold text-gray-800 line-clamp-1 group-hover:text-[#dd6b01] transition-colors">
+
+      {/* Main Info */}
+      <div>
+        <h4 className="text-base font-black text-slate-900 line-clamp-1 group-hover:text-[#dd6b01] transition-colors mb-2">
           {title}
-        </h3>
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <FaCalendarAlt className="text-[#dd6b01]/70" />
-            <span>{date || dateTime}</span>
+        </h4>
+
+        {/* Schedule Meta */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+            <FaCalendarAlt className="text-[#dd6b01] shrink-0 text-[11px]" />
+            <span className="truncate">{date}</span>
           </div>
           {time && (
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <FaClock className="text-[#dd6b01]/70" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+              <FaClock className="text-amber-500 shrink-0 text-[11px]" />
               <span>{time}</span>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Action Button */}
+      <div className="pt-2 border-t border-slate-100">
+        <Link
+          href={`/dashboard/exam-pack/exam-pack-details/${id}`}
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-md shadow-orange-500/10 hover:shadow-orange-500/20 transition-all cursor-pointer"
+        >
+          <FaPlay className="text-[10px]" />
+          <span>Launch Exam</span>
+        </Link>
       </div>
     </div>
   );
