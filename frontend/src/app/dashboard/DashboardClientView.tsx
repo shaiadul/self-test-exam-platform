@@ -142,14 +142,14 @@ export default function DashboardClientView({
                   link="/dashboard/exam-pack"
                   className="!text-xs !py-2.5 !px-5 shadow-lg shadow-orange-500/20"
                 >
-                  <FaBookOpen className="mr-1.5 text-xs" />
+                  <FaBookOpen className="mr-1.5 text-xs shrink-0" />
                   <span>Browse Exam Packs</span>
                 </PrimaryBtn>
                 <OutlineBtn
                   link="/dashboard/reporting"
                   className="!text-xs !py-2.5 !px-5 !bg-white/10 !border-white/30 !text-white hover:!bg-white/20"
                 >
-                  <FaChartLine className="mr-1.5 text-xs" />
+                  <FaChartLine className="mr-1.5 text-xs shrink-0" />
                   <span>My Reports</span>
                 </OutlineBtn>
               </>
@@ -161,14 +161,14 @@ export default function DashboardClientView({
                   link="/dashboard/manage-exam-pack/add"
                   className="!text-xs !py-2.5 !px-5 shadow-lg shadow-orange-500/20"
                 >
-                  <FaCogs className="mr-1.5 text-xs" />
+                  <FaCogs className="mr-1.5 text-xs shrink-0" />
                   <span>+ Create Exam Pack</span>
                 </PrimaryBtn>
                 <OutlineBtn
                   link="/dashboard/question/add"
                   className="!text-xs !py-2.5 !px-5 !bg-white/10 !border-white/30 !text-white hover:!bg-white/20"
                 >
-                  <FaFileAlt className="mr-1.5 text-xs" />
+                  <FaFileAlt className="mr-1.5 text-xs shrink-0" />
                   <span>Question Bank</span>
                 </OutlineBtn>
               </>
@@ -180,14 +180,14 @@ export default function DashboardClientView({
                   link="/dashboard/settings/user-management"
                   className="!text-xs !py-2.5 !px-5 shadow-lg shadow-purple-500/20 !from-purple-600 !to-indigo-600"
                 >
-                  <FaUsers className="mr-1.5 text-xs" />
+                  <FaUsers className="mr-1.5 text-xs shrink-0" />
                   <span>Manage Users</span>
                 </PrimaryBtn>
                 <OutlineBtn
                   link="/dashboard/settings/assets-setup"
                   className="!text-xs !py-2.5 !px-5 !bg-white/10 !border-white/30 !text-white hover:!bg-white/20"
                 >
-                  <FaCogs className="mr-1.5 text-xs" />
+                  <FaCogs className="mr-1.5 text-xs shrink-0" />
                   <span>System Assets</span>
                 </OutlineBtn>
               </>
