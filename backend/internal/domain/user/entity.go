@@ -1,4 +1,4 @@
-package model
+package user
 
 import "time"
 
@@ -55,4 +55,3 @@ type CompleteProfileRequest struct {
 	AdminDept   string `json:"adminDept"`
 	AdminBase   string `json:"adminBase"`
 }
-
