@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { FaEye, FaPlay, FaCalendarAlt, FaCheckCircle, FaSpinner } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
-import { getExamsAction } from "../../../../lib/actions";
 
 type Exam = {
   id: string;
@@ -28,42 +28,29 @@ interface ExamPackDetailsClientViewProps {
 export default function ExamPackDetailsClientView({
   packId,
   initialPack,
-  initialExams,
+  initialExams = [],
   initialStats,
   initialAttempts = [],
 }: ExamPackDetailsClientViewProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const packTitle = initialPack?.title || "Exam Pack";
-  const [examsData, setExamsData] = useState<any[]>(initialExams || []);
-  const [loading, setLoading] = useState<boolean>(false);
 
-  // Synchronize when initialExams changes from SSR
+  // If initial exams are empty (e.g. from cold client transition), revalidate with router.refresh()
   useEffect(() => {
-    if (initialExams && initialExams.length > 0) {
-      setExamsData(initialExams);
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token && !document.cookie.includes("token=")) {
+        document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+      }
     }
-  }, [initialExams]);
 
-  // Client-side self-healing fallback:
-  // If SSR provided empty exams (e.g. during client-side router cache transition),
-  // immediately fetch fresh exams from server action using token
-  useEffect(() => {
     if (packId && (!initialExams || initialExams.length === 0)) {
-      setLoading(true);
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
-      getExamsAction(packId, token)
-        .then((fetched) => {
-          if (fetched && Array.isArray(fetched) && fetched.length > 0) {
-            setExamsData(fetched);
-          }
-        })
-        .catch((err) => {
-          console.error("Failed to load exams client-side:", err);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+      startTransition(() => {
+        router.refresh();
+      });
     }
-  }, [packId, initialExams]);
+  }, [packId, initialExams, router]);
 
   // Map of examId to user's latest attempt
   const attemptMap = new Map<string, any>();
@@ -84,7 +71,7 @@ export default function ExamPackDetailsClientView({
   }
 
   const now = new Date();
-  const exams: Exam[] = (examsData || []).map((e: any) => {
+  const exams: Exam[] = (initialExams || []).map((e: any) => {
     const end = new Date(e.endDate);
     const userAttempt = attemptMap.get(e.id);
     let status: "Start Exam" | "Complete" | "Expire" = "Start Exam";
@@ -165,7 +152,6 @@ export default function ExamPackDetailsClientView({
                           link={`/dashboard/reporting/${exam.attemptId}`}
                           className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs"
                         >
-                          <FaEye className="text-xs text-[#dd6b01]" />
                           <span className="text-slate-700 font-bold">View Report</span>
                         </OutlineBtn>
                       ) : (
@@ -188,7 +174,7 @@ export default function ExamPackDetailsClientView({
               </tr>
             ))}
 
-            {loading && (
+            {isPending && (
               <tr>
                 <td colSpan={5} className="py-12 text-center text-slate-500 font-medium text-xs">
                   <div className="flex flex-col items-center justify-center gap-2">
@@ -199,7 +185,7 @@ export default function ExamPackDetailsClientView({
               </tr>
             )}
 
-            {!loading && exams.length === 0 && (
+            {!isPending && exams.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-10 text-center text-slate-400 font-medium text-xs">
                   No active exams available in this pack.

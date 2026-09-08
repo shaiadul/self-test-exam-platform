@@ -25,6 +25,10 @@ func InitDB() {
 		log.Fatalf("Failed to open database connection: %v", err)
 	}
 
+	DB.SetMaxOpenConns(25)
+	DB.SetMaxIdleConns(10)
+	DB.SetConnMaxLifetime(5 * time.Minute)
+
 	// Verify the connection is working
 	err = DB.Ping()
 	if err != nil {

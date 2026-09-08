@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { API_URL } from "./constants";
-import { getAuthHeader } from "./common";
+import { fetcher, fetcherWithAuth } from "./fetcher";
 
 export async function loginAction(email: string, password: string) {
 	try {
@@ -11,6 +11,7 @@ export async function loginAction(email: string, password: string) {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ email, password }),
+			cache: "no-store",
 		});
 
 		const data = await response.json();
@@ -18,7 +19,7 @@ export async function loginAction(email: string, password: string) {
 			throw new Error(data.error || "Invalid credentials.");
 		}
 
-		// Save token in httpOnly cookie
+		// Save token in cookie
 		const cookieStore = await cookies();
 		cookieStore.set("token", data.token, {
 			path: "/",
@@ -39,6 +40,7 @@ export async function registerAction(name: string, email: string, password: stri
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ name, email, password }),
+			cache: "no-store",
 		});
 
 		const data = await response.json();
@@ -69,51 +71,23 @@ export async function logoutAction() {
 	return { success: true };
 }
 
-export async function getProfileAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		if (!authHeader.Authorization) return null;
-
-		const response = await fetch(`${API_URL}/auth/profile`, {
-			method: "GET",
-			headers: { ...authHeader },
-		});
-
-		if (!response.ok) return null;
-		return await response.json();
-	} catch (error) {
-		return null;
-	}
+export async function getProfileAction(clientToken?: string) {
+	return await fetcherWithAuth<any>("/auth/profile", {}, clientToken);
 }
 
 export async function updateProfileAction(profileData: any) {
 	try {
-		const authHeader = await getAuthHeader();
-		if (!authHeader.Authorization) {
-			throw new Error("Unauthorized: Please sign in again.");
-		}
-
-		const response = await fetch(`${API_URL}/auth/complete-profile`, {
+		const user = await fetcherWithAuth<any>("/auth/complete-profile", {
 			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
-			},
 			body: JSON.stringify(profileData),
 		});
 
-		if (!response.ok) {
-			const data = await response.json().catch(() => ({}));
-			throw new Error(data.error || "Failed to update profile.");
-		}
-
-		const data = await response.json();
+		if (!user) throw new Error("Failed to update profile.");
 
 		revalidatePath("/dashboard");
 		revalidatePath("/dashboard/edit-profile");
-		return { success: true, user: data };
+		return { success: true, user };
 	} catch (error: any) {
 		return { success: false, error: error.message };
 	}
 }
-

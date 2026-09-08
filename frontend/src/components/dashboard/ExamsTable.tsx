@@ -156,7 +156,6 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
                           link={reportLink}
                           className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs"
                         >
-                          <FaEye className="text-xs text-[#dd6b01]" />
                           <span className="text-slate-700 font-bold">View Report</span>
                         </OutlineBtn>
                       );

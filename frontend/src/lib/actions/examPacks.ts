@@ -1,63 +1,25 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { API_URL } from "./constants";
-import { getAuthHeader } from "./common";
+import { fetcherWithAuth } from "./fetcher";
 
 export async function getExamPacksAction(clientToken?: string) {
-	try {
-		const authHeader = await getAuthHeader();
-		const headers: Record<string, string> = { ...authHeader };
-		if (clientToken) {
-			headers["Authorization"] = `Bearer ${clientToken}`;
-		}
-		const response = await fetch(`${API_URL}/exam-packs`, {
-			headers,
-			cache: "no-store",
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return [];
-		return await response.json();
-	} catch (error) {
-		return [];
-	}
+	const data = await fetcherWithAuth<any[]>("/exam-packs", {}, clientToken);
+	return data || [];
 }
 
 export async function getExamPackDetailsAction(id: number, clientToken?: string) {
-	try {
-		const authHeader = await getAuthHeader();
-		const headers: Record<string, string> = { ...authHeader };
-		if (clientToken) {
-			headers["Authorization"] = `Bearer ${clientToken}`;
-		}
-		const response = await fetch(`${API_URL}/exam-packs/${id}`, {
-			headers,
-			cache: "no-store",
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return null;
-		return await response.json();
-	} catch (error) {
-		return null;
-	}
+	return await fetcherWithAuth<any>(`/exam-packs/${id}`, {}, clientToken);
 }
 
 export async function createExamPackAction(packData: any) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/exam-packs`, {
+		const data = await fetcherWithAuth<any>("/exam-packs", {
 			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
-			},
 			body: JSON.stringify(packData),
 		});
 
-		const data = await response.json();
-		if (!response.ok) throw new Error(data.error || "Failed to create exam pack");
+		if (!data) throw new Error("Failed to create exam pack");
 
 		revalidatePath("/dashboard");
 		revalidatePath("/dashboard/exam-pack");
@@ -70,18 +32,12 @@ export async function createExamPackAction(packData: any) {
 
 export async function updateExamPackAction(id: number, packData: any) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/exam-packs/${id}`, {
+		const data = await fetcherWithAuth<any>(`/exam-packs/${id}`, {
 			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
-			},
 			body: JSON.stringify(packData),
 		});
 
-		const data = await response.json();
-		if (!response.ok) throw new Error(data.error || "Failed to update exam pack");
+		if (!data) throw new Error("Failed to update exam pack");
 
 		revalidatePath("/dashboard");
 		revalidatePath("/dashboard/exam-pack");
@@ -94,16 +50,9 @@ export async function updateExamPackAction(id: number, packData: any) {
 
 export async function deleteExamPackAction(id: number) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/exam-packs/${id}`, {
+		await fetcherWithAuth<any>(`/exam-packs/${id}`, {
 			method: "DELETE",
-			headers: { ...authHeader },
 		});
-
-		if (!response.ok) {
-			const data = await response.json();
-			throw new Error(data.error || "Failed to delete exam pack");
-		}
 
 		revalidatePath("/dashboard");
 		revalidatePath("/dashboard/exam-pack");

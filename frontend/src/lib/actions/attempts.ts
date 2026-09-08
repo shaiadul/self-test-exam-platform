@@ -1,57 +1,39 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { API_URL } from "./constants";
-import { getAuthHeader } from "./common";
+import { fetcherWithAuth } from "./fetcher";
 
-export async function submitExamAction(examId: string, answers: any, warningCount: number, securityMessage: string) {
+export async function submitExamAction(
+	examId: string,
+	answers: any,
+	warningCount: number,
+	securityMessage: string,
+	clientToken?: string
+) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/exams/${examId}/submit`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
+		const result = await fetcherWithAuth<any>(
+			`/exams/${examId}/submit`,
+			{
+				method: "POST",
+				body: JSON.stringify({ answers, warningCount, securityMessage }),
 			},
-			body: JSON.stringify({ answers, warningCount, securityMessage }),
-		});
+			clientToken
+		);
 
-		const data = await response.json();
-		if (!response.ok) throw new Error(data.error || "Failed to submit exam");
+		if (!result) throw new Error("Failed to submit exam");
 
 		revalidatePath("/dashboard");
-		return { success: true, result: data };
+		return { success: true, result };
 	} catch (error: any) {
 		return { success: false, error: error.message };
 	}
 }
 
-export async function getUserAttemptsAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/attempts`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return [];
-		return await response.json();
-	} catch (error) {
-		return [];
-	}
+export async function getUserAttemptsAction(clientToken?: string) {
+	const data = await fetcherWithAuth<any[]>("/attempts", {}, clientToken);
+	return data || [];
 }
 
-export async function getAttemptDetailsAction(id: number) {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/attempts/${id}`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return null;
-		return await response.json();
-	} catch (error) {
-		return null;
-	}
+export async function getAttemptDetailsAction(id: number, clientToken?: string) {
+	return await fetcherWithAuth<any>(`/attempts/${id}`, {}, clientToken);
 }

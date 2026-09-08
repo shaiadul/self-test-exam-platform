@@ -1,18 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaEdit, FaTrashAlt, FaPlus, FaSpinner } from "react-icons/fa";
 import { MdOutlineEditNote } from "react-icons/md";
 import { PageContainer } from "../../../../components/common/PageContainer";
-import {
-  deleteExamAction,
-  deleteExamPackAction,
-  getExamsAction,
-  getExamPackDetailsAction,
-} from "../../../../lib/actions";
+import { deleteExamAction, deleteExamPackAction } from "../../../../lib/actions";
 
 type Exam = {
   id: string;
@@ -34,9 +29,8 @@ export default function ManageExamPackDetailClientView({
   initialExams,
 }: ManageExamPackDetailClientViewProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const [packData, setPackData] = useState<any>(initialPack);
-  const [packTitle, setPackTitle] = useState(initialPack?.title || "Exam Pack");
   const [exams, setExams] = useState<Exam[]>(
     (initialExams || []).map((e: any) => ({
       id: e.id,
@@ -46,19 +40,12 @@ export default function ManageExamPackDetailClientView({
       link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
     }))
   );
-  const [loading, setLoading] = useState<boolean>(false);
 
-  // Sync when initialPack changes from SSR
-  useEffect(() => {
-    if (initialPack) {
-      setPackData(initialPack);
-      setPackTitle(initialPack.title || "Exam Pack");
-    }
-  }, [initialPack]);
+  const packTitle = initialPack?.title || "Exam Pack";
 
-  // Sync when initialExams changes from SSR
+  // Sync state whenever SSR props change (e.g. after router.refresh())
   useEffect(() => {
-    if (initialExams && initialExams.length > 0) {
+    if (initialExams) {
       setExams(
         initialExams.map((e: any) => ({
           id: e.id,
@@ -71,85 +58,21 @@ export default function ManageExamPackDetailClientView({
     }
   }, [initialExams]);
 
-  // Client-side self-healing fallback:
-  // If SSR passed empty exams or pack data due to client-side router transition,
-  // immediately fetch fresh data in background using token
+  // Sync token to document.cookie & trigger router.refresh() if initial data was empty
   useEffect(() => {
-    // Sync document.cookie with localStorage token if missing
     if (typeof window !== "undefined") {
-      const lsToken = localStorage.getItem("token");
-      if (lsToken && !document.cookie.includes("token=")) {
-        document.cookie = `token=${lsToken}; path=/; max-age=86400; SameSite=Lax`;
+      const token = localStorage.getItem("token");
+      if (token && !document.cookie.includes("token=")) {
+        document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
       }
     }
 
     if (packId && (!initialExams || initialExams.length === 0 || !initialPack)) {
-      setLoading(true);
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("token") || document.cookie.match(/(?:^|;\s*)token=([^;]*)/)?.[1]
-          : undefined;
-
-      const fetchExams = async () => {
-        try {
-          const actionData = await getExamsAction(packId, token);
-          if (Array.isArray(actionData) && actionData.length > 0) return actionData;
-
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
-          const res = await fetch(`${apiUrl}/exam-packs/${packId}/exams`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-          if (res.ok) {
-            const direct = await res.json();
-            if (Array.isArray(direct)) return direct;
-          }
-          return actionData || [];
-        } catch (err) {
-          console.error("Failed to load exams client-side:", err);
-          return [];
-        }
-      };
-
-      const fetchPack = async () => {
-        if (initialPack) return initialPack;
-        try {
-          const actionPack = await getExamPackDetailsAction(packId, token);
-          if (actionPack) return actionPack;
-
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
-          const res = await fetch(`${apiUrl}/exam-packs/${packId}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-          if (res.ok) return await res.json();
-          return null;
-        } catch {
-          return null;
-        }
-      };
-
-      Promise.all([fetchExams(), fetchPack()])
-        .then(([fetchedExams, fetchedPack]) => {
-          if (fetchedPack) {
-            setPackData(fetchedPack);
-            setPackTitle(fetchedPack.title || "Exam Pack");
-          }
-          if (fetchedExams && Array.isArray(fetchedExams)) {
-            setExams(
-              fetchedExams.map((e: any) => ({
-                id: e.id,
-                name: e.name,
-                startDate: e.startDate,
-                endDate: e.endDate,
-                link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
-              }))
-            );
-          }
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+      startTransition(() => {
+        router.refresh();
+      });
     }
-  }, [packId, initialExams, initialPack]);
+  }, [packId, initialExams, initialPack, router]);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "—";
@@ -173,6 +96,7 @@ export default function ManageExamPackDetailClientView({
       if (res.success) {
         toast.success("Exam deleted successfully.");
         setExams((prev) => prev.filter((e) => e.id !== examId));
+        router.refresh();
       } else {
         toast.error(res.error || "Failed to delete exam.");
       }
@@ -188,6 +112,7 @@ export default function ManageExamPackDetailClientView({
       if (res.success) {
         toast.success("Exam pack deleted successfully.");
         router.push("/dashboard/manage-exam-pack");
+        router.refresh();
       } else {
         toast.error(res.error || "Failed to delete exam pack.");
       }
@@ -229,9 +154,14 @@ export default function ManageExamPackDetailClientView({
       {/* --- Exams Table --- */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-800">
-            Exams List ({exams.length})
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-gray-800">
+              Exams List ({exams.length})
+            </h2>
+            {isPending && (
+              <FaSpinner className="animate-spin text-xs text-[#dd6b01]" />
+            )}
+          </div>
         </div>
 
         {exams.length > 0 ? (
@@ -296,7 +226,7 @@ export default function ManageExamPackDetailClientView({
               </tbody>
             </table>
           </div>
-        ) : loading ? (
+        ) : isPending ? (
           <div className="py-16 flex flex-col items-center justify-center gap-2 text-gray-500 font-medium">
             <FaSpinner className="animate-spin text-2xl text-[#dd6b01]" />
             <span className="text-sm font-semibold">Loading exams...</span>

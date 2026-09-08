@@ -94,9 +94,21 @@ export async function directUploadAction(
       key: data.key,
     };
   } catch (err: any) {
+    const rawMsg = err?.message || String(err);
+    if (
+      rawMsg.includes("Body exceeded") ||
+      rawMsg.includes("body size limit") ||
+      rawMsg.includes("413") ||
+      rawMsg.includes("Payload Too Large")
+    ) {
+      return {
+        success: false,
+        error: "Image size exceeds the 1 MB limit. Please select a photo under 1 MB or compress it.",
+      };
+    }
     return {
       success: false,
-      error: err.message || "Direct upload failed",
+      error: rawMsg || "Direct upload failed",
     };
   }
 }

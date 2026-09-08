@@ -358,7 +358,6 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
                         link={`/dashboard/reporting/${report.id}`}
                         className="!text-xs !py-1.5 !px-3.5 gap-1.5 shadow-xs"
                       >
-                        <FaEye className="text-xs text-[#dd6b01]" />
                         <span className="text-slate-700 font-bold">View Report</span>
                       </OutlineBtn>
                     </td>

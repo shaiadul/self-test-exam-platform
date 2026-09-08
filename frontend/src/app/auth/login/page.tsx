@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import logo2 from "../../../../public/global/logo2.png";
 import Image from "next/image";
@@ -19,6 +19,11 @@ export default function SignIn() {
   const [error, setError] = useState("");
 
   const router = useRouter();
+
+  // Prefetch dashboard route so transition is instant
+  useEffect(() => {
+    router.prefetch("/dashboard");
+  }, [router]);
 
   // Environment fallback variables
   const studentEmail =

@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { toast } from "sonner";
 import { uploadFileToStorage } from "@/lib/utils/uploadClient";
+import Image from "next/image";
 
 export interface ImageUploaderProps {
   // New standard props
@@ -42,7 +43,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   height = "h-56",
   aspectRatio,
   folder = "general",
-  maxSizeMB = 10,
+  maxSizeMB = 1,
   disabled = false,
   className = "",
 }) => {
@@ -69,12 +70,20 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     if (disabled || isUploading) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload a valid image (JPG, PNG, WebP, SVG).");
+      toast.error("Please upload a valid image file (JPG, PNG, WebP, SVG).");
       return;
     }
 
+    const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+
+    // Client-side file size check before making any network calls
     if (file.size > maxSizeMB * 1024 * 1024) {
-      toast.error(`File size exceeds ${maxSizeMB}MB limit.`);
+      toast.error(
+        `Selected image (${fileSizeMB} MB) exceeds the ${maxSizeMB} MB limit. Please select a photo under ${maxSizeMB} MB or compress it.`
+      );
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       return;
     }
 
@@ -88,11 +97,39 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         triggerChange(res.url);
         toast.success("Image uploaded successfully!");
       } else {
-        toast.error(res.error || "Failed to upload image.");
+        const errorMsg = res.error || "Failed to upload image.";
+        if (
+          errorMsg.includes("Body exceeded") ||
+          errorMsg.includes("body size limit") ||
+          errorMsg.includes("413") ||
+          errorMsg.includes("Payload Too Large") ||
+          errorMsg.toLowerCase().includes("limit") ||
+          errorMsg.toLowerCase().includes("exceed")
+        ) {
+          toast.error(
+            `Image size (${fileSizeMB} MB) exceeds the ${maxSizeMB} MB limit. Please select a photo under ${maxSizeMB} MB or compress it.`
+          );
+        } else {
+          toast.error(errorMsg);
+        }
       }
     } catch (err: any) {
       console.error("Upload handler error:", err);
-      toast.error("An error occurred during upload. Please try again.");
+      const rawMsg = err?.message || String(err);
+      if (
+        rawMsg.includes("Body exceeded") ||
+        rawMsg.includes("body size limit") ||
+        rawMsg.includes("413") ||
+        rawMsg.includes("Payload Too Large") ||
+        rawMsg.toLowerCase().includes("limit") ||
+        rawMsg.toLowerCase().includes("exceed")
+      ) {
+        toast.error(
+          `Image size (${fileSizeMB} MB) exceeds the ${maxSizeMB} MB limit. Please select a photo under ${maxSizeMB} MB or compress it.`
+        );
+      } else {
+        toast.error("Failed to upload image. Please try again with a photo under 1 MB.");
+      }
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -150,7 +187,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             onDrop={handleDrop}
           >
             {internalPreview ? (
-              <img
+              <Image
+                width={100}
+                height={100}
                 src={internalPreview}
                 alt="Avatar"
                 className="w-full h-full object-cover object-center"
@@ -182,20 +221,14 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             </div>
           </div>
 
-          {/* Quick Remove Button for Avatar */}
-          {internalPreview && !isUploading && !disabled && (
-            <button
-              type="button"
-              onClick={handleRemove}
-              title="Remove picture"
-              className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg hover:scale-110 transition-all cursor-pointer"
-            >
-              <FaTrashAlt size={11} />
-            </button>
-          )}
+         
         </div>
 
-        {description && <p className="text-xs text-gray-500 text-center max-w-xs">{description}</p>}
+        {description ? (
+          <p className="text-xs text-gray-500 text-center max-w-xs">{description}</p>
+        ) : (
+          <p className="text-[11px] text-gray-400 text-center">JPG, PNG, WebP (max {maxSizeMB} MB)</p>
+        )}
 
         <input
           ref={fileInputRef}
@@ -228,7 +261,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             {isUploading ? (
               <FaSpinner className="text-[#dd6b01] animate-spin text-lg" />
             ) : internalPreview ? (
-              <img src={internalPreview} alt="Thumbnail" className="w-full h-full object-cover" />
+              <Image width={100} height={100} src={internalPreview} alt="Thumbnail" className="w-full h-full object-cover" />
             ) : (
               <FaCloudUploadAlt className="text-gray-400 text-2xl" />
             )}
@@ -309,7 +342,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           </div>
         ) : internalPreview ? (
           <>
-            <img
+            <Image
+              width={100}
+              height={100}
               src={internalPreview}
               alt="Preview"
               className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"

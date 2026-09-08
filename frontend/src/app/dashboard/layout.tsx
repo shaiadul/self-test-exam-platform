@@ -34,8 +34,12 @@ function isRouteAllowed(role: string, pathname: string): boolean {
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [userRole, setUserRole] = useState<string>("student");
-  const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("userRole") || "student";
+    }
+    return "student";
+  });
 
   useEffect(() => {
     const role = localStorage.getItem("userRole") || "student";
@@ -44,7 +48,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
     }
     setUserRole(role);
-    setLoading(false);
   }, [pathname]);
 
   const allowed = isRouteAllowed(userRole, pathname);
@@ -73,11 +76,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         <main className={`flex-1 overflow-y-auto print:overflow-visible ${!isExamPage ? "pt-20" : "pt-0"}`}>
           <div className="p-6 max-w-7xl mx-auto print:p-0 print:max-w-none">
-            {loading ? (
-              <div className="min-h-[50vh] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#dd6b01]"></div>
-              </div>
-            ) : allowed ? (
+            {allowed ? (
               children
             ) : (
               <div className="min-h-[70vh] flex items-center justify-center p-4">

@@ -1,58 +1,42 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { API_URL } from "./constants";
-import { getAuthHeader } from "./common";
+import { fetcherWithAuth } from "./fetcher";
 
-export async function getSystemAssetsAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/assets`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return [];
-		return await response.json();
-	} catch (error) {
-		return [];
-	}
+export async function getSystemAssetsAction(clientToken?: string) {
+	const data = await fetcherWithAuth<any[]>("/assets", {}, clientToken);
+	return data || [];
 }
 
-export async function createSystemAssetAction(type: string, value: string) {
+export async function createSystemAssetAction(type: string, value: string, clientToken?: string) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/assets`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
+		const asset = await fetcherWithAuth<any>(
+			"/assets",
+			{
+				method: "POST",
+				body: JSON.stringify({ type, value }),
 			},
-			body: JSON.stringify({ type, value }),
-		});
+			clientToken
+		);
 
-		const data = await response.json();
-		if (!response.ok) throw new Error(data.error || "Failed to create asset");
+		if (!asset) throw new Error("Failed to create asset");
 
 		revalidatePath("/dashboard/settings/assets-setup");
-		return { success: true, asset: data };
+		return { success: true, asset };
 	} catch (error: any) {
 		return { success: false, error: error.message };
 	}
 }
 
-export async function deleteSystemAssetAction(id: number) {
+export async function deleteSystemAssetAction(id: number, clientToken?: string) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/assets/${id}`, {
-			method: "DELETE",
-			headers: { ...authHeader },
-		});
-
-		if (!response.ok) {
-			const data = await response.json();
-			throw new Error(data.error || "Failed to delete asset");
-		}
+		await fetcherWithAuth<any>(
+			`/assets/${id}`,
+			{
+				method: "DELETE",
+			},
+			clientToken
+		);
 
 		revalidatePath("/dashboard/settings/assets-setup");
 		return { success: true };
