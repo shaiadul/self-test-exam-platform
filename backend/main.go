@@ -10,6 +10,7 @@ import (
 	"github.com/selftest/backend/config"
 	delivery "github.com/selftest/backend/internal/delivery/http"
 	"github.com/selftest/backend/internal/infrastructure/persistence"
+	"github.com/selftest/backend/internal/infrastructure/storage"
 	"github.com/selftest/backend/internal/service"
 )
 
@@ -23,13 +24,18 @@ func main() {
 	config.InitDB()
 	defer config.DB.Close()
 
-	// 1. Initialize Infrastructure Repositories
+	// 1. Initialize Infrastructure Repositories & Storage
 	userRepo := persistence.NewPostgresUserRepository(config.DB)
 	packRepo := persistence.NewPostgresExamPackRepository(config.DB)
 	examRepo := persistence.NewPostgresExamRepository(config.DB)
 	attemptRepo := persistence.NewPostgresAttemptRepository(config.DB)
 	reportRepo := persistence.NewPostgresReportRepository(config.DB)
 	systemRepo := persistence.NewPostgresSystemRepository(config.DB)
+
+	s3Storage, err := storage.NewS3Storage()
+	if err != nil {
+		fmt.Printf("Warning: Failed to initialize S3 storage: %v\n", err)
+	}
 
 	// 2. Initialize Domain / Application Services
 	userService := service.NewUserService(userRepo)
@@ -38,6 +44,7 @@ func main() {
 	attemptService := service.NewAttemptService(attemptRepo, examRepo, packRepo, userRepo)
 	reportService := service.NewReportService(userRepo, examRepo, packRepo, attemptRepo, reportRepo)
 	systemService := service.NewSystemService(systemRepo)
+	uploadService := service.NewUploadService(s3Storage)
 
 	// 3. Initialize Delivery HTTP Handlers
 	authHandler := delivery.NewAuthHandler(userService)
@@ -46,6 +53,7 @@ func main() {
 	attemptHandler := delivery.NewAttemptHandler(attemptService)
 	reportHandler := delivery.NewReportHandler(reportService)
 	systemHandler := delivery.NewSystemHandler(systemService)
+	uploadHandler := delivery.NewUploadHandler(uploadService)
 
 	// 4. Build Router with Middlewares
 	router := delivery.NewRouter(delivery.Handlers{
@@ -55,6 +63,7 @@ func main() {
 		AttemptHandler:  attemptHandler,
 		ReportHandler:   reportHandler,
 		SystemHandler:   systemHandler,
+		UploadHandler:   uploadHandler,
 	})
 
 	port := os.Getenv("PORT")

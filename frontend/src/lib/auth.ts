@@ -43,6 +43,12 @@ export function setSession(token: string, user: User) {
   localStorage.setItem("userName", user.name);
   localStorage.setItem("userEmail", user.email);
   localStorage.setItem("userID", user.id.toString());
+  if (user.image) {
+    localStorage.setItem("userImage", user.image);
+  } else {
+    localStorage.removeItem("userImage");
+  }
+  window.dispatchEvent(new CustomEvent("profileUpdated", { detail: user }));
 }
 
 export function clearSession() {
@@ -52,6 +58,8 @@ export function clearSession() {
   localStorage.removeItem("userName");
   localStorage.removeItem("userEmail");
   localStorage.removeItem("userID");
+  localStorage.removeItem("userImage");
+  window.dispatchEvent(new CustomEvent("profileUpdated", { detail: null }));
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
@@ -79,6 +87,10 @@ export async function completeProfile(profileData: CompleteProfileInput): Promis
   }
   if (typeof window !== "undefined") {
     localStorage.setItem("userName", result.user.name);
+    if (result.user.image) {
+      localStorage.setItem("userImage", result.user.image);
+    }
+    window.dispatchEvent(new CustomEvent("profileUpdated", { detail: result.user }));
   }
   return result.user;
 }

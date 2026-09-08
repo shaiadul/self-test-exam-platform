@@ -49,9 +49,9 @@ export const DashboardHeader = () => {
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   // User Profile Session state
-  const [userName, setUserName] = useState("Md Saidul Basar");
+  const [userName, setUserName] = useState("User");
   const [userRoleLabel, setUserRoleLabel] = useState("Student Account");
-  const [userAvatar, setUserAvatar] = useState("/user/md-saidul.jpeg");
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
   // Refs for clicking outside
   const searchRef = useRef<HTMLDivElement>(null);
@@ -64,22 +64,62 @@ export const DashboardHeader = () => {
     item.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  useEffect(() => {
-    // Populate session user role data on client mount
-    const role = localStorage.getItem("userRole") || "student";
-    const name = localStorage.getItem("userName") || "Md Saidul Basar";
+  const syncUserData = (userData?: any) => {
+    if (typeof window === "undefined") return;
+
+    const role = userData?.role || localStorage.getItem("userRole") || "student";
+    const name = userData?.name || localStorage.getItem("userName") || "User";
+    const image = userData?.image !== undefined 
+      ? userData.image 
+      : (localStorage.getItem("userImage") || null);
+
     setUserName(name);
-    
+    setUserAvatar(image && image.trim() !== "" ? image : null);
+
     if (role === "admin") {
       setUserRoleLabel("System Administrator");
-      setUserAvatar("/global/logo2.png");
     } else if (role === "teacher") {
       setUserRoleLabel("Lead Instructor");
-      setUserAvatar("/global/logo2.png");
     } else {
       setUserRoleLabel("Student Account");
-      setUserAvatar("/user/md-saidul.jpeg");
     }
+  };
+
+  useEffect(() => {
+    // 1. Initial sync from localStorage
+    syncUserData();
+
+    // 2. Fetch fresh profile from backend
+    const fetchFreshProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await fetch("http://localhost:8080/api/auth/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const profile = await res.json();
+          if (profile) {
+            if (profile.name) localStorage.setItem("userName", profile.name);
+            if (profile.image) {
+              localStorage.setItem("userImage", profile.image);
+            }
+            syncUserData(profile);
+          }
+        }
+      } catch (e) {
+        // Silently keep localStorage values
+      }
+    };
+    fetchFreshProfile();
+
+    // 3. Listen for profile updates dispatched across components
+    const handleProfileUpdate = (e: any) => {
+      syncUserData(e.detail);
+    };
+
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+    window.addEventListener("storage", () => syncUserData());
 
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -90,8 +130,14 @@ export const DashboardHeader = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+      window.removeEventListener("storage", () => syncUserData());
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
+
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
@@ -244,18 +290,20 @@ export const DashboardHeader = () => {
               <p className="text-sm font-bold text-gray-800 leading-none">{userName}</p>
               <p className="text-xs text-gray-500 mt-1">{userRoleLabel}</p>
             </div>
-            <div className="w-10 h-10 rounded-full border-2 border-[#dd6b01]/20 overflow-hidden shadow-sm hover:border-[#dd6b01]/50 transition-all cursor-pointer relative bg-orange-50 flex items-center justify-center font-bold text-[#dd6b01]">
-              {userAvatar && (userAvatar.includes(".jpeg") || userAvatar.includes(".png") || userAvatar.includes(".jpg")) ? (
-                <Image 
+            <div 
+              onClick={() => router.push("/dashboard/edit-profile")}
+              className="w-10 h-10 rounded-full border-2 border-[#dd6b01]/20 overflow-hidden shadow-sm hover:border-[#dd6b01] transition-all cursor-pointer relative bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center font-bold text-[#dd6b01] text-sm shrink-0 select-none"
+              title="View & Edit Profile"
+            >
+              {userAvatar ? (
+                <img 
                   src={userAvatar} 
-                  alt="Profile" 
-                  width={40} 
-                  height={40}
+                  alt={userName} 
                   className="object-cover w-full h-full"
-                  onError={() => setUserAvatar("")}
+                  onError={() => setUserAvatar(null)}
                 />
               ) : (
-                userName.charAt(0)
+                <span>{(userName || "U").trim().charAt(0).toUpperCase()}</span>
               )}
             </div>
           </div>

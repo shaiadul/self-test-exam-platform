@@ -7,12 +7,13 @@ import (
 )
 
 type Handlers struct {
-	AuthHandler    *AuthHandler
+	AuthHandler     *AuthHandler
 	ExamPackHandler *ExamPackHandler
-	ExamHandler    *ExamHandler
-	AttemptHandler *AttemptHandler
-	ReportHandler  *ReportHandler
-	SystemHandler  *SystemHandler
+	ExamHandler     *ExamHandler
+	AttemptHandler  *AttemptHandler
+	ReportHandler   *ReportHandler
+	SystemHandler   *SystemHandler
+	UploadHandler   *UploadHandler
 }
 
 // CorsMiddleware adds standard headers to handle requests from next.js frontend
@@ -41,6 +42,12 @@ func NewRouter(h Handlers) http.Handler {
 	// Protected routes using auth middleware
 	mux.Handle("/api/auth/profile", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.GetProfile)))
 	mux.Handle("/api/auth/complete-profile", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.CompleteProfile)))
+
+	// Upload routes
+	if h.UploadHandler != nil {
+		mux.Handle("/api/uploads/presign", middleware.AuthMiddleware(http.HandlerFunc(h.UploadHandler.HandlePresign)))
+		mux.Handle("/api/uploads/direct", middleware.AuthMiddleware(http.HandlerFunc(h.UploadHandler.HandleDirectUpload)))
+	}
 
 	// Exam Pack routes
 	mux.Handle("/api/exam-packs", middleware.AuthMiddleware(http.HandlerFunc(h.ExamPackHandler.HandleExamPacks)))

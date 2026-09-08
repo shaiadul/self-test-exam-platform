@@ -11,6 +11,7 @@ import ToggleSwitch from "../../../../../components/ui/ToggleSwitch";
 import { PrimaryBtn } from "../../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../../components/ui/OutlineBtn";
 import { PageContainer } from "../../../../../components/common/PageContainer";
+import ImageUploader from "../../../../../components/ui/ImageUploader";
 import { createExamAction } from "../../../../../lib/actions";
 import { useRouter } from "next/navigation";
 
@@ -24,9 +25,6 @@ export default function AddExamClientView({
   initialAssets,
 }: AddExamClientViewProps) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const levelOptions = (initialAssets || [])
@@ -58,30 +56,6 @@ export default function AddExamClientView({
     privateExam: false,
     privatePassword: "",
   });
-
-  const handleFileChange = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setExamPackData((prev) => ({ ...prev, image: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleDrag = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
-    else if (e.type === "dragleave") setDragActive(false);
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileChange(e.dataTransfer.files[0]);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,40 +180,14 @@ export default function AddExamClientView({
 
           {/* Banner Upload */}
           <div>
-            <label className="text-sm font-bold text-gray-700 ml-1 block mb-2">Exam Thumbnail (Optional)</label>
-            <div
-              onDragEnter={handleDrag}
-              onDragOver={handleDrag}
-              onDragLeave={handleDrag}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition ${
-                dragActive ? "border-[#dd6b01] bg-orange-50/40" : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <FaCloudUploadAlt className="mx-auto text-4xl text-[#dd6b01] mb-2" />
-              <p className="text-sm font-semibold text-gray-700">
-                Drag & Drop Exam Thumbnail or <span className="text-[#dd6b01] font-bold">Browse</span>
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])}
-              />
-              {examPackData.image && (
-                <div className="mt-4 flex justify-center">
-                  <Image
-                    src={examPackData.image}
-                    alt="Preview"
-                    width={160}
-                    height={90}
-                    className="rounded-lg object-cover border border-gray-200 shadow-sm"
-                  />
-                </div>
-              )}
-            </div>
+            <ImageUploader
+              label="Exam Thumbnail (Optional)"
+              folder="exams"
+              height="h-52"
+              value={examPackData.image}
+              onChange={(url) => setExamPackData({ ...examPackData, image: url || "" })}
+              description="Recommended ratio 16:9 for clean card displays."
+            />
           </div>
         </div>
 

@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import logo2 from "../../../../public/global/logo2.png";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import CustomSelect from "../../../components/ui/CustomSelect";
-import { FaEdit } from "react-icons/fa";
+import ImageUploader from "../../../components/ui/ImageUploader";
 import { completeProfile } from "../../../lib/auth";
 
 interface CompleteProfileClientViewProps {
@@ -17,7 +17,6 @@ export default function CompleteProfileClientView({
   initialAssets,
 }: CompleteProfileClientViewProps) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -56,17 +55,6 @@ export default function CompleteProfileClientView({
 
   const handleChange = (field: string, value: string) => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileData((prev) => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,30 +99,12 @@ export default function CompleteProfileClientView({
         {/* Form Container */}
         <form onSubmit={handleSubmit} className="w-full flex flex-col justify-center items-center gap-5">
           {/* Profile Image Upload */}
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full border-2 border-[#dd6b01] overflow-hidden bg-gray-100 flex items-center justify-center">
-              {profileData.image ? (
-                <Image src={profileData.image} alt="Profile" width={96} height={96} className="object-cover w-full h-full" />
-              ) : (
-                <span className="text-gray-400 font-semibold text-xs">No Photo</span>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 p-2 bg-[#dd6b01] text-white rounded-full text-xs shadow hover:bg-orange-600 transition"
-              title="Upload Photo"
-            >
-              <FaEdit />
-            </button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              className="hidden"
-            />
-          </div>
+          <ImageUploader
+            variant="avatar"
+            folder="avatars"
+            value={profileData.image}
+            onChange={(url) => setProfileData((prev) => ({ ...prev, image: url || "" }))}
+          />
 
           {/* Input Fields */}
           <div className="w-full space-y-3">

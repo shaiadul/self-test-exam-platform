@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useRef, useState, DragEvent } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
-import Image from "next/image";
-import { FaCloudUploadAlt } from "react-icons/fa";
 import CustomSelect from "../../../../components/ui/CustomSelect";
 import { Input } from "../../../../components/ui/Input";
 import { PageContainer } from "../../../../components/common/PageContainer";
+import ImageUploader from "../../../../components/ui/ImageUploader";
 import { updateExamPackAction } from "../../../../lib/actions";
 import { useRouter } from "next/navigation";
 
@@ -20,9 +19,6 @@ export default function EditExamPackClientView({
   initialPack,
 }: EditExamPackClientViewProps) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [examPackData, setExamPackData] = useState({
     id: initialPack?.id ? initialPack.id.toString() : "",
@@ -32,28 +28,6 @@ export default function EditExamPackClientView({
     batch: "",
     image: initialPack?.image || "/global/test.png",
   });
-
-  const handleFileChange = (file: File) => {
-    const imageUrl = URL.createObjectURL(file);
-    setExamPackData({ ...examPackData, image: imageUrl });
-  };
-
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(true);
-  };
-
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(false);
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleFileChange(file);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,37 +80,15 @@ export default function EditExamPackClientView({
           placeholder="Select Category Level"
         />
 
-        <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition ${
-            dragActive ? "border-[#dd6b01] bg-orange-50/40" : "border-gray-300 hover:border-gray-400"
-          }`}
-        >
-          <FaCloudUploadAlt className="mx-auto text-4xl text-[#dd6b01] mb-2" />
-          <p className="text-sm font-semibold text-gray-700">
-            Drag & Drop Pack Image or <span className="text-[#dd6b01] font-bold">Browse</span>
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])}
+        <div>
+          <ImageUploader
+            label="Exam Pack Cover Image"
+            folder="exam-packs"
+            height="h-64"
+            value={examPackData.image}
+            onChange={(url) => setExamPackData({ ...examPackData, image: url || "" })}
+            description="JPG, PNG, or WebP cover image for this pack."
           />
-          {examPackData.image && (
-            <div className="mt-4 flex justify-center">
-              <Image
-                src={examPackData.image}
-                alt="Preview"
-                width={150}
-                height={90}
-                className="rounded-lg object-cover border"
-              />
-            </div>
-          )}
         </div>
 
         <div className="flex justify-end gap-4 pt-4">

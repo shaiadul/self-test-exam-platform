@@ -1,20 +1,16 @@
 "use client";
 
-import React, { useRef, useState, DragEvent } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
-import Image from "next/image";
-import { FaCloudUploadAlt } from "react-icons/fa";
-import CustomSelect from "../../../../components/ui/CustomSelect"; // adjust path if needed
+import CustomSelect from "../../../../components/ui/CustomSelect";
 import { Input } from "../../../../components/ui/Input";
 import { PageContainer } from "../../../../components/common/PageContainer";
-
+import ImageUploader from "../../../../components/ui/ImageUploader";
 import { createExamPackAction } from "../../../../lib/actions";
 import { useRouter } from "next/navigation";
 
 export default function AddExamPackPage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [examPackData, setExamPackData] = useState({
     name: "",
@@ -23,29 +19,6 @@ export default function AddExamPackPage() {
     batch: "",
     image: "",
   });
-
-  // --- Image Upload Handlers ---
-  const handleFileChange = (file: File) => {
-    const imageUrl = URL.createObjectURL(file);
-    setExamPackData({ ...examPackData, image: imageUrl });
-  };
-
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(true);
-  };
-
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(false);
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleFileChange(file);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,56 +46,22 @@ export default function AddExamPackPage() {
   return (
     <PageContainer>
       <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-[#dd6b01]">
-        Add New Exam Pack
+        Create Exam Pack
       </h1>
 
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start"
       >
-        {/* --- Image Upload (Drag & Drop) --- */}
-        <div
-          className={`w-full h-96 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
-            dragActive
-              ? "border-[#dd6b01] bg-orange-50"
-              : "border-gray-300 bg-gray-100 hover:border-[#dd6b01] hover:bg-orange-50/30"
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {examPackData.image ? (
-            <div className="relative w-full h-full rounded-2xl overflow-hidden">
-              <Image
-                src={examPackData.image}
-                alt="Exam Pack"
-                fill
-                className="object-cover object-center w-full h-full rounded-2xl"
-              />
-            </div>
-          ) : (
-            <>
-              <FaCloudUploadAlt className="text-5xl text-[#dd6b01] mb-3" />
-              <p className="text-gray-700 font-medium">
-                Drag & drop image here
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                or click to upload (JPG, PNG)
-              </p>
-            </>
-          )}
-
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                handleFileChange(e.target.files[0]);
-              }
-            }}
+        {/* --- Image Upload --- */}
+        <div>
+          <ImageUploader
+            label="Exam Pack Cover Image"
+            folder="exam-packs"
+            height="h-96"
+            value={examPackData.image}
+            onChange={(url) => setExamPackData((prev) => ({ ...prev, image: url || "" }))}
+            description="Upload a high quality cover image for this exam pack."
           />
         </div>
 

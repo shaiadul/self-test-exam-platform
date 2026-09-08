@@ -260,8 +260,14 @@ export default function AddQuestionClientView({
 
             {type === "picture" && (
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Question Image *</label>
-                <ImageUploader preview={pictureUrl} onUpload={(url) => setPictureUrl(url)} />
+                <ImageUploader
+                  label="Question Image *"
+                  folder="questions"
+                  height="h-64"
+                  value={pictureUrl}
+                  onChange={(url) => setPictureUrl(url)}
+                  description="Upload diagram, formula, or illustration for this question."
+                />
               </div>
             )}
 

@@ -23,8 +23,10 @@ import {
   FaShieldAlt,
   FaGraduationCap,
   FaChalkboardTeacher,
+  FaSpinner,
 } from "react-icons/fa";
 import { PageContainer } from "../../../components/common/PageContainer";
+import ImageUploader from "../../../components/ui/ImageUploader";
 
 import { updateProfileAction } from "../../../lib/actions";
 
@@ -38,7 +40,6 @@ export default function EditProfileClientView({
   initialAssets,
 }: EditProfileClientViewProps) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const userRole = initialProfile?.role || "student";
   const [loading, setLoading] = useState(false);
@@ -78,36 +79,8 @@ export default function EditProfileClientView({
     adminBase: initialProfile?.adminBase || "",
   });
 
-  // Track if image was changed locally (base64 preview)
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
   const handleChange = (field: string, value: string) => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select a valid image file.");
-      return;
-    }
-
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image must be under 2MB.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setImagePreview(base64);
-      setProfileData((prev) => ({ ...prev, image: base64 }));
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,8 +100,8 @@ export default function EditProfileClientView({
       // Always send name
       payload.name = profileData.name;
 
-      // Only send image if it was changed
-      if (imagePreview) {
+      // Send image if present
+      if (profileData.image) {
         payload.image = profileData.image;
       }
 
@@ -155,6 +128,15 @@ export default function EditProfileClientView({
 
       const res = await updateProfileAction(payload);
       if (res.success) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("userName", payload.name || "");
+          if (payload.image) {
+            localStorage.setItem("userImage", payload.image);
+          } else {
+            localStorage.removeItem("userImage");
+          }
+          window.dispatchEvent(new CustomEvent("profileUpdated", { detail: res.user || payload }));
+        }
         toast.success("Profile updated successfully!");
         router.push("/dashboard");
         router.refresh();
@@ -177,9 +159,6 @@ export default function EditProfileClientView({
     admin: { icon: <FaShieldAlt />, label: "Administrator", color: "bg-purple-50 text-purple-600 border-purple-200" },
   };
   const roleBadge = roleBadgeMap[normRole] || { icon: <FaUser />, label: userRole, color: "bg-gray-50 text-gray-600 border-gray-200" };
-
-  // Resolve display image
-  const displayImage = imagePreview || profileData.image || "/global/no-picture.jpg";
 
   return (
     <PageContainer className="space-y-8 animate-fadeIn">
@@ -212,32 +191,12 @@ export default function EditProfileClientView({
         {/* Profile Picture + Identity Card */}
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
           <div className="p-6 flex flex-col sm:flex-row items-center gap-6">
-            <div className="relative group">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#dd6b01]/15 shadow-md">
-                <Image
-                  src={displayImage}
-                  alt="Profile Picture"
-                  width={96}
-                  height={96}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 p-2 bg-[#dd6b01] text-white rounded-full shadow-lg hover:bg-orange-700 transition-all duration-200 group-hover:scale-110"
-                title="Upload Photo"
-              >
-                <FaCamera className="text-xs" />
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-              />
-            </div>
+            <ImageUploader
+              variant="avatar"
+              folder="avatars"
+              value={profileData.image}
+              onChange={(url) => setProfileData((prev) => ({ ...prev, image: url || "" }))}
+            />
 
             <div className="text-center sm:text-left space-y-1.5 flex-1">
               <h3 className="font-black text-slate-900 text-lg tracking-tight">
@@ -252,10 +211,10 @@ export default function EditProfileClientView({
               </p>
             </div>
 
-            {imagePreview && (
+            {profileData.image && profileData.image !== initialProfile?.image && (
               <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0">
                 <FaCheckCircle className="text-[10px]" />
-                New photo selected
+                Photo updated
               </span>
             )}
           </div>
