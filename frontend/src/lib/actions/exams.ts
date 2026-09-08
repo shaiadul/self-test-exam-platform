@@ -4,11 +4,16 @@ import { revalidatePath } from "next/cache";
 import { API_URL } from "./constants";
 import { getAuthHeader } from "./common";
 
-export async function getExamsAction(packId: number) {
+export async function getExamsAction(packId: number, clientToken?: string) {
 	try {
 		const authHeader = await getAuthHeader();
+		const headers: Record<string, string> = { ...authHeader };
+		if (clientToken) {
+			headers["Authorization"] = `Bearer ${clientToken}`;
+		}
 		const response = await fetch(`${API_URL}/exam-packs/${packId}/exams`, {
-			headers: { ...authHeader },
+			headers,
+			cache: "no-store",
 			next: { revalidate: 0 },
 		});
 
@@ -19,11 +24,16 @@ export async function getExamsAction(packId: number) {
 	}
 }
 
-export async function getExamDetailsAction(examId: string) {
+export async function getExamDetailsAction(examId: string, clientToken?: string) {
 	try {
 		const authHeader = await getAuthHeader();
+		const headers: Record<string, string> = { ...authHeader };
+		if (clientToken) {
+			headers["Authorization"] = `Bearer ${clientToken}`;
+		}
 		const response = await fetch(`${API_URL}/exams/${examId}`, {
-			headers: { ...authHeader },
+			headers,
+			cache: "no-store",
 			next: { revalidate: 0 },
 		});
 

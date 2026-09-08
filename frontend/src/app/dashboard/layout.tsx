@@ -39,6 +39,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const role = localStorage.getItem("userRole") || "student";
+    const token = localStorage.getItem("token");
+    if (token && typeof document !== "undefined" && !document.cookie.includes("token=")) {
+      document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+    }
     setUserRole(role);
     setLoading(false);
   }, [pathname]);

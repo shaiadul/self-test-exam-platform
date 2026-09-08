@@ -1,15 +1,41 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { FaSpinner } from "react-icons/fa";
 import ExamPackCard from "../../../components/dashboard/ExamPackCard";
 import AddButton from "../../../components/ui/AddButton";
 import { PageContainer } from "../../../components/common/PageContainer";
+import { getExamPacksAction } from "../../../lib/actions";
 
 interface ManageExamPackClientViewProps {
   initialPacks: any[];
 }
 
 export default function ManageExamPackClientView({ initialPacks }: ManageExamPackClientViewProps) {
-  const examPacks = initialPacks || [];
+  const [examPacks, setExamPacks] = useState<any[]>(initialPacks || []);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialPacks && initialPacks.length > 0) {
+      setExamPacks(initialPacks);
+    }
+  }, [initialPacks]);
+
+  useEffect(() => {
+    if (!initialPacks || initialPacks.length === 0) {
+      setLoading(true);
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
+      getExamPacksAction(token)
+        .then((fetched) => {
+          if (fetched && Array.isArray(fetched) && fetched.length > 0) {
+            setExamPacks(fetched);
+          }
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [initialPacks]);
 
   return (
     <PageContainer>
@@ -18,7 +44,12 @@ export default function ManageExamPackClientView({ initialPacks }: ManageExamPac
         <AddButton href="/dashboard/manage-exam-pack/add" label="Add Exam Pack" />
       </div>
 
-      {examPacks.length > 0 ? (
+      {loading ? (
+        <div className="py-20 flex flex-col items-center justify-center gap-3 text-gray-500 font-medium">
+          <FaSpinner className="animate-spin text-3xl text-[#dd6b01]" />
+          <span className="text-sm">Loading exam packs...</span>
+        </div>
+      ) : examPacks.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {examPacks.map((pack) => (
             <ExamPackCard

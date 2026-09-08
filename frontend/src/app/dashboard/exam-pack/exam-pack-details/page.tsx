@@ -6,6 +6,9 @@ import {
 } from "../../../../lib/actions";
 import ExamPackDetailsClientView from "./ExamPackDetailsClientView";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ExamPackDetailPage({
   searchParams,
 }: {
@@ -23,6 +26,7 @@ export default async function ExamPackDetailPage({
 
   return (
     <ExamPackDetailsClientView
+      packId={packId}
       initialPack={pack}
       initialExams={liveExams || []}
       initialStats={stats}

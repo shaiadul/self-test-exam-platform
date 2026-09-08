@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FaEdit, FaTrashAlt, FaPlus } from "react-icons/fa";
+import { FaEdit, FaTrashAlt, FaPlus, FaSpinner } from "react-icons/fa";
 import { MdOutlineEditNote } from "react-icons/md";
 import { PageContainer } from "../../../../components/common/PageContainer";
-import { deleteExamAction, deleteExamPackAction } from "../../../../lib/actions";
+import {
+  deleteExamAction,
+  deleteExamPackAction,
+  getExamsAction,
+  getExamPackDetailsAction,
+} from "../../../../lib/actions";
 
 type Exam = {
   id: string;
@@ -30,7 +35,8 @@ export default function ManageExamPackDetailClientView({
 }: ManageExamPackDetailClientViewProps) {
   const router = useRouter();
 
-  const [packTitle] = useState(initialPack?.title || "Exam Pack");
+  const [packData, setPackData] = useState<any>(initialPack);
+  const [packTitle, setPackTitle] = useState(initialPack?.title || "Exam Pack");
   const [exams, setExams] = useState<Exam[]>(
     (initialExams || []).map((e: any) => ({
       id: e.id,
@@ -40,6 +46,121 @@ export default function ManageExamPackDetailClientView({
       link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
     }))
   );
+  const [loading, setLoading] = useState<boolean>(false);
+
+  // Sync when initialPack changes from SSR
+  useEffect(() => {
+    if (initialPack) {
+      setPackData(initialPack);
+      setPackTitle(initialPack.title || "Exam Pack");
+    }
+  }, [initialPack]);
+
+  // Sync when initialExams changes from SSR
+  useEffect(() => {
+    if (initialExams && initialExams.length > 0) {
+      setExams(
+        initialExams.map((e: any) => ({
+          id: e.id,
+          name: e.name,
+          startDate: e.startDate,
+          endDate: e.endDate,
+          link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
+        }))
+      );
+    }
+  }, [initialExams]);
+
+  // Client-side self-healing fallback:
+  // If SSR passed empty exams or pack data due to client-side router transition,
+  // immediately fetch fresh data in background using token
+  useEffect(() => {
+    // Sync document.cookie with localStorage token if missing
+    if (typeof window !== "undefined") {
+      const lsToken = localStorage.getItem("token");
+      if (lsToken && !document.cookie.includes("token=")) {
+        document.cookie = `token=${lsToken}; path=/; max-age=86400; SameSite=Lax`;
+      }
+    }
+
+    if (packId && (!initialExams || initialExams.length === 0 || !initialPack)) {
+      setLoading(true);
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("token") || document.cookie.match(/(?:^|;\s*)token=([^;]*)/)?.[1]
+          : undefined;
+
+      const fetchExams = async () => {
+        try {
+          const actionData = await getExamsAction(packId, token);
+          if (Array.isArray(actionData) && actionData.length > 0) return actionData;
+
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+          const res = await fetch(`${apiUrl}/exam-packs/${packId}/exams`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (res.ok) {
+            const direct = await res.json();
+            if (Array.isArray(direct)) return direct;
+          }
+          return actionData || [];
+        } catch (err) {
+          console.error("Failed to load exams client-side:", err);
+          return [];
+        }
+      };
+
+      const fetchPack = async () => {
+        if (initialPack) return initialPack;
+        try {
+          const actionPack = await getExamPackDetailsAction(packId, token);
+          if (actionPack) return actionPack;
+
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+          const res = await fetch(`${apiUrl}/exam-packs/${packId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (res.ok) return await res.json();
+          return null;
+        } catch {
+          return null;
+        }
+      };
+
+      Promise.all([fetchExams(), fetchPack()])
+        .then(([fetchedExams, fetchedPack]) => {
+          if (fetchedPack) {
+            setPackData(fetchedPack);
+            setPackTitle(fetchedPack.title || "Exam Pack");
+          }
+          if (fetchedExams && Array.isArray(fetchedExams)) {
+            setExams(
+              fetchedExams.map((e: any) => ({
+                id: e.id,
+                name: e.name,
+                startDate: e.startDate,
+                endDate: e.endDate,
+                link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
+              }))
+            );
+          }
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [packId, initialExams, initialPack]);
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   const handleEditExam = (examId: string) => {
     router.push(`/dashboard/manage-exam-pack/${packId}/edit-exam?examId=${examId}`);
@@ -141,10 +262,10 @@ export default function ManageExamPackDetailClientView({
                       {exam.id}
                     </td>
                     <td className="py-4 px-6 text-gray-600 font-medium">
-                      {exam.startDate}
+                      {formatDate(exam.startDate)}
                     </td>
                     <td className="py-4 px-6 text-gray-600 font-medium">
-                      {exam.endDate}
+                      {formatDate(exam.endDate)}
                     </td>
                     <td className="py-4 px-6 text-center">
                       <Link
@@ -174,6 +295,11 @@ export default function ManageExamPackDetailClientView({
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : loading ? (
+          <div className="py-16 flex flex-col items-center justify-center gap-2 text-gray-500 font-medium">
+            <FaSpinner className="animate-spin text-2xl text-[#dd6b01]" />
+            <span className="text-sm font-semibold">Loading exams...</span>
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500 font-medium">

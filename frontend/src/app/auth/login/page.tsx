@@ -44,6 +44,9 @@ export default function SignIn() {
       const res = await loginAction(email, password);
       if (res.success && res.user) {
         localStorage.setItem("token", res.token || "");
+        if (res.token && typeof document !== "undefined") {
+          document.cookie = `token=${res.token}; path=/; max-age=86400; SameSite=Lax`;
+        }
         localStorage.setItem("userRole", res.user.role || "student");
         localStorage.setItem("userName", res.user.name || "");
         localStorage.setItem("userEmail", res.user.email || "");

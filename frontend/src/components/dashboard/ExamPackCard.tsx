@@ -44,7 +44,8 @@ export default function ExamPackCard({
         </span>
         <Link
           href={link}
-          className="px-4 py-2 text-sm text-[#dd6b01] rounded-lg hover:text-[#c95f00] underline"
+          prefetch={false}
+          className="px-4 py-2 text-sm text-[#dd6b01] rounded-lg hover:text-[#c95f00] underline cursor-pointer"
         >
           View Pack
         </Link>

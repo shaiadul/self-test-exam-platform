@@ -1,6 +1,9 @@
 import { getExamPackDetailsAction, getExamsAction } from "../../../../lib/actions";
 import ManageExamPackDetailClientView from "./ManageExamPackDetailClientView";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ExamPackDetailPage({
   params,
 }: {
