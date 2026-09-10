@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { FaUserPlus, FaUsers, FaUserCog, FaTrashAlt, FaTimes, FaEnvelope, FaLock, FaUser } from "react-icons/fa";
+import { FaUserPlus, FaUsers, FaUserCog, FaTrashAlt, FaTimes, FaEnvelope, FaLock, FaUser, FaGraduationCap } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import { adminUpdateUserAction, adminDeleteUserAction, registerAction } from "../../../../lib/actions";
 import { Input } from "../../../../components/ui/Input";
@@ -151,11 +151,11 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
           <div className="flex items-center gap-2">
             <FaUsers className="text-[#dd6b01] text-2xl" />
             <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
-              User & Role Management
+              User &amp; Role Management
             </h1>
           </div>
           <p className="text-xs md:text-sm text-gray-500 font-medium mt-1">
-            System administration tool to configure platform access rights and roles.
+            System administration tool to configure platform access rights, roles and teacher exam quotas.
           </p>
         </div>
 
@@ -176,6 +176,7 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                 <th className="py-4 px-6">Name</th>
                 <th className="py-4 px-6">Email</th>
                 <th className="py-4 px-6">Assigned Role</th>
+                <th className="py-4 px-6">Exam Quota</th>
                 <th className="py-4 px-6 text-right">Actions</th>
               </tr>
             </thead>
@@ -224,6 +225,60 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                       </span>
                     )}
                   </td>
+
+                  {/* Exam Quota column — only meaningful for teachers */}
+                  <td className="py-4 px-6">
+                    {u.role === "teacher" ? (
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-gray-700">
+                            {(u.createdExamsCount ?? 0)}
+                          </span>
+                          <span className="text-xs text-gray-400">/</span>
+                          <span className={`text-xs font-bold ${
+                            u.examLimit === -1
+                              ? "text-emerald-600"
+                              : (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
+                              ? "text-red-500"
+                              : "text-gray-700"
+                          }`}>
+                            {u.examLimit === -1 ? "∞" : (u.examLimit ?? 5)}
+                          </span>
+                          {u.examLimit !== -1 && (
+                            <span className={`ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                              (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
+                                ? "bg-red-50 text-red-600 border border-red-200"
+                                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            }`}>
+                              {(u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) ? "LIMIT REACHED" : "OK"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          {u.examLimit !== -1 && (
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
+                                  ? "bg-red-500"
+                                  : (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) * 0.8
+                                  ? "bg-amber-400"
+                                  : "bg-emerald-500"
+                              }`}
+                              style={{
+                                width: `${Math.min(100, ((u.createdExamsCount ?? 0) / (u.examLimit ?? 5)) * 100)}%`,
+                              }}
+                            />
+                          )}
+                          {u.examLimit === -1 && (
+                            <div className="h-full w-full bg-emerald-400 rounded-full" />
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-300 italic">N/A</span>
+                    )}
+                  </td>
+
                   <td className="py-4 px-6 text-right space-x-2">
                     <button
                       onClick={() => {
@@ -234,6 +289,17 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                     >
                       <FaUserCog /> Change Role
                     </button>
+                    {u.role === "teacher" && (
+                      <button
+                        onClick={() => {
+                          setLimitModalUser(u);
+                          setLimitValue(u.examLimit ?? 5);
+                        }}
+                        className="inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-bold p-1 hover:bg-violet-50 rounded transition cursor-pointer"
+                      >
+                        <FaGraduationCap /> Set Limit
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDeleteUser(u.id, u.name)}
                       className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-800 font-bold p-1 hover:bg-red-50 rounded transition cursor-pointer"
@@ -246,7 +312,7 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
 
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-gray-500 font-medium">
+                  <td colSpan={6} className="py-8 text-center text-gray-500 font-medium">
                     No users registered in system.
                   </td>
                 </tr>
@@ -256,7 +322,91 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
         </div>
       </div>
 
-      {/* Add User Modal */}
+      {/* ── Exam Limit Edit Modal ─────────────────────────────────── */}
+      {limitModalUser && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-100">
+            <div className="flex justify-between items-center pb-4 mb-5 border-b border-gray-100">
+              <div>
+                <h3 className="text-lg font-black text-gray-900">Set Exam Creation Limit</h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Teacher: <span className="font-bold text-gray-700">{limitModalUser.name}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setLimitModalUser(null)}
+                className="text-gray-400 hover:text-gray-600 transition cursor-pointer"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLimit} className="space-y-5">
+              {/* Current usage info */}
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700 font-medium">
+                Currently created:{" "}
+                <span className="font-bold">{limitModalUser.createdExamsCount ?? 0} exam(s)</span>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-2">
+                  Maximum Exams Allowed
+                  <span className="ml-1 text-gray-400 font-normal">(use -1 for unlimited)</span>
+                </label>
+
+                {/* Quick presets */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {[-1, 3, 5, 10, 20, 50].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setLimitValue(preset)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                        limitValue === preset
+                          ? "bg-violet-600 text-white border-violet-600 shadow-sm"
+                          : "bg-gray-50 text-gray-600 border-gray-200 hover:border-violet-400 hover:text-violet-600"
+                      }`}
+                    >
+                      {preset === -1 ? "∞ Unlimited" : preset}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 font-medium">Custom:</span>
+                  <input
+                    type="number"
+                    min={-1}
+                    max={999}
+                    value={limitValue}
+                    onChange={(e) => setLimitValue(parseInt(e.target.value) || 0)}
+                    className="w-24 border-2 border-gray-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-violet-500 transition"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setLimitModalUser(null)}
+                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingLimit}
+                  className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-xl transition shadow-md cursor-pointer disabled:opacity-50"
+                >
+                  {savingLimit ? "Saving..." : "Save Limit"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add User Modal ─────────────────────────────────────────── */}
       {addUserOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 animate-fadeIn">
@@ -264,7 +414,7 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
               <h3 className="text-xl font-black text-gray-900">Create New Account</h3>
               <button
                 onClick={() => setAddUserOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition"
+                className="text-gray-400 hover:text-gray-600 transition cursor-pointer"
               >
                 <FaTimes />
               </button>
@@ -321,6 +471,43 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                   placeholder="Select Role"
                 />
               </div>
+
+              {/* Exam limit — only shown when teacher is selected */}
+              {newRole === "teacher" && (
+                <div className="p-3 bg-violet-50 border border-violet-100 rounded-xl space-y-2">
+                  <label className="text-xs font-bold text-violet-800 block">
+                    Exam Creation Limit
+                    <span className="ml-1 text-violet-500 font-normal">(−1 = unlimited)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[-1, 3, 5, 10, 20].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setNewExamLimit(preset)}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                          newExamLimit === preset
+                            ? "bg-violet-600 text-white border-violet-600"
+                            : "bg-white text-gray-600 border-gray-200 hover:border-violet-400"
+                        }`}
+                      >
+                        {preset === -1 ? "∞" : preset}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs text-violet-600 font-semibold">Custom:</span>
+                    <input
+                      type="number"
+                      min={-1}
+                      max={999}
+                      value={newExamLimit}
+                      onChange={(e) => setNewExamLimit(parseInt(e.target.value) || 0)}
+                      className="w-20 border border-violet-200 rounded-lg px-2 py-1.5 text-sm font-bold outline-none focus:border-violet-500 bg-white"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4 border-t border-gray-100">
                 <button
