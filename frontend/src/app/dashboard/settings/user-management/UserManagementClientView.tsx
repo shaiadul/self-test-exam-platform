@@ -14,6 +14,8 @@ interface User {
   email: string;
   role: string;
   status?: string;
+  examLimit?: number;
+  createdExamsCount?: number;
 }
 
 interface UserManagementClientViewProps {
@@ -27,18 +29,24 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>("");
 
+  // Edit exam limit modal states
+  const [limitModalUser, setLimitModalUser] = useState<User | null>(null);
+  const [limitValue, setLimitValue] = useState<number>(5);
+  const [savingLimit, setSavingLimit] = useState(false);
+
   // Add User modal states
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("student");
+  const [newExamLimit, setNewExamLimit] = useState<number>(5);
   const [submitting, setSubmitting] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
   async function handleRoleChange(userId: number, role: string) {
     try {
-      const res = await adminUpdateUserAction(userId, role);
+      const res = await adminUpdateUserAction(userId, { role });
       if (res.success) {
         setUsers((prev) =>
           prev.map((u) => (u.id === userId ? { ...u, role } : u))
@@ -51,6 +59,29 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
     } catch (err) {
       console.error(err);
       toast.error("An error occurred while updating the role.");
+    }
+  }
+
+  async function handleSaveLimit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!limitModalUser) return;
+
+    setSavingLimit(true);
+    try {
+      const res = await adminUpdateUserAction(limitModalUser.id, { examLimit: limitValue });
+      if (res.success) {
+        setUsers((prev) =>
+          prev.map((u) => (u.id === limitModalUser.id ? { ...u, examLimit: limitValue } : u))
+        );
+        toast.success(`Exam creation limit updated to ${limitValue === -1 ? "Unlimited" : limitValue}.`);
+        setLimitModalUser(null);
+      } else {
+        toast.error(res.error || "Failed to update exam limit");
+      }
+    } catch {
+      toast.error("Failed to update exam limit.");
+    } finally {
+      setSavingLimit(false);
     }
   }
 
@@ -82,8 +113,15 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
       const res = await registerAction(newName, newEmail, newPassword);
       if (res.success && res.user) {
         if (newRole !== "student" && res.user.id) {
-          await adminUpdateUserAction(res.user.id, newRole);
+          const updateData: { role: string; examLimit?: number } = { role: newRole };
+          if (newRole === "teacher") {
+            updateData.examLimit = newExamLimit;
+          }
+          await adminUpdateUserAction(res.user.id, updateData);
           res.user.role = newRole;
+          if (newRole === "teacher") {
+            res.user.examLimit = newExamLimit;
+          }
         }
 
         setUsers((prev) => [res.user, ...prev]);
@@ -93,6 +131,7 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
         setNewEmail("");
         setNewPassword("");
         setNewRole("student");
+        setNewExamLimit(5);
       } else {
         setAddError(res.error || "Failed to register new user.");
       }

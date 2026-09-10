@@ -9,6 +9,7 @@ import (
 
 	"github.com/selftest/backend/internal/domain/exampack"
 	"github.com/selftest/backend/internal/service"
+	"github.com/selftest/backend/middleware"
 )
 
 type ExamPackHandler struct {
@@ -197,8 +198,14 @@ func (h *ExamPackHandler) CreateExam(w http.ResponseWriter, r *http.Request, pac
 		return
 	}
 
-	created, err := h.examService.CreateExam(packID, input)
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+
+	created, err := h.examService.CreateExam(packID, input, userID)
 	if err != nil {
+		if strings.Contains(err.Error(), "exam creation limit reached") {
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err.Error()), http.StatusForbidden)
+			return
+		}
 		switch err {
 		case service.ErrExamNameRequired, service.ErrInvalidStartDate, service.ErrInvalidEndDate, service.ErrEndDateBeforeStart:
 			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusBadRequest)

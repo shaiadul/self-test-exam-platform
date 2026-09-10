@@ -181,6 +181,10 @@ func (s *UserService) UpdateUserRole(id int, role string) error {
 	return s.userRepo.UpdateRole(id, role)
 }
 
+func (s *UserService) UpdateUserRoleAndLimit(id int, role *string, examLimit *int) error {
+	return s.userRepo.UpdateRoleAndLimit(id, role, examLimit)
+}
+
 func (s *UserService) DeleteUser(id int) error {
 	return s.userRepo.Delete(id)
 }

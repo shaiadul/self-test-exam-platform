@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/selftest/backend/internal/domain/attempt"
@@ -27,6 +28,24 @@ func (h *ExamHandler) HandleExams(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	trimmed := strings.TrimPrefix(path, "/api/exams/")
 	parts := strings.Split(trimmed, "/")
+
+	if len(parts) == 3 && parts[1] == "questions" {
+		examID := parts[0]
+		questionID, err := strconv.Atoi(parts[2])
+		if err != nil {
+			http.Error(w, `{"error": "Invalid question ID"}`, http.StatusBadRequest)
+			return
+		}
+		switch r.Method {
+		case http.MethodPut:
+			h.UpdateQuestion(w, r, examID, questionID)
+		case http.MethodDelete:
+			h.DeleteQuestion(w, r, examID, questionID)
+		default:
+			http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		}
+		return
+	}
 
 	if len(parts) == 2 && parts[1] == "questions" {
 		examID := parts[0]
@@ -145,6 +164,48 @@ func (h *ExamHandler) CreateQuestion(w http.ResponseWriter, r *http.Request, exa
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(q)
+}
+
+func (h *ExamHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request, examID string, questionID int) {
+	var input service.QuestionInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	q, err := h.examService.UpdateQuestion(examID, questionID, input)
+	if err != nil {
+		if err == service.ErrQuestionNotFound {
+			http.Error(w, `{"error": "Question not found"}`, http.StatusNotFound)
+			return
+		}
+		switch err {
+		case service.ErrQuestionTextReq, service.ErrMinOptionsReq:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusBadRequest)
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "Failed to update question: %v"}`, err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(q)
+}
+
+func (h *ExamHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request, examID string, questionID int) {
+	if err := h.examService.DeleteQuestion(examID, questionID); err != nil {
+		if err == service.ErrQuestionNotFound {
+			http.Error(w, `{"error": "Question not found"}`, http.StatusNotFound)
+			return
+		}
+		http.Error(w, fmt.Sprintf(`{"error": "Failed to delete question: %v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true}`))
 }
 
 func (h *ExamHandler) SubmitExam(w http.ResponseWriter, r *http.Request, examID string) {

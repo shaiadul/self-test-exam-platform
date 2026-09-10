@@ -9,7 +9,11 @@ type ExamRepository interface {
 	CreateExam(exam *Exam) error
 	UpdateExam(exam *Exam) error
 	DeleteExam(id string) error
+	CountExamsByCreator(creatorID int) (int, error)
 
 	GetQuestionsByExamID(examID string) ([]Question, error)
+	GetQuestionByID(id int) (*Question, error)
 	CreateQuestion(question *Question) error
+	UpdateQuestion(question *Question) error
+	DeleteQuestion(id int) error
 }

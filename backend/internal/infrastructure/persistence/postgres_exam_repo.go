@@ -142,8 +142,8 @@ func (r *PostgresExamRepository) GetUpcomingExamsForUser(userID int, now time.Ti
 
 func (r *PostgresExamRepository) CreateExam(e *exam.Exam) error {
 	query := `
-		INSERT INTO exams (id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, is_private, passcode, duration_minutes, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`
+		INSERT INTO exams (id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, is_private, passcode, duration_minutes, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`
 
 	now := time.Now()
 	e.CreatedAt = now
@@ -165,6 +165,7 @@ func (r *PostgresExamRepository) CreateExam(e *exam.Exam) error {
 		e.IsPrivate,
 		e.Passcode,
 		e.DurationMinutes,
+		e.CreatedBy,
 		e.CreatedAt,
 		e.UpdatedAt,
 	)
@@ -201,6 +202,12 @@ func (r *PostgresExamRepository) UpdateExam(e *exam.Exam) error {
 func (r *PostgresExamRepository) DeleteExam(id string) error {
 	_, err := r.db.Exec("DELETE FROM exams WHERE id = $1", id)
 	return err
+}
+
+func (r *PostgresExamRepository) CountExamsByCreator(creatorID int) (int, error) {
+	var count int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM exams WHERE created_by = $1", creatorID).Scan(&count)
+	return count, err
 }
 
 func (r *PostgresExamRepository) GetQuestionsByExamID(examID string) ([]exam.Question, error) {
@@ -241,6 +248,35 @@ func (r *PostgresExamRepository) GetQuestionsByExamID(examID string) ([]exam.Que
 	return questions, nil
 }
 
+func (r *PostgresExamRepository) GetQuestionByID(id int) (*exam.Question, error) {
+	query := `
+		SELECT id, exam_id, type, question_text, options, correct_answer, passage, picture_url, created_at
+		FROM questions
+		WHERE id = $1`
+
+	var q exam.Question
+	var optSlice []string
+	err := r.db.QueryRow(query, id).Scan(
+		&q.ID,
+		&q.ExamID,
+		&q.Type,
+		&q.QuestionText,
+		pq.Array(&optSlice),
+		&q.CorrectAnswer,
+		&q.Passage,
+		&q.PictureURL,
+		&q.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	q.Options = optSlice
+	return &q, nil
+}
+
 func (r *PostgresExamRepository) CreateQuestion(q *exam.Question) error {
 	query := `
 		INSERT INTO questions (exam_id, type, question_text, options, correct_answer, passage, picture_url, created_at)
@@ -259,4 +295,28 @@ func (r *PostgresExamRepository) CreateQuestion(q *exam.Question) error {
 		q.PictureURL,
 		q.CreatedAt,
 	).Scan(&q.ID)
+}
+
+func (r *PostgresExamRepository) UpdateQuestion(q *exam.Question) error {
+	query := `
+		UPDATE questions
+		SET type = $1, question_text = $2, options = $3, correct_answer = $4, passage = $5, picture_url = $6
+		WHERE id = $7`
+
+	_, err := r.db.Exec(
+		query,
+		q.Type,
+		q.QuestionText,
+		pq.Array(q.Options),
+		q.CorrectAnswer,
+		q.Passage,
+		q.PictureURL,
+		q.ID,
+	)
+	return err
+}
+
+func (r *PostgresExamRepository) DeleteQuestion(id int) error {
+	_, err := r.db.Exec("DELETE FROM questions WHERE id = $1", id)
+	return err
 }

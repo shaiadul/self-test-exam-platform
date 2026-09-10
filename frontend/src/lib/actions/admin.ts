@@ -7,13 +7,18 @@ export async function adminGetUsersAction(clientToken?: string) {
 	return data || [];
 }
 
-export async function adminUpdateUserAction(id: number, role: string, clientToken?: string) {
+export async function adminUpdateUserAction(
+	id: number,
+	updateData: string | { role?: string; examLimit?: number },
+	clientToken?: string
+) {
 	try {
+		const payload = typeof updateData === "string" ? { role: updateData } : updateData;
 		await fetcherWithAuth<any>(
 			`/admin/users/${id}`,
 			{
 				method: "PUT",
-				body: JSON.stringify({ role }),
+				body: JSON.stringify(payload),
 			},
 			clientToken
 		);

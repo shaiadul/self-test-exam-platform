@@ -112,13 +112,15 @@ func createUsersTable() {
 		"ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_tier VARCHAR(100)",
 		"ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_dept VARCHAR(100)",
 		"ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_base VARCHAR(100)",
+		"ALTER TABLE users ADD COLUMN IF NOT EXISTS exam_limit INT DEFAULT 5",
 		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT false",
 		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS passcode VARCHAR(100) DEFAULT ''",
 		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS duration_minutes INT DEFAULT 30",
+		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS created_by INT REFERENCES users(id) ON DELETE SET NULL",
 	}
 	for _, aq := range alterQueries {
 		if _, err := DB.Exec(aq); err != nil {
-			log.Fatalf("Failed to alter users table: %v", err)
+			log.Fatalf("Failed to alter users/exams table: %v", err)
 		}
 	}
 

@@ -161,14 +161,15 @@ func (h *AuthHandler) HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPut:
 		var req struct {
-			Role string `json:"role"`
+			Role      *string `json:"role"`
+			ExamLimit *int    `json:"examLimit"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
 			return
 		}
-		if err := h.userService.UpdateUserRole(id, req.Role); err != nil {
-			http.Error(w, fmt.Sprintf(`{"error": "Failed to update user role: %v"}`, err), http.StatusInternalServerError)
+		if err := h.userService.UpdateUserRoleAndLimit(id, req.Role, req.ExamLimit); err != nil {
+			http.Error(w, fmt.Sprintf(`{"error": "Failed to update user: %v"}`, err), http.StatusInternalServerError)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")

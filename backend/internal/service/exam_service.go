@@ -8,16 +8,19 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/selftest/backend/internal/domain/exam"
+	"github.com/selftest/backend/internal/domain/user"
 )
 
 var (
-	ErrExamNotFound     = errors.New("exam not found")
-	ErrExamNameRequired = errors.New("exam name is required")
-	ErrInvalidStartDate = errors.New("valid start date is required")
-	ErrInvalidEndDate   = errors.New("valid end date is required")
+	ErrExamNotFound       = errors.New("exam not found")
+	ErrExamNameRequired   = errors.New("exam name is required")
+	ErrInvalidStartDate   = errors.New("valid start date is required")
+	ErrInvalidEndDate     = errors.New("valid end date is required")
 	ErrEndDateBeforeStart = errors.New("end date must be after start date")
-	ErrQuestionTextReq  = errors.New("question text is required")
-	ErrMinOptionsReq    = errors.New("at least 2 options are required")
+	ErrQuestionTextReq    = errors.New("question text is required")
+	ErrMinOptionsReq      = errors.New("at least 2 options are required")
+	ErrExamLimitReached   = errors.New("exam creation limit reached")
+	ErrQuestionNotFound   = errors.New("question not found")
 )
 
 type CreateExamInput struct {
@@ -78,11 +81,12 @@ type QuestionInput struct {
 }
 
 type ExamService struct {
-	repo exam.ExamRepository
+	repo     exam.ExamRepository
+	userRepo user.UserRepository
 }
 
-func NewExamService(repo exam.ExamRepository) *ExamService {
-	return &ExamService{repo: repo}
+func NewExamService(repo exam.ExamRepository, userRepo user.UserRepository) *ExamService {
+	return &ExamService{repo: repo, userRepo: userRepo}
 }
 
 func (s *ExamService) ListExamsByPack(packID int) ([]exam.Exam, error) {
@@ -100,10 +104,26 @@ func (s *ExamService) GetExam(id string) (*exam.Exam, error) {
 	return e, nil
 }
 
-func (s *ExamService) CreateExam(packID int, input CreateExamInput) (*exam.Exam, error) {
+func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID int) (*exam.Exam, error) {
 	name := strings.TrimSpace(input.Name)
 	if name == "" {
 		return nil, ErrExamNameRequired
+	}
+
+	if creatorID > 0 && s.userRepo != nil {
+		u, err := s.userRepo.GetByID(creatorID)
+		if err == nil && u != nil && strings.ToLower(u.Role) == "teacher" {
+			limit := 5
+			if u.ExamLimit != nil {
+				limit = *u.ExamLimit
+			}
+			if limit >= 0 {
+				count, err := s.repo.CountExamsByCreator(creatorID)
+				if err == nil && count >= limit {
+					return nil, fmt.Errorf("exam creation limit reached: you have already created %d of %d allowed exams; please contact an admin to increase your limit", count, limit)
+				}
+			}
+		}
 	}
 
 	startDate, err := ParseFlexibleTime(input.StartDate)
@@ -207,6 +227,10 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput) (*exam.Exam,
 		e.DurationMinutes = *input.Duration
 	} else {
 		e.DurationMinutes = 30
+	}
+
+	if creatorID > 0 {
+		e.CreatedBy = &creatorID
 	}
 
 	if err := s.repo.CreateExam(&e); err != nil {
@@ -374,6 +398,87 @@ func (s *ExamService) CreateQuestion(examID string, input QuestionInput) (*exam.
 	}
 
 	return &q, nil
+}
+
+func (s *ExamService) UpdateQuestion(examID string, questionID int, input QuestionInput) (*exam.Question, error) {
+	existing, err := s.repo.GetQuestionByID(questionID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil || existing.ExamID != examID {
+		return nil, ErrQuestionNotFound
+	}
+
+	qText := strings.TrimSpace(input.QuestionText)
+	if qText == "" {
+		qText = strings.TrimSpace(input.Text)
+	}
+	if qText == "" {
+		return nil, ErrQuestionTextReq
+	}
+
+	var cleanOptions []string
+	for _, opt := range input.Options {
+		trimmed := strings.TrimSpace(opt)
+		if trimmed != "" {
+			cleanOptions = append(cleanOptions, trimmed)
+		}
+	}
+	if len(cleanOptions) < 2 {
+		return nil, ErrMinOptionsReq
+	}
+
+	correct := strings.TrimSpace(input.CorrectAnswer)
+	if correct == "" && input.CorrectIndex != nil && *input.CorrectIndex >= 0 && *input.CorrectIndex < len(cleanOptions) {
+		correct = cleanOptions[*input.CorrectIndex]
+	}
+	if correct == "" {
+		correct = cleanOptions[0]
+	}
+
+	qType := strings.TrimSpace(input.Type)
+	if qType == "" {
+		qType = existing.Type
+	}
+
+	var passage *string
+	if input.Passage != nil && strings.TrimSpace(*input.Passage) != "" {
+		p := strings.TrimSpace(*input.Passage)
+		passage = &p
+	} else if input.Explanation != nil && strings.TrimSpace(*input.Explanation) != "" {
+		p := strings.TrimSpace(*input.Explanation)
+		passage = &p
+	}
+
+	var pictureURL *string
+	if input.PictureURL != nil && strings.TrimSpace(*input.PictureURL) != "" {
+		pic := strings.TrimSpace(*input.PictureURL)
+		pictureURL = &pic
+	}
+
+	existing.Type = qType
+	existing.QuestionText = qText
+	existing.Options = cleanOptions
+	existing.CorrectAnswer = correct
+	existing.Passage = passage
+	existing.PictureURL = pictureURL
+
+	if err := s.repo.UpdateQuestion(existing); err != nil {
+		return nil, err
+	}
+
+	return existing, nil
+}
+
+func (s *ExamService) DeleteQuestion(examID string, questionID int) error {
+	existing, err := s.repo.GetQuestionByID(questionID)
+	if err != nil {
+		return err
+	}
+	if existing == nil || existing.ExamID != examID {
+		return ErrQuestionNotFound
+	}
+	return s.repo.DeleteQuestion(questionID)
 }
 
 func ParseFlexibleTime(val interface{}) (time.Time, error) {

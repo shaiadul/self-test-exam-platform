@@ -40,7 +40,7 @@ func main() {
 	// 2. Initialize Domain / Application Services
 	userService := service.NewUserService(userRepo)
 	packService := service.NewExamPackService(packRepo)
-	examService := service.NewExamService(examRepo)
+	examService := service.NewExamService(examRepo, userRepo)
 	attemptService := service.NewAttemptService(attemptRepo, examRepo, packRepo, userRepo)
 	reportService := service.NewReportService(userRepo, examRepo, packRepo, attemptRepo, reportRepo)
 	systemService := service.NewSystemService(systemRepo)

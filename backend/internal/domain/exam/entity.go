@@ -17,6 +17,7 @@ type Exam struct {
 	IsPrivate        bool      `json:"isPrivate" db:"is_private"`
 	Passcode         string    `json:"passcode" db:"passcode"`
 	DurationMinutes  int       `json:"durationMinutes" db:"duration_minutes"`
+	CreatedBy        *int      `json:"createdBy,omitempty" db:"created_by"`
 	CreatedAt        time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at" db:"updated_at"`
 }

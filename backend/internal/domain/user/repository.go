@@ -7,6 +7,7 @@ type UserRepository interface {
 	Update(user *User) error
 	GetAll() ([]User, error)
 	UpdateRole(id int, role string) error
+	UpdateRoleAndLimit(id int, role *string, examLimit *int) error
 	Delete(id int) error
 	GetUserCountByRole(role string) (int, error)
 	GetStudentRank(userID int) (int, error)

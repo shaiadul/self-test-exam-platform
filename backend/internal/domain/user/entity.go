@@ -19,9 +19,11 @@ type User struct {
 	Designation *string    `json:"designation" db:"designation"`
 	AdminTier   *string    `json:"adminTier" db:"admin_tier"`
 	AdminDept   *string    `json:"adminDept" db:"admin_dept"`
-	AdminBase   *string    `json:"adminBase" db:"admin_base"`
-	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
+	AdminBase         *string    `json:"adminBase" db:"admin_base"`
+	ExamLimit         *int       `json:"examLimit,omitempty" db:"exam_limit"`
+	CreatedExamsCount int        `json:"createdExamsCount,omitempty"`
+	CreatedAt         time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 type RegisterRequest struct {
