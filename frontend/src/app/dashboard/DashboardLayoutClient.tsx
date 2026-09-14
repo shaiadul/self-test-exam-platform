@@ -23,6 +23,7 @@ function isRouteAllowed(role: string, pathname: string): boolean {
   if (normRole === "student") {
     if (pathname.startsWith("/dashboard/settings")) return false;
     if (pathname.startsWith("/dashboard/manage-exam-pack")) return false;
+    if (pathname.startsWith("/dashboard/teacher-reports")) return false;
     if (pathname.startsWith("/dashboard/question")) return false;
     // Allow student reporting /dashboard/reporting, only block teacher evaluations /dashboard/report
     if (pathname.startsWith("/dashboard/report") && !pathname.startsWith("/dashboard/reporting")) return false;
@@ -32,23 +33,26 @@ function isRouteAllowed(role: string, pathname: string): boolean {
   return true;
 }
 
-export default function DashboardLayoutClient({ children }: { children: ReactNode }) {
+export default function DashboardLayoutClient({
+  children,
+  initialRole = "student",
+}: {
+  children: ReactNode;
+  initialRole?: string;
+}) {
   const pathname = usePathname();
-  const [userRole, setUserRole] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("userRole") || "student";
-    }
-    return "student";
-  });
+  // Start from the server-provided role so SSR and hydration render the same
+  // tree; the effect below only reconciles with localStorage after mount.
+  const [userRole, setUserRole] = useState<string>(initialRole);
 
   useEffect(() => {
-    const role = localStorage.getItem("userRole") || "student";
+    const role = localStorage.getItem("userRole") || initialRole;
     const token = localStorage.getItem("token");
     if (token && typeof document !== "undefined" && !document.cookie.includes("token=")) {
       document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
     }
     setUserRole(role);
-  }, [pathname]);
+  }, [pathname, initialRole]);
 
   const allowed = isRouteAllowed(userRole, pathname);
   const isExamPage = pathname.includes("/dashboard/exam-pack/exam-pack-details/");
@@ -57,13 +61,13 @@ export default function DashboardLayoutClient({ children }: { children: ReactNod
     <div className={`min-h-screen flex flex-col bg-[#fafafa] print:bg-white print:p-0 ${!isExamPage ? "lg:flex-row" : ""}`}>
       {!isExamPage && (
         <div className="print:hidden">
-          <Sidebar />
+          <Sidebar role={userRole} />
         </div>
       )}
 
       {!isExamPage && (
         <div className="print:hidden">
-          <MobileNav />
+          <MobileNav role={userRole} />
         </div>
       )}
 

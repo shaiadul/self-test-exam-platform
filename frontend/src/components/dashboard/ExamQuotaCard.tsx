@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { FaClipboardList, FaArrowRight, FaInfinity, FaLock } from "react-icons/fa";
+import { PrimaryBtn } from "../ui/PrimaryBtn";
+import { OutlineBtn } from "../ui/OutlineBtn";
 
 interface ExamQuotaCardProps {
   created?: number;
@@ -24,10 +25,10 @@ export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
   const message = !loaded
     ? "Quota data is unavailable. If this persists, please ensure the server is running the latest build."
     : unlimited
-    ? "No restriction — you have unlimited exam creation access."
+    ? "No restriction — you have unlimited exam pack access."
     : reached
-    ? `You have created ${createdCount} of ${normalizedLimit} allowed exams. Contact an admin to increase your limit.`
-    : `You have created ${createdCount} of ${normalizedLimit} allowed exams with ${remaining} slot${remaining === 1 ? "" : "s"} remaining.`;
+    ? `You have created ${createdCount} of ${normalizedLimit} allowed exam packs. Submit a request to increase your limit.`
+    : `You have created ${createdCount} of ${normalizedLimit} allowed exam packs with ${remaining} slot${remaining === 1 ? "" : "s"} remaining.`;
 
   return (
     <div
@@ -55,7 +56,7 @@ export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-base font-black text-slate-900 tracking-tight">
-                Exam Creation Quota
+                Exam Pack Quota
               </h3>
               {!loaded ? (
                 <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
@@ -71,13 +72,14 @@ export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
                 </span>
               ) : (
                 <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                  {remaining} SLOT{remaining === 1 ? "" : "S"} LEFT
+                  {remaining} PACK{remaining === 1 ? "" : "S"} LEFT
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500 font-medium mt-1 max-w-lg">
-              The platform admin configures how many exams you can publish across
-              your exam packs. This quota is enforced automatically.
+              The platform admin configures how many exam packs you can create.
+              Each pack allows up to 6 exams by default. This quota is enforced
+              automatically — request an increase anytime.
             </p>
           </div>
         </div>
@@ -130,21 +132,27 @@ export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
             {reached && <FaLock className="shrink-0" />}
             {message}
           </p>
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href="/dashboard/manage-exam-pack/add"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-100 px-3 py-2 rounded-xl transition-colors"
-            >
-              <span>Create Exam Pack</span>
-              <FaArrowRight className="text-[10px]" />
-            </Link>
-            <Link
-              href="/dashboard/manage-exam-pack"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-2 rounded-xl transition-colors"
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <OutlineBtn
+              link="/dashboard/manage-exam-pack"
+              className="!text-xs !py-2 !px-3.5"
             >
               <span>Manage Packs</span>
-              <FaArrowRight className="text-[10px]" />
-            </Link>
+            </OutlineBtn>
+            <OutlineBtn
+              link="/dashboard/requests"
+              className="!text-xs !py-2 !px-3.5"
+            >
+              <span>Request Increase</span>
+              <FaArrowRight className="ml-1.5 text-[10px]" />
+            </OutlineBtn>
+            <PrimaryBtn
+              link="/dashboard/manage-exam-pack/add"
+              className="!text-xs !py-2 !px-4"
+            >
+              <span>Create Exam Pack</span>
+              <FaArrowRight className="ml-1.5 text-[10px]" />
+            </PrimaryBtn>
           </div>
         </div>
       </div>

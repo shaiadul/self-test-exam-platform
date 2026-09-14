@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/selftest/backend/internal/domain/exam"
+	"github.com/selftest/backend/internal/domain/exampack"
 	"github.com/selftest/backend/internal/domain/user"
 )
 
@@ -83,23 +84,118 @@ type QuestionInput struct {
 type ExamService struct {
 	repo     exam.ExamRepository
 	userRepo user.UserRepository
+	packRepo exampack.ExamPackRepository
 }
 
-func NewExamService(repo exam.ExamRepository, userRepo user.UserRepository) *ExamService {
-	return &ExamService{repo: repo, userRepo: userRepo}
+func NewExamService(repo exam.ExamRepository, userRepo user.UserRepository, packRepo exampack.ExamPackRepository) *ExamService {
+	return &ExamService{repo: repo, userRepo: userRepo, packRepo: packRepo}
 }
 
-func (s *ExamService) ListExamsByPack(packID int) ([]exam.Exam, error) {
+func (s *ExamService) roleOf(userID int) string {
+	if s.userRepo == nil || userID <= 0 {
+		return ""
+	}
+	u, err := s.userRepo.GetByID(userID)
+	if err != nil || u == nil {
+		return ""
+	}
+	return strings.ToLower(u.Role)
+}
+
+// assertPackAccess ensures the user may view the pack's contents. Teachers are
+// restricted to packs they created; admins and students are not.
+func (s *ExamService) assertPackAccess(userID, packID int) error {
+	role := s.roleOf(userID)
+	if role != "teacher" {
+		return nil
+	}
+	pack, err := s.packRepo.GetExamPackByID(packID)
+	if err != nil {
+		return err
+	}
+	if pack == nil {
+		return ErrExamPackNotFound
+	}
+	if pack.CreatedBy == nil || *pack.CreatedBy != userID {
+		return ErrForbidden
+	}
+	return nil
+}
+
+// assertExamView allows viewing when the user is an admin/student, the exam was
+// created by the teacher, or the exam's pack belongs to the teacher.
+func (s *ExamService) assertExamView(userID int, e *exam.Exam) error {
+	role := s.roleOf(userID)
+	if role != "teacher" {
+		return nil
+	}
+	if e.CreatedBy != nil && *e.CreatedBy == userID {
+		return nil
+	}
+	pack, err := s.packRepo.GetExamPackByID(e.ExamPackID)
+	if err != nil {
+		return err
+	}
+	if pack != nil && pack.CreatedBy != nil && *pack.CreatedBy == userID {
+		return nil
+	}
+	return ErrForbidden
+}
+
+// assertExamEdit allows editing exams the teacher created, or any exam inside a
+// pack the teacher owns (admins may edit everything).
+func (s *ExamService) assertExamEdit(userID int, e *exam.Exam) error {
+	role := s.roleOf(userID)
+	if role != "teacher" {
+		return nil
+	}
+	if e.CreatedBy != nil && *e.CreatedBy == userID {
+		return nil
+	}
+
+	// Fall back to pack ownership: a teacher manages every exam (and question)
+	// inside their own packs, even if the exam row itself has no creator set.
+	if s.packRepo != nil {
+		pack, err := s.packRepo.GetExamPackByID(e.ExamPackID)
+		if err != nil {
+			return err
+		}
+		if pack != nil && pack.CreatedBy != nil && *pack.CreatedBy == userID {
+			return nil
+		}
+	}
+
+	return ErrForbidden
+}
+
+func (s *ExamService) assertExamEditByID(userID int, examID string) error {
+	e, err := s.repo.GetExamByID(examID)
+	if err != nil {
+		return err
+	}
+	if e == nil {
+		return ErrExamNotFound
+	}
+	return s.assertExamEdit(userID, e)
+}
+
+func (s *ExamService) ListExamsByPack(userID, packID int) ([]exam.Exam, error) {
+	if err := s.assertPackAccess(userID, packID); err != nil {
+		return nil, err
+	}
 	return s.repo.GetExamsByPackID(packID)
 }
 
-func (s *ExamService) GetExam(id string) (*exam.Exam, error) {
+func (s *ExamService) GetExam(userID int, id string) (*exam.Exam, error) {
 	e, err := s.repo.GetExamByID(id)
 	if err != nil {
 		return nil, err
 	}
 	if e == nil {
 		return nil, ErrExamNotFound
+	}
+	if err := s.assertExamView(userID, e); err != nil {
+		return nil, err
 	}
 	return e, nil
 }
@@ -110,9 +206,25 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 		return nil, ErrExamNameRequired
 	}
 
-	teacherLimit, limitErr := s.resolveTeacherLimit(creatorID)
-	if limitErr != nil {
-		return nil, limitErr
+	pack, err := s.packRepo.GetExamPackByID(packID)
+	if err != nil {
+		return nil, err
+	}
+	if pack == nil {
+		return nil, ErrExamPackNotFound
+	}
+
+	role := s.roleOf(creatorID)
+	if role == "teacher" && (pack.CreatedBy == nil || *pack.CreatedBy != creatorID) {
+		return nil, ErrForbidden
+	}
+
+	packLimit := pack.ExamLimit
+	if packLimit == 0 {
+		packLimit = exampack.DefaultExamLimit
+	}
+	if packLimit < 0 {
+		packLimit = -1
 	}
 
 	startDate, err := ParseFlexibleTime(input.StartDate)
@@ -222,16 +334,17 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 		e.CreatedBy = &creatorID
 	}
 
-	if teacherLimit != nil {
-		inserted, err := s.repo.CreateExamWithinLimit(&e, creatorID, *teacherLimit)
+	if packLimit >= 0 {
+		inserted, err := s.repo.CreateExamWithinPackLimit(&e, packID, packLimit)
 		if err != nil {
 			return nil, err
 		}
 		if !inserted {
-			if count, cerr := s.repo.CountExamsByCreator(creatorID); cerr == nil {
-				return nil, examLimitError(count, *teacherLimit)
+			count := 0
+			if exams, cerr := s.repo.GetExamsByPackID(packID); cerr == nil {
+				count = len(exams)
 			}
-			return nil, ErrExamLimitReached
+			return nil, examPackLimitError(count, packLimit)
 		}
 		return &e, nil
 	}
@@ -243,49 +356,20 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 	return &e, nil
 }
 
-func examLimitError(count, limit int) error {
-	return fmt.Errorf("exam creation limit reached: you have already created %d of %d allowed exams; please contact an admin to increase your limit", count, limit)
+func examPackLimitError(count, limit int) error {
+	return fmt.Errorf("exam creation limit reached: this exam pack already has %d of %d allowed exams; please request an increase from an admin", count, limit)
 }
 
-// resolveTeacherLimit returns the teacher's exam creation limit (nil for
-// non-teachers) and performs a best-effort early check so the user gets fast,
-// clear feedback. The authoritative, race-safe enforcement happens atomically
-// at insert time via CreateExamWithinLimit.
-func (s *ExamService) resolveTeacherLimit(creatorID int) (*int, error) {
-	if creatorID <= 0 || s.userRepo == nil {
-		return nil, nil
-	}
-
-	u, err := s.userRepo.GetByID(creatorID)
-	if err != nil || u == nil || strings.ToLower(u.Role) != "teacher" {
-		return nil, nil
-	}
-
-	limit := 5
-	if u.ExamLimit != nil {
-		limit = *u.ExamLimit
-	}
-	if limit < 0 {
-		limit = -1 // unlimited
-	}
-
-	if limit >= 0 {
-		count, err := s.repo.CountExamsByCreator(creatorID)
-		if err == nil && count >= limit {
-			return nil, examLimitError(count, limit)
-		}
-	}
-
-	return &limit, nil
-}
-
-func (s *ExamService) UpdateExam(id string, input UpdateExamInput) (*exam.Exam, error) {
+func (s *ExamService) UpdateExam(userID int, id string, input UpdateExamInput) (*exam.Exam, error) {
 	e, err := s.repo.GetExamByID(id)
 	if err != nil {
 		return nil, err
 	}
 	if e == nil {
 		return nil, ErrExamNotFound
+	}
+	if err := s.assertExamEdit(userID, e); err != nil {
+		return nil, err
 	}
 
 	if strings.TrimSpace(input.Name) != "" {
@@ -366,7 +450,17 @@ func (s *ExamService) UpdateExam(id string, input UpdateExamInput) (*exam.Exam, 
 	return e, nil
 }
 
-func (s *ExamService) DeleteExam(id string) error {
+func (s *ExamService) DeleteExam(userID int, id string) error {
+	e, err := s.repo.GetExamByID(id)
+	if err != nil {
+		return err
+	}
+	if e == nil {
+		return ErrExamNotFound
+	}
+	if err := s.assertExamEdit(userID, e); err != nil {
+		return err
+	}
 	return s.repo.DeleteExam(id)
 }
 
@@ -374,7 +468,11 @@ func (s *ExamService) GetQuestions(examID string) ([]exam.Question, error) {
 	return s.repo.GetQuestionsByExamID(examID)
 }
 
-func (s *ExamService) CreateQuestion(examID string, input QuestionInput) (*exam.Question, error) {
+func (s *ExamService) CreateQuestion(userID int, examID string, input QuestionInput) (*exam.Question, error) {
+	if err := s.assertExamEditByID(userID, examID); err != nil {
+		return nil, err
+	}
+
 	qText := strings.TrimSpace(input.QuestionText)
 	if qText == "" {
 		qText = strings.TrimSpace(input.Text)
@@ -439,7 +537,11 @@ func (s *ExamService) CreateQuestion(examID string, input QuestionInput) (*exam.
 	return &q, nil
 }
 
-func (s *ExamService) UpdateQuestion(examID string, questionID int, input QuestionInput) (*exam.Question, error) {
+func (s *ExamService) UpdateQuestion(userID int, examID string, questionID int, input QuestionInput) (*exam.Question, error) {
+	if err := s.assertExamEditByID(userID, examID); err != nil {
+		return nil, err
+	}
+
 	existing, err := s.repo.GetQuestionByID(questionID)
 	if err != nil {
 		return nil, err
@@ -509,7 +611,11 @@ func (s *ExamService) UpdateQuestion(examID string, questionID int, input Questi
 	return existing, nil
 }
 
-func (s *ExamService) DeleteQuestion(examID string, questionID int) error {
+func (s *ExamService) DeleteQuestion(userID int, examID string, questionID int) error {
+	if err := s.assertExamEditByID(userID, examID); err != nil {
+		return err
+	}
+
 	existing, err := s.repo.GetQuestionByID(questionID)
 	if err != nil {
 		return err

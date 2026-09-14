@@ -84,7 +84,8 @@ func (h *ExamPackHandler) HandleExamPacks(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExamPackHandler) ListExamPacks(w http.ResponseWriter, r *http.Request) {
-	packs, err := h.packService.ListExamPacks()
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	packs, err := h.packService.ListExamPacks(userID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
 		return
@@ -95,13 +96,17 @@ func (h *ExamPackHandler) ListExamPacks(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ExamPackHandler) GetExamPack(w http.ResponseWriter, r *http.Request, id int) {
-	pack, err := h.packService.GetExamPack(id)
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	pack, err := h.packService.GetExamPack(userID, id)
 	if err != nil {
-		if err == service.ErrExamPackNotFound {
+		switch err {
+		case service.ErrExamPackNotFound:
 			http.Error(w, `{"error": "Exam Pack not found"}`, http.StatusNotFound)
-			return
+		case service.ErrForbidden:
+			http.Error(w, `{"error": "You do not have access to this exam pack"}`, http.StatusForbidden)
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
 		}
-		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
 		return
 	}
 
@@ -121,7 +126,16 @@ func (h *ExamPackHandler) CreateExamPack(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.packService.CreateExamPack(&pack); err != nil {
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	if err := h.packService.CreateExamPack(userID, &pack); err != nil {
+		if strings.Contains(err.Error(), "exam pack creation limit reached") {
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
+			return
+		}
+		if err == service.ErrForbidden {
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
+			return
+		}
 		http.Error(w, fmt.Sprintf(`{"error": "Failed to create exam pack: %v"}`, err), http.StatusInternalServerError)
 		return
 	}
@@ -132,8 +146,13 @@ func (h *ExamPackHandler) CreateExamPack(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *ExamPackHandler) UpdateExamPack(w http.ResponseWriter, r *http.Request, id int) {
-	pack, err := h.packService.GetExamPack(id)
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	pack, err := h.packService.GetExamPack(userID, id)
 	if err != nil || pack == nil {
+		if err == service.ErrForbidden {
+			http.Error(w, `{"error": "You do not have access to this exam pack"}`, http.StatusForbidden)
+			return
+		}
 		http.Error(w, `{"error": "Exam Pack not found"}`, http.StatusNotFound)
 		return
 	}
@@ -163,7 +182,11 @@ func (h *ExamPackHandler) UpdateExamPack(w http.ResponseWriter, r *http.Request,
 		pack.Image = req.Image
 	}
 
-	if err := h.packService.UpdateExamPack(pack); err != nil {
+	if err := h.packService.UpdateExamPack(userID, pack); err != nil {
+		if err == service.ErrForbidden {
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
+			return
+		}
 		http.Error(w, fmt.Sprintf(`{"error": "Failed to update exam pack: %v"}`, err), http.StatusInternalServerError)
 		return
 	}
@@ -173,17 +196,33 @@ func (h *ExamPackHandler) UpdateExamPack(w http.ResponseWriter, r *http.Request,
 }
 
 func (h *ExamPackHandler) DeleteExamPack(w http.ResponseWriter, r *http.Request, id int) {
-	if err := h.packService.DeleteExamPack(id); err != nil {
-		http.Error(w, fmt.Sprintf(`{"error": "Failed to delete: %v"}`, err), http.StatusInternalServerError)
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	if err := h.packService.DeleteExamPack(userID, id); err != nil {
+		switch err {
+		case service.ErrExamPackNotFound:
+			http.Error(w, `{"error": "Exam Pack not found"}`, http.StatusNotFound)
+		case service.ErrForbidden:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "Failed to delete: %v"}`, err), http.StatusInternalServerError)
+		}
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *ExamPackHandler) ListExams(w http.ResponseWriter, r *http.Request, packID int) {
-	exams, err := h.examService.ListExamsByPack(packID)
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	exams, err := h.examService.ListExamsByPack(userID, packID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+		switch err {
+		case service.ErrExamPackNotFound:
+			http.Error(w, `{"error": "Exam Pack not found"}`, http.StatusNotFound)
+		case service.ErrForbidden:
+			http.Error(w, `{"error": "You do not have access to this exam pack"}`, http.StatusForbidden)
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -209,6 +248,10 @@ func (h *ExamPackHandler) CreateExam(w http.ResponseWriter, r *http.Request, pac
 		switch err {
 		case service.ErrExamNameRequired, service.ErrInvalidStartDate, service.ErrInvalidEndDate, service.ErrEndDateBeforeStart:
 			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusBadRequest)
+		case service.ErrForbidden:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
+		case service.ErrExamPackNotFound:
+			http.Error(w, `{"error": "Exam Pack not found"}`, http.StatusNotFound)
 		default:
 			http.Error(w, fmt.Sprintf(`{"error": "Failed to create exam: %v"}`, err), http.StatusInternalServerError)
 		}

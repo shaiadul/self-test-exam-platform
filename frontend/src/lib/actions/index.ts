@@ -7,6 +7,7 @@ export * from "./questions";
 export * from "./attempts";
 export * from "./reports";
 export * from "./admin";
+export * from "./requests";
 export * from "./assets";
 export * from "./transactions";
 export * from "./upload";

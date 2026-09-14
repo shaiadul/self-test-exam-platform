@@ -5,7 +5,7 @@ import Link from "next/link";
 import { HiMenuAlt3, HiX } from "react-icons/hi";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { FaHome, FaBoxOpen, FaChartBar, FaUserCog } from "react-icons/fa";
+import { FaHome, FaBoxOpen, FaChartBar, FaUserCog, FaClipboardList, FaPoll } from "react-icons/fa";
 import { IoMdLogOut, IoMdSettings } from "react-icons/io";
 import { SiGoogletagmanager } from "react-icons/si";
 import { MdQuestionAnswer } from "react-icons/md";
@@ -17,28 +17,33 @@ const menuItems = [
   { name: "Exam Pack", href: "/dashboard/exam-pack", icon: <FaBoxOpen /> },
   { name: "Manage Exam Pack", href: "/dashboard/manage-exam-pack", icon: <SiGoogletagmanager /> },
   { name: "My Reports", href: "/dashboard/reporting", icon: <FaChartBar /> },
+  { name: "Exam Reports", href: "/dashboard/teacher-reports", icon: <FaPoll /> },
   { name: "Question Bank", href: "/dashboard/question/add", icon: <MdQuestionAnswer /> },
+  { name: "Requests", href: "/dashboard/requests", icon: <FaClipboardList /> },
   { name: "Class Evaluations", href: "/dashboard/report", icon: <TbMessageReportFilled /> },
   { name: "Edit Profile", href: "/dashboard/edit-profile", icon: <FaUserCog /> },
   { name: "Settings", href: "/dashboard/settings", icon: <IoMdSettings /> },
 ];
 
 const roleAccess: Record<string, string[]> = {
+  "My Reports": ["student"],
+  "Exam Reports": ["teacher", "admin"],
   "Manage Exam Pack": ["teacher", "admin"],
   "Question Bank": ["teacher", "admin"],
   "Class Evaluations": ["teacher", "admin"],
+  Requests: ["teacher", "admin"],
   Settings: ["admin"],
 };
 
-export const MobileNav = () => {
+export const MobileNav = ({ role = "student" }: { role?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string>("student");
+  const [userRole, setUserRole] = useState<string>(role);
   const pathname = usePathname();
 
   useEffect(() => {
-    const role = localStorage.getItem("userRole") || "student";
-    setUserRole(role);
-  }, []);
+    const stored = localStorage.getItem("userRole") || role;
+    setUserRole(stored);
+  }, [role]);
 
   const visibleMenuItems = menuItems.filter((item) => {
     const allowed = roleAccess[item.name];

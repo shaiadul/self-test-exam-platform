@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { IoMdLogOut, IoMdSettings } from "react-icons/io";
-import { FaHome, FaBoxOpen, FaChartBar, FaUserCog } from "react-icons/fa";
+import { FaHome, FaBoxOpen, FaChartBar, FaUserCog, FaClipboardList, FaPoll } from "react-icons/fa";
 import { SiGoogletagmanager } from "react-icons/si";
 import { MdQuestionAnswer } from "react-icons/md";
 import { TbMessageReportFilled } from "react-icons/tb";
@@ -33,9 +33,19 @@ const menuItems: MenuItem[] = [
     icon: <FaChartBar className="text-xl" />,
   },
   {
+    name: "Exam Reports",
+    href: "/dashboard/teacher-reports",
+    icon: <FaPoll className="text-xl" />,
+  },
+  {
     name: "Question Bank",
     href: "/dashboard/question/add",
     icon: <MdQuestionAnswer className="text-xl" />,
+  },
+  {
+    name: "Requests",
+    href: "/dashboard/requests",
+    icon: <FaClipboardList className="text-xl" />,
   },
   {
     name: "Class Evaluations",
@@ -56,21 +66,24 @@ const menuItems: MenuItem[] = [
 
 // Define role access restrictions (if undefined, accessible by all)
 const roleAccess: Record<string, string[]> = {
+  "My Reports": ["student"],
+  "Exam Reports": ["teacher", "admin"],
   "Manage Exam Pack": ["teacher", "admin"],
   "Question Bank": ["teacher", "admin"],
   "Class Evaluations": ["teacher", "admin"],
+  Requests: ["teacher", "admin"],
   Settings: ["admin"],
 };
 
-export const Sidebar = () => {
+export const Sidebar = ({ role = "student" }: { role?: string }) => {
   const pathname = usePathname();
-  const [userRole, setUserRole] = useState<string>("student");
+  const [userRole, setUserRole] = useState<string>(role);
 
   useEffect(() => {
-    // Read local storage inside client-side effect
-    const role = localStorage.getItem("userRole") || "student";
-    setUserRole(role);
-  }, []);
+    // Reconcile with local storage after mount (server role is the fallback)
+    const stored = localStorage.getItem("userRole") || role;
+    setUserRole(stored);
+  }, [role]);
 
   const visibleMenuItems = menuItems.filter((item) => {
     const allowed = roleAccess[item.name];

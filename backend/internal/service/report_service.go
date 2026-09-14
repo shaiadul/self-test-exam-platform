@@ -182,14 +182,22 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 			createdExamsCount = 0
 		}
 
+		packLimit := 3
+		if u.ExamPackLimit != nil {
+			packLimit = *u.ExamPackLimit
+		}
+		if packLimit < 0 {
+			packLimit = -1 // unlimited
+		}
+		createdPacksCount, err := s.examPackRepo.CountExamPacksByCreator(u.ID)
+		if err != nil {
+			createdPacksCount = 0
+		}
+
 		packs, _ := s.examPackRepo.GetExamPacks()
-		totalQuestions := 0
-		for _, p := range packs {
-			exams, _ := s.examRepo.GetExamsByPackID(p.ID)
-			for _, e := range exams {
-				qs, _ := s.examRepo.GetQuestionsByExamID(e.ID)
-				totalQuestions += len(qs)
-			}
+		totalQuestions, err := s.examRepo.CountAllQuestions()
+		if err != nil {
+			totalQuestions = 0
 		}
 
 		var sumScores float64
@@ -287,6 +295,8 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 			Rating:            rating,
 			ExamLimit:         examLimit,
 			CreatedExamsCount: createdExamsCount,
+			ExamPackLimit:     packLimit,
+			CreatedPacksCount: createdPacksCount,
 			ActivityData:      activityData,
 			AssignedPacks:     assignedPacks,
 			PendingTasks:      pendingTasks,
@@ -381,8 +391,14 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 	}
 }
 
-func (s *ReportService) GetTeacherReports() ([]report.TeacherReport, error) {
-	packs, err := s.examPackRepo.GetExamPacks()
+func (s *ReportService) GetTeacherReports(userID int) ([]report.TeacherReport, error) {
+	var packs []exampack.ExamPack
+	var err error
+	if s.isTeacher(userID) {
+		packs, err = s.examPackRepo.GetExamPacksByCreator(userID)
+	} else {
+		packs, err = s.examPackRepo.GetExamPacks()
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -439,10 +455,14 @@ func (s *ReportService) GetTeacherReports() ([]report.TeacherReport, error) {
 	return reports, nil
 }
 
-func (s *ReportService) GetTeacherReportDetails(examID string) (*report.TeacherReportDetail, error) {
+func (s *ReportService) GetTeacherReportDetails(userID int, examID string) (*report.TeacherReportDetail, error) {
 	targetExam, err := s.examRepo.GetExamByID(examID)
 	if err != nil || targetExam == nil {
 		return nil, ErrExamNotFound
+	}
+
+	if s.isTeacher(userID) && !s.teacherOwnsExam(userID, targetExam) {
+		return nil, ErrForbidden
 	}
 
 	packName := "Unknown Pack"
@@ -518,6 +538,28 @@ func (s *ReportService) GetTeacherReportDetails(examID string) (*report.TeacherR
 
 func (s *ReportService) GetExamAnalysisStats() (*report.ExamAnalysisStats, error) {
 	return s.reportRepo.GetAnalysisStats()
+}
+
+func (s *ReportService) isTeacher(userID int) bool {
+	if s.userRepo == nil || userID <= 0 {
+		return false
+	}
+	u, err := s.userRepo.GetByID(userID)
+	if err != nil || u == nil {
+		return false
+	}
+	return strings.ToLower(u.Role) == "teacher"
+}
+
+func (s *ReportService) teacherOwnsExam(userID int, e *exam.Exam) bool {
+	if e.CreatedBy != nil && *e.CreatedBy == userID {
+		return true
+	}
+	pack, err := s.examPackRepo.GetExamPackByID(e.ExamPackID)
+	if err != nil || pack == nil {
+		return false
+	}
+	return pack.CreatedBy != nil && *pack.CreatedBy == userID
 }
 
 func valOrDefault(ptr *string, fallback string) string {

@@ -9,7 +9,7 @@ export async function adminGetUsersAction(clientToken?: string) {
 
 export async function adminUpdateUserAction(
 	id: number,
-	updateData: string | { role?: string; examLimit?: number },
+	updateData: string | { role?: string; examLimit?: number; examPackLimit?: number },
 	clientToken?: string
 ) {
 	try {

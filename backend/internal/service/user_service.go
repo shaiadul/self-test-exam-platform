@@ -195,6 +195,17 @@ func (s *UserService) UpdateUserRoleAndLimit(id int, role *string, examLimit *in
 	return s.userRepo.UpdateRoleAndLimit(id, role, examLimit)
 }
 
+func (s *UserService) UpdateUserPackLimit(id int, packLimit *int) error {
+	if packLimit == nil {
+		return nil
+	}
+	v := *packLimit
+	if v < -1 {
+		v = -1 // unlimited
+	}
+	return s.userRepo.UpdateExamPackLimit(id, v)
+}
+
 func (s *UserService) DeleteUser(id int) error {
 	return s.userRepo.Delete(id)
 }

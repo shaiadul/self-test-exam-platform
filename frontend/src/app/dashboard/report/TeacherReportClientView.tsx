@@ -144,7 +144,7 @@ export default function TeacherReportClientView({ initialReports }: TeacherRepor
         {filteredReports.map((report) => (
           <Link
             key={report.id}
-            href={`/dashboard/report/${report.id}`}
+            href={`/dashboard/teacher-reports/${report.id}`}
             className="group bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between"
           >
             <div>

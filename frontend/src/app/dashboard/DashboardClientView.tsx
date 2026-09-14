@@ -520,8 +520,8 @@ export default function DashboardClientView({
 
           {/* Teacher Exam Creation Quota */}
           <ExamQuotaCard
-            created={stats?.createdExamsCount}
-            limit={stats?.examLimit}
+            created={stats?.createdPacksCount}
+            limit={stats?.examPackLimit}
           />
 
           {/* Teacher Activity & Curriculum Table */}

@@ -21,7 +21,9 @@ type User struct {
 	AdminDept   *string    `json:"adminDept" db:"admin_dept"`
 	AdminBase         *string    `json:"adminBase" db:"admin_base"`
 	ExamLimit         *int       `json:"examLimit,omitempty" db:"exam_limit"`
+	ExamPackLimit     *int       `json:"examPackLimit,omitempty" db:"exam_pack_limit"`
 	CreatedExamsCount int        `json:"createdExamsCount,omitempty"`
+	CreatedPacksCount int        `json:"createdPacksCount,omitempty"`
 	CreatedAt         time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt         time.Time  `json:"updated_at" db:"updated_at"`
 }

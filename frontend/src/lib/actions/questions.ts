@@ -13,6 +13,7 @@ export async function createQuestionAction(examId: string, questionData: any) {
 		const data = await fetcherWithAuth<any>(`/exams/${examId}/questions`, {
 			method: "POST",
 			body: JSON.stringify(questionData),
+			throwOnError: true,
 		});
 
 		if (!data) throw new Error("Failed to create question");
@@ -29,6 +30,7 @@ export async function updateQuestionAction(examId: string, questionId: number | 
 		const data = await fetcherWithAuth<any>(`/exams/${examId}/questions/${questionId}`, {
 			method: "PUT",
 			body: JSON.stringify(questionData),
+			throwOnError: true,
 		});
 
 		if (!data) throw new Error("Failed to update question");
@@ -45,6 +47,7 @@ export async function deleteQuestionAction(examId: string, questionId: number | 
 	try {
 		await fetcherWithAuth<any>(`/exams/${examId}/questions/${questionId}`, {
 			method: "DELETE",
+			throwOnError: true,
 		});
 
 		revalidatePath(`/dashboard/question/add`);

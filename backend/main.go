@@ -31,6 +31,7 @@ func main() {
 	attemptRepo := persistence.NewPostgresAttemptRepository(config.DB)
 	reportRepo := persistence.NewPostgresReportRepository(config.DB)
 	systemRepo := persistence.NewPostgresSystemRepository(config.DB)
+	requestRepo := persistence.NewPostgresExamRequestRepository(config.DB)
 
 	s3Storage, err := storage.NewS3Storage()
 	if err != nil {
@@ -39,12 +40,13 @@ func main() {
 
 	// 2. Initialize Domain / Application Services
 	userService := service.NewUserService(userRepo)
-	packService := service.NewExamPackService(packRepo)
-	examService := service.NewExamService(examRepo, userRepo)
+	packService := service.NewExamPackService(packRepo, userRepo)
+	examService := service.NewExamService(examRepo, userRepo, packRepo)
 	attemptService := service.NewAttemptService(attemptRepo, examRepo, packRepo, userRepo)
 	reportService := service.NewReportService(userRepo, examRepo, packRepo, attemptRepo, reportRepo)
 	systemService := service.NewSystemService(systemRepo)
 	uploadService := service.NewUploadService(s3Storage)
+	requestService := service.NewExamRequestService(requestRepo, userRepo, packRepo)
 
 	// 3. Initialize Delivery HTTP Handlers
 	authHandler := delivery.NewAuthHandler(userService)
@@ -54,6 +56,7 @@ func main() {
 	reportHandler := delivery.NewReportHandler(reportService)
 	systemHandler := delivery.NewSystemHandler(systemService)
 	uploadHandler := delivery.NewUploadHandler(uploadService)
+	requestHandler := delivery.NewExamRequestHandler(requestService)
 
 	// 4. Build Router with Middlewares
 	router := delivery.NewRouter(delivery.Handlers{
@@ -64,6 +67,7 @@ func main() {
 		ReportHandler:   reportHandler,
 		SystemHandler:   systemHandler,
 		UploadHandler:   uploadHandler,
+		ExamRequestHandler: requestHandler,
 	})
 
 	port := os.Getenv("PORT")

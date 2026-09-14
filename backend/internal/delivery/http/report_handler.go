@@ -74,7 +74,13 @@ func (h *ReportHandler) HandleTeacherReports(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ReportHandler) GetTeacherReports(w http.ResponseWriter, r *http.Request) {
-	reports, err := h.reportService.GetTeacherReports()
+	userID, err := middleware.GetUserIDFromContext(r.Context())
+	if err != nil {
+		http.Error(w, `{"error": "Unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	reports, err := h.reportService.GetTeacherReports(userID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
 		return
@@ -85,14 +91,20 @@ func (h *ReportHandler) GetTeacherReports(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ReportHandler) GetTeacherReportDetails(w http.ResponseWriter, r *http.Request, examID string) {
-	detail, err := h.reportService.GetTeacherReportDetails(examID)
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	detail, err := h.reportService.GetTeacherReportDetails(userID, examID)
 	if err != nil {
-		if err == service.ErrExamNotFound {
+		switch err {
+		case service.ErrExamNotFound:
 			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
 			return
+		case service.ErrForbidden:
+			http.Error(w, `{"error": "You do not have access to this exam report"}`, http.StatusForbidden)
+			return
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+			return
 		}
-		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
-		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

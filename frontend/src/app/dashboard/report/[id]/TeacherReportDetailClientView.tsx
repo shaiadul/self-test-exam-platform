@@ -93,6 +93,14 @@ export default function TeacherReportDetailClientView({
     { label: "Institution", value: "institution" },
   ];
 
+  const totalAttempts = report?.attempts?.length || 0;
+  const passedAttempts =
+    report?.attempts?.filter((a: any) => a.passed).length || 0;
+  const passRate =
+    totalAttempts > 0
+      ? `${Math.round((passedAttempts / totalAttempts) * 100)}%`
+      : "0%";
+
   if (!report) {
     return (
       <PageContainer>
@@ -104,7 +112,7 @@ export default function TeacherReportDetailClientView({
             We couldn&apos;t load the evaluation report for this exam. It may have been archived or removed.
           </p>
           <PrimaryBtn
-            link="/dashboard/report"
+            link="/dashboard/teacher-reports"
             className="!text-xs !py-2.5 !px-5 gap-2 shadow-sm"
           >
             <FaArrowLeft className="text-xs" />
@@ -121,7 +129,7 @@ export default function TeacherReportDetailClientView({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div className="flex items-center gap-3">
           <OutlineBtn
-            link="/dashboard/report"
+            link="/dashboard/teacher-reports"
             className="!p-2.5 !rounded-xl !text-slate-600 hover:!text-[#dd6b01] shadow-xs"
             title="Back to Reports"
           >
@@ -155,7 +163,7 @@ export default function TeacherReportDetailClientView({
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                 Highest Score
               </p>
-              <p className="text-xl font-black text-slate-900">{report.highestScore ?? 0}</p>
+              <p className="text-xl font-black text-slate-900">{report.highest ?? 0}</p>
             </div>
           </div>
 
@@ -167,7 +175,7 @@ export default function TeacherReportDetailClientView({
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                 Average Score
               </p>
-              <p className="text-xl font-black text-blue-600">{report.averageScore ?? 0}</p>
+              <p className="text-xl font-black text-blue-600">{report.average ?? 0}</p>
             </div>
           </div>
 
@@ -179,7 +187,7 @@ export default function TeacherReportDetailClientView({
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                 Lowest Score
               </p>
-              <p className="text-xl font-black text-rose-500">{report.lowestScore ?? 0}</p>
+              <p className="text-xl font-black text-rose-500">{report.lowest ?? 0}</p>
             </div>
           </div>
 
@@ -191,7 +199,7 @@ export default function TeacherReportDetailClientView({
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                 Pass Rate
               </p>
-              <p className="text-xl font-black text-purple-600">{report.passRate || "100%"}</p>
+              <p className="text-xl font-black text-purple-600">{passRate}</p>
             </div>
           </div>
         </div>

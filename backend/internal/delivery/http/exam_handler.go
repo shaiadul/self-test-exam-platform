@@ -89,14 +89,20 @@ func (h *ExamHandler) HandleExams(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ExamHandler) GetExam(w http.ResponseWriter, r *http.Request, id string) {
-	e, err := h.examService.GetExam(id)
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	e, err := h.examService.GetExam(userID, id)
 	if err != nil {
-		if err == service.ErrExamNotFound {
+		switch err {
+		case service.ErrExamNotFound:
 			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
 			return
+		case service.ErrForbidden:
+			http.Error(w, `{"error": "You do not have access to this exam"}`, http.StatusForbidden)
+			return
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+			return
 		}
-		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
-		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -110,14 +116,20 @@ func (h *ExamHandler) UpdateExam(w http.ResponseWriter, r *http.Request, id stri
 		return
 	}
 
-	e, err := h.examService.UpdateExam(id, input)
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	e, err := h.examService.UpdateExam(userID, id, input)
 	if err != nil {
-		if err == service.ErrExamNotFound {
+		switch err {
+		case service.ErrExamNotFound:
 			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
 			return
+		case service.ErrForbidden:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
+			return
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "Failed to update exam: %v"}`, err), http.StatusInternalServerError)
+			return
 		}
-		http.Error(w, fmt.Sprintf(`{"error": "Failed to update exam: %v"}`, err), http.StatusInternalServerError)
-		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -125,9 +137,19 @@ func (h *ExamHandler) UpdateExam(w http.ResponseWriter, r *http.Request, id stri
 }
 
 func (h *ExamHandler) DeleteExam(w http.ResponseWriter, r *http.Request, id string) {
-	if err := h.examService.DeleteExam(id); err != nil {
-		http.Error(w, fmt.Sprintf(`{"error": "Failed to delete: %v"}`, err), http.StatusInternalServerError)
-		return
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	if err := h.examService.DeleteExam(userID, id); err != nil {
+		switch err {
+		case service.ErrExamNotFound:
+			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
+			return
+		case service.ErrForbidden:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
+			return
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "Failed to delete: %v"}`, err), http.StatusInternalServerError)
+			return
+		}
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -150,11 +172,16 @@ func (h *ExamHandler) CreateQuestion(w http.ResponseWriter, r *http.Request, exa
 		return
 	}
 
-	q, err := h.examService.CreateQuestion(examID, input)
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	q, err := h.examService.CreateQuestion(userID, examID, input)
 	if err != nil {
 		switch err {
 		case service.ErrQuestionTextReq, service.ErrMinOptionsReq:
 			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusBadRequest)
+		case service.ErrForbidden:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
+		case service.ErrExamNotFound:
+			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
 		default:
 			http.Error(w, fmt.Sprintf(`{"error": "Failed to save question: %v"}`, err), http.StatusInternalServerError)
 		}
@@ -173,7 +200,8 @@ func (h *ExamHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request, exa
 		return
 	}
 
-	q, err := h.examService.UpdateQuestion(examID, questionID, input)
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	q, err := h.examService.UpdateQuestion(userID, examID, questionID, input)
 	if err != nil {
 		if err == service.ErrQuestionNotFound {
 			http.Error(w, `{"error": "Question not found"}`, http.StatusNotFound)
@@ -182,6 +210,10 @@ func (h *ExamHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request, exa
 		switch err {
 		case service.ErrQuestionTextReq, service.ErrMinOptionsReq:
 			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusBadRequest)
+		case service.ErrForbidden:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
+		case service.ErrExamNotFound:
+			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
 		default:
 			http.Error(w, fmt.Sprintf(`{"error": "Failed to update question: %v"}`, err), http.StatusInternalServerError)
 		}
@@ -194,13 +226,22 @@ func (h *ExamHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request, exa
 }
 
 func (h *ExamHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request, examID string, questionID int) {
-	if err := h.examService.DeleteQuestion(examID, questionID); err != nil {
-		if err == service.ErrQuestionNotFound {
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	if err := h.examService.DeleteQuestion(userID, examID, questionID); err != nil {
+		switch err {
+		case service.ErrQuestionNotFound:
 			http.Error(w, `{"error": "Question not found"}`, http.StatusNotFound)
 			return
+		case service.ErrForbidden:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
+			return
+		case service.ErrExamNotFound:
+			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
+			return
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "Failed to delete question: %v"}`, err), http.StatusInternalServerError)
+			return
 		}
-		http.Error(w, fmt.Sprintf(`{"error": "Failed to delete question: %v"}`, err), http.StatusInternalServerError)
-		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

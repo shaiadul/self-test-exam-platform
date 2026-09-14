@@ -19,7 +19,7 @@ func NewPostgresExamRepository(db *sql.DB) *PostgresExamRepository {
 
 func (r *PostgresExamRepository) GetExamsByPackID(packID int) ([]exam.Exam, error) {
 	query := `
-		SELECT id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, COALESCE(is_private, false), COALESCE(passcode, ''), COALESCE(duration_minutes, 30), created_at, updated_at
+		SELECT id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, COALESCE(is_private, false), COALESCE(passcode, ''), COALESCE(duration_minutes, 30), created_by, created_at, updated_at
 		FROM exams
 		WHERE exam_pack_id = $1
 		ORDER BY start_date ASC`
@@ -48,6 +48,7 @@ func (r *PostgresExamRepository) GetExamsByPackID(packID int) ([]exam.Exam, erro
 			&e.IsPrivate,
 			&e.Passcode,
 			&e.DurationMinutes,
+			&e.CreatedBy,
 			&e.CreatedAt,
 			&e.UpdatedAt,
 		)
@@ -62,7 +63,7 @@ func (r *PostgresExamRepository) GetExamsByPackID(packID int) ([]exam.Exam, erro
 
 func (r *PostgresExamRepository) GetExamByID(id string) (*exam.Exam, error) {
 	query := `
-		SELECT id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, COALESCE(is_private, false), COALESCE(passcode, ''), COALESCE(duration_minutes, 30), created_at, updated_at
+		SELECT id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, COALESCE(is_private, false), COALESCE(passcode, ''), COALESCE(duration_minutes, 30), created_by, created_at, updated_at
 		FROM exams
 		WHERE id = $1`
 
@@ -82,6 +83,7 @@ func (r *PostgresExamRepository) GetExamByID(id string) (*exam.Exam, error) {
 		&e.IsPrivate,
 		&e.Passcode,
 		&e.DurationMinutes,
+		&e.CreatedBy,
 		&e.CreatedAt,
 		&e.UpdatedAt,
 	)
@@ -97,7 +99,7 @@ func (r *PostgresExamRepository) GetExamByID(id string) (*exam.Exam, error) {
 
 func (r *PostgresExamRepository) GetUpcomingExamsForUser(userID int, now time.Time) ([]exam.Exam, error) {
 	query := `
-		SELECT e.id, e.exam_pack_id, e.name, e.start_date, e.end_date, e.level, e.batch, e.total_marks, e.passing_marks, e.per_question_marks, e.negative_marks, COALESCE(e.is_private, false), COALESCE(e.passcode, ''), COALESCE(e.duration_minutes, 30), e.created_at, e.updated_at
+		SELECT e.id, e.exam_pack_id, e.name, e.start_date, e.end_date, e.level, e.batch, e.total_marks, e.passing_marks, e.per_question_marks, e.negative_marks, COALESCE(e.is_private, false), COALESCE(e.passcode, ''), COALESCE(e.duration_minutes, 30), e.created_by, e.created_at, e.updated_at
 		FROM exams e
 		LEFT JOIN exam_attempts a ON e.id = a.exam_id AND a.user_id = $1
 		WHERE a.id IS NULL AND e.end_date > $2
@@ -128,6 +130,7 @@ func (r *PostgresExamRepository) GetUpcomingExamsForUser(userID int, now time.Ti
 			&e.IsPrivate,
 			&e.Passcode,
 			&e.DurationMinutes,
+			&e.CreatedBy,
 			&e.CreatedAt,
 			&e.UpdatedAt,
 		)
@@ -231,6 +234,65 @@ func (r *PostgresExamRepository) CreateExamWithinLimit(e *exam.Exam, creatorID i
 	return true, nil
 }
 
+func (r *PostgresExamRepository) CreateExamWithinPackLimit(e *exam.Exam, packID int, limit int) (bool, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback()
+
+	// Serialize exam creation per pack so concurrent requests cannot both pass
+	// the quota check and overshoot the per-pack limit.
+	if _, err := tx.Exec("SELECT pg_advisory_xact_lock($1)", int64(packID)); err != nil {
+		return false, err
+	}
+
+	if limit >= 0 {
+		var count int
+		if err := tx.QueryRow("SELECT COUNT(*) FROM exams WHERE exam_pack_id = $1", packID).Scan(&count); err != nil {
+			return false, err
+		}
+		if count >= limit {
+			return false, nil
+		}
+	}
+
+	now := time.Now()
+	e.CreatedAt = now
+	e.UpdatedAt = now
+
+	_, err = tx.Exec(
+		`INSERT INTO exams (id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, is_private, passcode, duration_minutes, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+		e.ID,
+		e.ExamPackID,
+		e.Name,
+		e.StartDate,
+		e.EndDate,
+		e.Level,
+		e.Batch,
+		e.TotalMarks,
+		e.PassingMarks,
+		e.PerQuestionMarks,
+		e.NegativeMarks,
+		e.IsPrivate,
+		e.Passcode,
+		e.DurationMinutes,
+		e.CreatedBy,
+		e.CreatedAt,
+		e.UpdatedAt,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (r *PostgresExamRepository) UpdateExam(e *exam.Exam) error {
 	query := `
 		UPDATE exams
@@ -266,6 +328,12 @@ func (r *PostgresExamRepository) DeleteExam(id string) error {
 func (r *PostgresExamRepository) CountExamsByCreator(creatorID int) (int, error) {
 	var count int
 	err := r.db.QueryRow("SELECT COUNT(*) FROM exams WHERE created_by = $1", creatorID).Scan(&count)
+	return count, err
+}
+
+func (r *PostgresExamRepository) CountAllQuestions() (int, error) {
+	var count int
+	err := r.db.QueryRow("SELECT COUNT(*) FROM questions").Scan(&count)
 	return count, err
 }
 

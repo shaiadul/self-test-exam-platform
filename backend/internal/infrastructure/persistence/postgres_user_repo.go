@@ -56,7 +56,7 @@ func (r *PostgresUserRepository) Create(u *user.User) error {
 
 func (r *PostgresUserRepository) GetByEmail(email string) (*user.User, error) {
 	query := `
-		SELECT id, name, email, password, role, image, phone, level, batch, board, institution, address, subject, designation, admin_tier, admin_dept, admin_base, exam_limit, created_at, updated_at
+		SELECT id, name, email, password, role, image, phone, level, batch, board, institution, address, subject, designation, admin_tier, admin_dept, admin_base, exam_limit, exam_pack_limit, created_at, updated_at
 		FROM users
 		WHERE email = $1`
 
@@ -80,6 +80,7 @@ func (r *PostgresUserRepository) GetByEmail(email string) (*user.User, error) {
 		&u.AdminDept,
 		&u.AdminBase,
 		&u.ExamLimit,
+		&u.ExamPackLimit,
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	)
@@ -96,7 +97,7 @@ func (r *PostgresUserRepository) GetByEmail(email string) (*user.User, error) {
 
 func (r *PostgresUserRepository) GetByID(id int) (*user.User, error) {
 	query := `
-		SELECT id, name, email, password, role, image, phone, level, batch, board, institution, address, subject, designation, admin_tier, admin_dept, admin_base, exam_limit, created_at, updated_at
+		SELECT id, name, email, password, role, image, phone, level, batch, board, institution, address, subject, designation, admin_tier, admin_dept, admin_base, exam_limit, exam_pack_limit, created_at, updated_at
 		FROM users
 		WHERE id = $1`
 
@@ -120,6 +121,7 @@ func (r *PostgresUserRepository) GetByID(id int) (*user.User, error) {
 		&u.AdminDept,
 		&u.AdminBase,
 		&u.ExamLimit,
+		&u.ExamPackLimit,
 		&u.CreatedAt,
 		&u.UpdatedAt,
 	)
@@ -165,7 +167,7 @@ func (r *PostgresUserRepository) Update(u *user.User) error {
 
 func (r *PostgresUserRepository) GetAll() ([]user.User, error) {
 	query := `
-		SELECT u.id, u.name, u.email, u.role, u.image, u.phone, u.level, u.batch, u.board, u.institution, u.address, u.subject, u.designation, u.admin_tier, u.admin_dept, u.admin_base, u.exam_limit, COALESCE(COUNT(e.id), 0)::int AS created_exams_count, u.created_at, u.updated_at
+		SELECT u.id, u.name, u.email, u.role, u.image, u.phone, u.level, u.batch, u.board, u.institution, u.address, u.subject, u.designation, u.admin_tier, u.admin_dept, u.admin_base, u.exam_limit, u.exam_pack_limit, COALESCE(COUNT(e.id), 0)::int AS created_exams_count, (SELECT COUNT(*) FROM exam_packs p WHERE p.created_by = u.id)::int AS created_packs_count, u.created_at, u.updated_at
 		FROM users u
 		LEFT JOIN exams e ON e.created_by = u.id
 		GROUP BY u.id
@@ -198,7 +200,9 @@ func (r *PostgresUserRepository) GetAll() ([]user.User, error) {
 			&u.AdminDept,
 			&u.AdminBase,
 			&u.ExamLimit,
+			&u.ExamPackLimit,
 			&u.CreatedExamsCount,
+			&u.CreatedPacksCount,
 			&u.CreatedAt,
 			&u.UpdatedAt,
 		)
@@ -230,6 +234,12 @@ func (r *PostgresUserRepository) UpdateRoleAndLimit(id int, role *string, examLi
 		return err
 	}
 	return nil
+}
+
+func (r *PostgresUserRepository) UpdateExamPackLimit(id int, limit int) error {
+	query := `UPDATE users SET exam_pack_limit = $1, updated_at = $2 WHERE id = $3`
+	_, err := r.db.Exec(query, limit, time.Now(), id)
+	return err
 }
 
 func (r *PostgresUserRepository) Delete(id int) error {

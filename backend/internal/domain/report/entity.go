@@ -22,6 +22,8 @@ type TeacherStats struct {
 	Rating            string               `json:"rating"`
 	ExamLimit         int                  `json:"examLimit"`
 	CreatedExamsCount int                  `json:"createdExamsCount"`
+	ExamPackLimit     int                  `json:"examPackLimit"`
+	CreatedPacksCount int                  `json:"createdPacksCount"`
 	ActivityData      []ChartDataPoint     `json:"activityData"`
 	AssignedPacks     []AssignedPackDetail `json:"assignedPacks"`
 	PendingTasks      []PendingTask        `json:"pendingTasks"`

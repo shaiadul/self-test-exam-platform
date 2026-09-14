@@ -14,6 +14,7 @@ type Handlers struct {
 	ReportHandler   *ReportHandler
 	SystemHandler   *SystemHandler
 	UploadHandler   *UploadHandler
+	ExamRequestHandler *ExamRequestHandler
 }
 
 // CorsMiddleware adds standard headers to handle requests from next.js frontend
@@ -64,6 +65,12 @@ func NewRouter(h Handlers) http.Handler {
 	mux.Handle("/api/attempts/", middleware.AuthMiddleware(http.HandlerFunc(h.AttemptHandler.HandleAttempts)))
 	mux.Handle("/api/teacher/reports", middleware.AuthMiddleware(http.HandlerFunc(h.ReportHandler.HandleTeacherReports)))
 	mux.Handle("/api/teacher/reports/", middleware.AuthMiddleware(http.HandlerFunc(h.ReportHandler.HandleTeacherReports)))
+
+	// Exam pack / limit requests
+	if h.ExamRequestHandler != nil {
+		mux.Handle("/api/requests", middleware.AuthMiddleware(http.HandlerFunc(h.ExamRequestHandler.HandleRequests)))
+		mux.Handle("/api/requests/", middleware.AuthMiddleware(http.HandlerFunc(h.ExamRequestHandler.HandleRequests)))
+	}
 
 	// Admin Settings routes
 	mux.Handle("/api/admin/users", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.HandleAdminUsers)))
