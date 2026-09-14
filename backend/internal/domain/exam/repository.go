@@ -7,6 +7,7 @@ type ExamRepository interface {
 	GetExamByID(id string) (*Exam, error)
 	GetUpcomingExamsForUser(userID int, now time.Time) ([]Exam, error)
 	CreateExam(exam *Exam) error
+	CreateExamWithinLimit(exam *Exam, creatorID int, limit int) (bool, error)
 	UpdateExam(exam *Exam) error
 	DeleteExam(id string) error
 	CountExamsByCreator(creatorID int) (int, error)

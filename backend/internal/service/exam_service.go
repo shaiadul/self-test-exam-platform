@@ -110,20 +110,9 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 		return nil, ErrExamNameRequired
 	}
 
-	if creatorID > 0 && s.userRepo != nil {
-		u, err := s.userRepo.GetByID(creatorID)
-		if err == nil && u != nil && strings.ToLower(u.Role) == "teacher" {
-			limit := 5
-			if u.ExamLimit != nil {
-				limit = *u.ExamLimit
-			}
-			if limit >= 0 {
-				count, err := s.repo.CountExamsByCreator(creatorID)
-				if err == nil && count >= limit {
-					return nil, fmt.Errorf("exam creation limit reached: you have already created %d of %d allowed exams; please contact an admin to increase your limit", count, limit)
-				}
-			}
-		}
+	teacherLimit, limitErr := s.resolveTeacherLimit(creatorID)
+	if limitErr != nil {
+		return nil, limitErr
 	}
 
 	startDate, err := ParseFlexibleTime(input.StartDate)
@@ -233,11 +222,61 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 		e.CreatedBy = &creatorID
 	}
 
+	if teacherLimit != nil {
+		inserted, err := s.repo.CreateExamWithinLimit(&e, creatorID, *teacherLimit)
+		if err != nil {
+			return nil, err
+		}
+		if !inserted {
+			if count, cerr := s.repo.CountExamsByCreator(creatorID); cerr == nil {
+				return nil, examLimitError(count, *teacherLimit)
+			}
+			return nil, ErrExamLimitReached
+		}
+		return &e, nil
+	}
+
 	if err := s.repo.CreateExam(&e); err != nil {
 		return nil, err
 	}
 
 	return &e, nil
+}
+
+func examLimitError(count, limit int) error {
+	return fmt.Errorf("exam creation limit reached: you have already created %d of %d allowed exams; please contact an admin to increase your limit", count, limit)
+}
+
+// resolveTeacherLimit returns the teacher's exam creation limit (nil for
+// non-teachers) and performs a best-effort early check so the user gets fast,
+// clear feedback. The authoritative, race-safe enforcement happens atomically
+// at insert time via CreateExamWithinLimit.
+func (s *ExamService) resolveTeacherLimit(creatorID int) (*int, error) {
+	if creatorID <= 0 || s.userRepo == nil {
+		return nil, nil
+	}
+
+	u, err := s.userRepo.GetByID(creatorID)
+	if err != nil || u == nil || strings.ToLower(u.Role) != "teacher" {
+		return nil, nil
+	}
+
+	limit := 5
+	if u.ExamLimit != nil {
+		limit = *u.ExamLimit
+	}
+	if limit < 0 {
+		limit = -1 // unlimited
+	}
+
+	if limit >= 0 {
+		count, err := s.repo.CountExamsByCreator(creatorID)
+		if err == nil && count >= limit {
+			return nil, examLimitError(count, limit)
+		}
+	}
+
+	return &limit, nil
 }
 
 func (s *ExamService) UpdateExam(id string, input UpdateExamInput) (*exam.Exam, error) {

@@ -17,6 +17,7 @@ export async function createExamAction(packId: number, examData: any) {
 		const data = await fetcherWithAuth<any>(`/exam-packs/${packId}/exams`, {
 			method: "POST",
 			body: JSON.stringify(examData),
+			throwOnError: true,
 		});
 
 		if (!data) throw new Error("Failed to create exam");

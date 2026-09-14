@@ -172,6 +172,65 @@ func (r *PostgresExamRepository) CreateExam(e *exam.Exam) error {
 	return err
 }
 
+func (r *PostgresExamRepository) CreateExamWithinLimit(e *exam.Exam, creatorID int, limit int) (bool, error) {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback()
+
+	// Serialize exam creation for this creator so concurrent requests cannot
+	// both pass the limit check and overshoot the quota.
+	if _, err := tx.Exec("SELECT pg_advisory_xact_lock($1)", int64(creatorID)); err != nil {
+		return false, err
+	}
+
+	if limit >= 0 {
+		var count int
+		if err := tx.QueryRow("SELECT COUNT(*) FROM exams WHERE created_by = $1", creatorID).Scan(&count); err != nil {
+			return false, err
+		}
+		if count >= limit {
+			return false, nil
+		}
+	}
+
+	now := time.Now()
+	e.CreatedAt = now
+	e.UpdatedAt = now
+
+	_, err = tx.Exec(
+		`INSERT INTO exams (id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, is_private, passcode, duration_minutes, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+		e.ID,
+		e.ExamPackID,
+		e.Name,
+		e.StartDate,
+		e.EndDate,
+		e.Level,
+		e.Batch,
+		e.TotalMarks,
+		e.PassingMarks,
+		e.PerQuestionMarks,
+		e.NegativeMarks,
+		e.IsPrivate,
+		e.Passcode,
+		e.DurationMinutes,
+		e.CreatedBy,
+		e.CreatedAt,
+		e.UpdatedAt,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (r *PostgresExamRepository) UpdateExam(e *exam.Exam) error {
 	query := `
 		UPDATE exams

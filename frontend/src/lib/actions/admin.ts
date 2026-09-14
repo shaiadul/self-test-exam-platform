@@ -19,6 +19,7 @@ export async function adminUpdateUserAction(
 			{
 				method: "PUT",
 				body: JSON.stringify(payload),
+				throwOnError: true,
 			},
 			clientToken
 		);
@@ -34,6 +35,7 @@ export async function adminDeleteUserAction(id: number, clientToken?: string) {
 			`/admin/users/${id}`,
 			{
 				method: "DELETE",
+				throwOnError: true,
 			},
 			clientToken
 		);
@@ -55,6 +57,7 @@ export async function adminUpdatePermissionAction(id: number, access: string, cl
 			{
 				method: "PUT",
 				body: JSON.stringify({ access }),
+				throwOnError: true,
 			},
 			clientToken
 		);

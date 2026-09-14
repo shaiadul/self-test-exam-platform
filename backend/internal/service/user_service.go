@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -182,6 +183,15 @@ func (s *UserService) UpdateUserRole(id int, role string) error {
 }
 
 func (s *UserService) UpdateUserRoleAndLimit(id int, role *string, examLimit *int) error {
+	// Normalize invalid negative limits to -1 (unlimited). A teacher is only
+	// allowed unlimited (-1) or a non-negative count.
+	if examLimit != nil && *examLimit < -1 {
+		v := -1
+		examLimit = &v
+	}
+	if role != nil && strings.ToLower(*role) != "teacher" {
+		examLimit = nil
+	}
 	return s.userRepo.UpdateRoleAndLimit(id, role, examLimit)
 }
 

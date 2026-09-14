@@ -7,6 +7,7 @@ import ExamsTable from "../../components/dashboard/ExamsTable";
 import StatsGrid from "../../components/dashboard/StatsGrid";
 import UpcomingExamCard from "../../components/dashboard/UpcomingExamCard";
 import UserCard from "../../components/dashboard/UserCard";
+import ExamQuotaCard from "../../components/dashboard/ExamQuotaCard";
 import { PrimaryBtn } from "../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../components/ui/OutlineBtn";
 import {
@@ -516,6 +517,12 @@ export default function DashboardClientView({
               </p>
             </div>
           </div>
+
+          {/* Teacher Exam Creation Quota */}
+          <ExamQuotaCard
+            created={stats?.createdExamsCount}
+            limit={stats?.examLimit}
+          />
 
           {/* Teacher Activity & Curriculum Table */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">

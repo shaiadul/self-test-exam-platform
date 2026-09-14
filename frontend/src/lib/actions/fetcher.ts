@@ -5,6 +5,7 @@ import { API_URL } from "./constants";
 
 export interface FetcherOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
+  throwOnError?: boolean;
 }
 
 /**
@@ -47,11 +48,12 @@ export async function fetcher<T = any>(
   endpoint: string,
   options: FetcherOptions = {}
 ): Promise<T | null> {
-  const { params, headers = {}, ...rest } = options;
+  const { params, headers = {}, throwOnError = false, ...rest } = options;
   const url = buildUrl(endpoint, params);
 
+  let response: Response;
   try {
-    const response = await fetch(url, {
+    response = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
         ...headers,
@@ -60,13 +62,36 @@ export async function fetcher<T = any>(
       next: { revalidate: 0 },
       ...rest,
     });
-
-    if (!response.ok) return null;
-    return (await response.json()) as T;
   } catch (err) {
-    console.error(`fetcher error [${endpoint}]:`, err);
+    console.error(`fetcher network error [${endpoint}]:`, err);
+    if (throwOnError) throw new Error("Network error while contacting the server.");
     return null;
   }
+
+  if (!response.ok) {
+    if (throwOnError) throw await httpErrorFromResponse(response);
+    return null;
+  }
+
+  try {
+    return (await response.json()) as T;
+  } catch {
+    // Some endpoints return 204/empty bodies on success.
+    return null;
+  }
+}
+
+async function httpErrorFromResponse(response: Response): Promise<Error> {
+  let message = `Request failed with status ${response.status}`;
+  try {
+    const body = await response.json();
+    if (body && typeof body.error === "string" && body.error.trim()) {
+      message = body.error.trim();
+    }
+  } catch {
+    // body was not JSON; fall back to the generic message
+  }
+  return new Error(message);
 }
 
 /**

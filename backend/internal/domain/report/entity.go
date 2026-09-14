@@ -15,14 +15,16 @@ type StudentStats struct {
 }
 
 type TeacherStats struct {
-	ClassAverage   string               `json:"classAverage"`
-	ActivePacks    int                  `json:"activePacks"`
-	QuestionsCount int                  `json:"questionsCount"`
-	GradedScripts  int                  `json:"gradedScripts"`
-	Rating         string               `json:"rating"`
-	ActivityData   []ChartDataPoint     `json:"activityData"`
-	AssignedPacks  []AssignedPackDetail `json:"assignedPacks"`
-	PendingTasks   []PendingTask        `json:"pendingTasks"`
+	ClassAverage      string               `json:"classAverage"`
+	ActivePacks       int                  `json:"activePacks"`
+	QuestionsCount    int                  `json:"questionsCount"`
+	GradedScripts     int                  `json:"gradedScripts"`
+	Rating            string               `json:"rating"`
+	ExamLimit         int                  `json:"examLimit"`
+	CreatedExamsCount int                  `json:"createdExamsCount"`
+	ActivityData      []ChartDataPoint     `json:"activityData"`
+	AssignedPacks     []AssignedPackDetail `json:"assignedPacks"`
+	PendingTasks      []PendingTask        `json:"pendingTasks"`
 }
 
 type AdminStats struct {

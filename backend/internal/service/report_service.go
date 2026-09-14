@@ -170,6 +170,18 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 			allAttempts = []attempt.ExamAttempt{}
 		}
 
+		examLimit := 5
+		if u.ExamLimit != nil {
+			examLimit = *u.ExamLimit
+		}
+		if examLimit < 0 {
+			examLimit = -1 // unlimited
+		}
+		createdExamsCount, err := s.examRepo.CountExamsByCreator(u.ID)
+		if err != nil {
+			createdExamsCount = 0
+		}
+
 		packs, _ := s.examPackRepo.GetExamPacks()
 		totalQuestions := 0
 		for _, p := range packs {
@@ -268,14 +280,16 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 		}
 
 		return report.TeacherStats{
-			ClassAverage:   avgStr,
-			ActivePacks:    len(packs),
-			QuestionsCount: totalQuestions,
-			GradedScripts:  len(allAttempts),
-			Rating:         rating,
-			ActivityData:   activityData,
-			AssignedPacks:  assignedPacks,
-			PendingTasks:   pendingTasks,
+			ClassAverage:      avgStr,
+			ActivePacks:       len(packs),
+			QuestionsCount:    totalQuestions,
+			GradedScripts:     len(allAttempts),
+			Rating:            rating,
+			ExamLimit:         examLimit,
+			CreatedExamsCount: createdExamsCount,
+			ActivityData:      activityData,
+			AssignedPacks:     assignedPacks,
+			PendingTasks:      pendingTasks,
 		}, nil
 
 	case "admin":
