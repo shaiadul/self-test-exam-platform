@@ -28,14 +28,11 @@ func (s *ExamPackService) roleOf(userID int) (string, error) {
 	if s.userRepo == nil || userID <= 0 {
 		return "", nil
 	}
-	u, err := s.userRepo.GetByID(userID)
+	role, err := s.userRepo.GetRoleByID(userID)
 	if err != nil {
 		return "", err
 	}
-	if u == nil {
-		return "", nil
-	}
-	return strings.ToLower(u.Role), nil
+	return strings.ToLower(role), nil
 }
 
 func (s *ExamPackService) ListExamPacks(userID int) ([]exampack.ExamPack, error) {

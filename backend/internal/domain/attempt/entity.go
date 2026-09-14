@@ -86,3 +86,19 @@ type EvaluationResult struct {
 	FinalScore float64
 	Passed     bool
 }
+
+// ExamAttemptStats aggregates attempt metrics for a single exam.
+type ExamAttemptStats struct {
+	Total   int
+	Passed  int
+	Highest float64
+	Lowest  float64
+	Sum     float64
+}
+
+func (s ExamAttemptStats) Average() float64 {
+	if s.Total == 0 {
+		return 0
+	}
+	return s.Sum / float64(s.Total)
+}

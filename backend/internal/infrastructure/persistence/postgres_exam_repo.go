@@ -97,6 +97,53 @@ func (r *PostgresExamRepository) GetExamByID(id string) (*exam.Exam, error) {
 	return &e, nil
 }
 
+func (r *PostgresExamRepository) GetExamsByIDs(ids []string) ([]exam.Exam, error) {
+	if len(ids) == 0 {
+		return []exam.Exam{}, nil
+	}
+
+	query := `
+		SELECT id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, COALESCE(is_private, false), COALESCE(passcode, ''), COALESCE(duration_minutes, 30), created_by, created_at, updated_at
+		FROM exams
+		WHERE id = ANY($1)`
+
+	rows, err := r.db.Query(query, pq.Array(ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var exams []exam.Exam
+	for rows.Next() {
+		var e exam.Exam
+		err := rows.Scan(
+			&e.ID,
+			&e.ExamPackID,
+			&e.Name,
+			&e.StartDate,
+			&e.EndDate,
+			&e.Level,
+			&e.Batch,
+			&e.TotalMarks,
+			&e.PassingMarks,
+			&e.PerQuestionMarks,
+			&e.NegativeMarks,
+			&e.IsPrivate,
+			&e.Passcode,
+			&e.DurationMinutes,
+			&e.CreatedBy,
+			&e.CreatedAt,
+			&e.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		exams = append(exams, e)
+	}
+
+	return exams, rows.Err()
+}
+
 func (r *PostgresExamRepository) GetUpcomingExamsForUser(userID int, now time.Time) ([]exam.Exam, error) {
 	query := `
 		SELECT e.id, e.exam_pack_id, e.name, e.start_date, e.end_date, e.level, e.batch, e.total_marks, e.passing_marks, e.per_question_marks, e.negative_marks, COALESCE(e.is_private, false), COALESCE(e.passcode, ''), COALESCE(e.duration_minutes, 30), e.created_by, e.created_at, e.updated_at

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/selftest/backend/internal/domain/exampack"
 )
 
@@ -32,6 +33,7 @@ func scanPack(row interface {
 		&p.CreatedBy,
 		&p.CreatedAt,
 		&p.UpdatedAt,
+		&p.TotalExams,
 	)
 	if err != nil {
 		return nil, err
@@ -40,7 +42,7 @@ func scanPack(row interface {
 }
 
 func (r *PostgresExamPackRepository) queryPacks(where string, args ...interface{}) ([]exampack.ExamPack, error) {
-	query := `SELECT ` + packColumns + ` FROM exam_packs ` + where + ` ORDER BY created_at DESC`
+	query := `SELECT ` + packColumns + `, (SELECT COUNT(*) FROM exams e WHERE e.exam_pack_id = exam_packs.id) FROM exam_packs ` + where + ` ORDER BY created_at DESC`
 
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
@@ -54,11 +56,10 @@ func (r *PostgresExamPackRepository) queryPacks(where string, args ...interface{
 		if err != nil {
 			return nil, err
 		}
-		r.db.QueryRow("SELECT COUNT(*) FROM exams WHERE exam_pack_id = $1", p.ID).Scan(&p.TotalExams)
 		packs = append(packs, *p)
 	}
 
-	return packs, nil
+	return packs, rows.Err()
 }
 
 func (r *PostgresExamPackRepository) GetExamPacks() ([]exampack.ExamPack, error) {
@@ -70,7 +71,7 @@ func (r *PostgresExamPackRepository) GetExamPacksByCreator(creatorID int) ([]exa
 }
 
 func (r *PostgresExamPackRepository) GetExamPackByID(id int) (*exampack.ExamPack, error) {
-	query := `SELECT ` + packColumns + ` FROM exam_packs WHERE id = $1`
+	query := `SELECT ` + packColumns + `, (SELECT COUNT(*) FROM exams e WHERE e.exam_pack_id = exam_packs.id) FROM exam_packs WHERE id = $1`
 
 	p, err := scanPack(r.db.QueryRow(query, id))
 	if err != nil {
@@ -80,9 +81,30 @@ func (r *PostgresExamPackRepository) GetExamPackByID(id int) (*exampack.ExamPack
 		return nil, err
 	}
 
-	r.db.QueryRow("SELECT COUNT(*) FROM exams WHERE exam_pack_id = $1", p.ID).Scan(&p.TotalExams)
-
 	return p, nil
+}
+
+func (r *PostgresExamPackRepository) GetExamPacksByIDs(ids []int) (map[int]exampack.ExamPack, error) {
+	result := map[int]exampack.ExamPack{}
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	query := `SELECT ` + packColumns + `, (SELECT COUNT(*) FROM exams e WHERE e.exam_pack_id = exam_packs.id) FROM exam_packs WHERE id = ANY($1)`
+	rows, err := r.db.Query(query, pq.Array(ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		p, err := scanPack(rows)
+		if err != nil {
+			return nil, err
+		}
+		result[p.ID] = *p
+	}
+	return result, rows.Err()
 }
 
 func (r *PostgresExamPackRepository) CountExamPacksByCreator(creatorID int) (int, error) {

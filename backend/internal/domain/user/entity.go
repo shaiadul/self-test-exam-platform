@@ -28,6 +28,15 @@ type User struct {
 	UpdatedAt         time.Time  `json:"updated_at" db:"updated_at"`
 }
 
+type UserSummary struct {
+	ID            int     `json:"id"`
+	Name          string  `json:"name"`
+	Role          string  `json:"role"`
+	Institution   *string `json:"institution,omitempty"`
+	ExamLimit     *int    `json:"examLimit,omitempty"`
+	ExamPackLimit *int    `json:"examPackLimit,omitempty"`
+}
+
 type RegisterRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`

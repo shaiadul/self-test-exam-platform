@@ -109,11 +109,11 @@ func (s *ExamService) roleOf(userID int) string {
 	if s.userRepo == nil || userID <= 0 {
 		return ""
 	}
-	u, err := s.userRepo.GetByID(userID)
-	if err != nil || u == nil {
+	role, err := s.userRepo.GetRoleByID(userID)
+	if err != nil {
 		return ""
 	}
-	return strings.ToLower(u.Role)
+	return strings.ToLower(role)
 }
 
 // assertPackAccess ensures the user may view the pack's contents. Teachers are

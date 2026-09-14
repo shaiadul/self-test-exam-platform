@@ -102,7 +102,7 @@ func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.Submi
 	}
 
 	userName := "Candidate"
-	if u, err := s.userRepo.GetByID(userID); err == nil && u != nil {
+	if u, err := s.userRepo.GetSummaryByID(userID); err == nil && u != nil {
 		userName = u.Name
 	}
 
@@ -118,16 +118,47 @@ func (s *AttemptService) GetUserAttempts(userID int) ([]attempt.AttemptWithExam,
 		return nil, err
 	}
 
-	var results []attempt.AttemptWithExam
+	// Resolve every referenced exam and pack in two batched queries rather than
+	// two lookups per attempt.
+	examIDs := make([]string, 0, len(attempts))
+	seenExam := map[string]bool{}
+	for _, a := range attempts {
+		if !seenExam[a.ExamID] {
+			seenExam[a.ExamID] = true
+			examIDs = append(examIDs, a.ExamID)
+		}
+	}
+
+	exams := map[string]exam.Exam{}
+	packIDs := []int{}
+	seenPack := map[int]bool{}
+	if len(examIDs) > 0 {
+		if examList, err := s.examRepo.GetExamsByIDs(examIDs); err == nil {
+			for _, e := range examList {
+				exams[e.ID] = e
+				if !seenPack[e.ExamPackID] {
+					seenPack[e.ExamPackID] = true
+					packIDs = append(packIDs, e.ExamPackID)
+				}
+			}
+		}
+	}
+
+	packs := map[int]exampack.ExamPack{}
+	if len(packIDs) > 0 {
+		if packMap, err := s.examPackRepo.GetExamPacksByIDs(packIDs); err == nil {
+			packs = packMap
+		}
+	}
+
+	results := make([]attempt.AttemptWithExam, 0, len(attempts))
 	for _, a := range attempts {
 		examName := "Unknown Exam"
 		packName := "Unknown Pack"
 
-		targetExam, err := s.examRepo.GetExamByID(a.ExamID)
-		if err == nil && targetExam != nil {
+		if targetExam, ok := exams[a.ExamID]; ok {
 			examName = targetExam.Name
-			pack, err := s.examPackRepo.GetExamPackByID(targetExam.ExamPackID)
-			if err == nil && pack != nil {
+			if pack, ok := packs[targetExam.ExamPackID]; ok {
 				packName = pack.Title
 			}
 		}
@@ -159,11 +190,11 @@ func (s *AttemptService) isStaff(userID int) bool {
 	if s.userRepo == nil || userID <= 0 {
 		return false
 	}
-	u, err := s.userRepo.GetByID(userID)
-	if err != nil || u == nil {
+	role, err := s.userRepo.GetRoleByID(userID)
+	if err != nil {
 		return false
 	}
-	role := strings.ToLower(u.Role)
+	role = strings.ToLower(role)
 	return role == "teacher" || role == "admin"
 }
 
@@ -226,7 +257,7 @@ func (s *AttemptService) GetAttemptDetails(userID, id int) (*attempt.AttemptDeta
 	}
 
 	userName := "Candidate"
-	u, err := s.userRepo.GetByID(a.UserID)
+	u, err := s.userRepo.GetSummaryByID(a.UserID)
 	if err == nil && u != nil {
 		userName = u.Name
 	}

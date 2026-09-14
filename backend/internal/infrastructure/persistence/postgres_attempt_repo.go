@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/selftest/backend/internal/domain/attempt"
 )
 
@@ -82,7 +83,7 @@ func (r *PostgresAttemptRepository) GetExamAttemptsByUserID(userID int) ([]attem
 
 func (r *PostgresAttemptRepository) GetExamAttemptsByExamID(examID string) ([]attempt.ExamAttempt, error) {
 	query := `
-		SELECT id, user_id, exam_id, answers, total, correct, wrong, negative, final_score, passed, warning_count, security_message, created_at
+		SELECT id, user_id, exam_id, total, correct, wrong, negative, final_score, passed, warning_count, security_message, created_at
 		FROM exam_attempts
 		WHERE exam_id = $1
 		ORDER BY created_at DESC`
@@ -100,7 +101,6 @@ func (r *PostgresAttemptRepository) GetExamAttemptsByExamID(examID string) ([]at
 			&a.ID,
 			&a.UserID,
 			&a.ExamID,
-			&a.Answers,
 			&a.Total,
 			&a.Correct,
 			&a.Wrong,
@@ -117,12 +117,47 @@ func (r *PostgresAttemptRepository) GetExamAttemptsByExamID(examID string) ([]at
 		attempts = append(attempts, a)
 	}
 
-	return attempts, nil
+	return attempts, rows.Err()
+}
+
+func (r *PostgresAttemptRepository) GetExamAttemptStatsByExamIDs(examIDs []string) (map[string]attempt.ExamAttemptStats, error) {
+	stats := map[string]attempt.ExamAttemptStats{}
+	if len(examIDs) == 0 {
+		return stats, nil
+	}
+
+	query := `
+		SELECT exam_id,
+			COUNT(*)::int,
+			COALESCE(SUM(CASE WHEN passed THEN 1 ELSE 0 END), 0)::int,
+			COALESCE(MAX(final_score), 0),
+			COALESCE(MIN(final_score), 0),
+			COALESCE(SUM(final_score), 0)
+		FROM exam_attempts
+		WHERE exam_id = ANY($1)
+		GROUP BY exam_id`
+
+	rows, err := r.db.Query(query, pq.Array(examIDs))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var examID string
+		var s attempt.ExamAttemptStats
+		if err := rows.Scan(&examID, &s.Total, &s.Passed, &s.Highest, &s.Lowest, &s.Sum); err != nil {
+			return nil, err
+		}
+		stats[examID] = s
+	}
+
+	return stats, rows.Err()
 }
 
 func (r *PostgresAttemptRepository) GetAllExamAttempts() ([]attempt.ExamAttempt, error) {
 	query := `
-		SELECT id, user_id, exam_id, answers, total, correct, wrong, negative, final_score, passed, warning_count, security_message, created_at
+		SELECT id, user_id, exam_id, total, correct, wrong, negative, final_score, passed, warning_count, security_message, created_at
 		FROM exam_attempts
 		ORDER BY created_at DESC`
 
@@ -139,7 +174,6 @@ func (r *PostgresAttemptRepository) GetAllExamAttempts() ([]attempt.ExamAttempt,
 			&a.ID,
 			&a.UserID,
 			&a.ExamID,
-			&a.Answers,
 			&a.Total,
 			&a.Correct,
 			&a.Wrong,
@@ -156,7 +190,7 @@ func (r *PostgresAttemptRepository) GetAllExamAttempts() ([]attempt.ExamAttempt,
 		attempts = append(attempts, a)
 	}
 
-	return attempts, nil
+	return attempts, rows.Err()
 }
 
 func (r *PostgresAttemptRepository) GetExamAttemptByID(id int) (*attempt.ExamAttempt, error) {

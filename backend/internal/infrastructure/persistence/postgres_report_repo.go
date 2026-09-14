@@ -17,22 +17,13 @@ func NewPostgresReportRepository(db *sql.DB) *PostgresReportRepository {
 func (r *PostgresReportRepository) GetAnalysisStats() (*report.ExamAnalysisStats, error) {
 	var totalExams, totalStudents, totalPacks, totalTeachers int
 
-	err := r.db.QueryRow(`SELECT COUNT(*) FROM exams`).Scan(&totalExams)
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.db.QueryRow(`SELECT COUNT(*) FROM exam_packs`).Scan(&totalPacks)
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.db.QueryRow(`SELECT COUNT(*) FROM users WHERE role = 'student'`).Scan(&totalStudents)
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.db.QueryRow(`SELECT COUNT(*) FROM users WHERE role = 'teacher'`).Scan(&totalTeachers)
+	err := r.db.QueryRow(`
+		SELECT
+			(SELECT COUNT(*) FROM exams),
+			(SELECT COUNT(*) FROM exam_packs),
+			(SELECT COUNT(*) FROM users WHERE role = 'student'),
+			(SELECT COUNT(*) FROM users WHERE role = 'teacher')`,
+	).Scan(&totalExams, &totalPacks, &totalStudents, &totalTeachers)
 	if err != nil {
 		return nil, err
 	}

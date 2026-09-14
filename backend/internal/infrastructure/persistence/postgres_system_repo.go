@@ -91,12 +91,12 @@ func (r *PostgresSystemRepository) GetTransactions() ([]system.Transaction, erro
 func (r *PostgresSystemRepository) GetFinancialSummary() (*system.FinancialSummary, error) {
 	var totalIncome, totalExpenditure float64
 
-	err := r.db.QueryRow(`SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income'`).Scan(&totalIncome)
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.db.QueryRow(`SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expenditure'`).Scan(&totalExpenditure)
+	err := r.db.QueryRow(`
+		SELECT
+			COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN type = 'expenditure' THEN amount ELSE 0 END), 0)
+		FROM transactions`,
+	).Scan(&totalIncome, &totalExpenditure)
 	if err != nil {
 		return nil, err
 	}

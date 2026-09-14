@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -24,15 +25,23 @@ func InitDB() {
 		log.Fatalf("Failed to open database connection: %v", err)
 	}
 
+	// Pool tuning for a serverless (Neon) database: keep a warm set of
+	// connections, recycle them before they go stale, and avoid the default
+	// short idle timeout tearing down connections between requests.
 	DB.SetMaxOpenConns(25)
-	DB.SetMaxIdleConns(10)
-	DB.SetConnMaxLifetime(5 * time.Minute)
+	DB.SetMaxIdleConns(25)
+	DB.SetConnMaxLifetime(30 * time.Minute)
+	DB.SetConnMaxIdleTime(5 * time.Minute)
 
 	// Verify the connection is working
 	err = DB.Ping()
 	if err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
+
+	// Keep Neon's compute from suspending between bursts of traffic so the
+	// first request after an idle period does not pay a cold-start handshake.
+	startDBKeepAlive()
 
 	fmt.Println("Connected to PostgreSQL (Neon) successfully!")
 
@@ -42,6 +51,21 @@ func InitDB() {
 	// One-time cleanup: drop any legacy/demo rows while keeping user accounts.
 	// The app never seeds demo data — this only runs once per database.
 	clearLegacyDummyDataOnce()
+}
+
+// startDBKeepAlive periodically pings the database in the background.
+func startDBKeepAlive() {
+	go func() {
+		ticker := time.NewTicker(2 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			if err := DB.PingContext(ctx); err != nil {
+				log.Printf("database keepalive ping failed: %v", err)
+			}
+			cancel()
+		}
+	}()
 }
 
 func createUsersTable() {
@@ -189,8 +213,33 @@ func createUsersTable() {
 	createTransactionsTable()
 	createExamRequestsTable()
 	createAppMetaTable()
+	createIndexes()
 
 	fmt.Println("Database tables verified/created successfully!")
+}
+
+// createIndexes adds missing indexes on foreign-key and filter columns.
+// PostgreSQL does not index foreign keys automatically, so without these every
+// lookup degrades into a sequential scan as the tables grow.
+func createIndexes() {
+	indexQueries := []string{
+		"CREATE INDEX IF NOT EXISTS idx_exam_attempts_user_id ON exam_attempts(user_id)",
+		"CREATE INDEX IF NOT EXISTS idx_exam_attempts_exam_id ON exam_attempts(exam_id)",
+		"CREATE INDEX IF NOT EXISTS idx_exam_attempts_created_at ON exam_attempts(created_at DESC)",
+		"CREATE INDEX IF NOT EXISTS idx_exams_exam_pack_id ON exams(exam_pack_id)",
+		"CREATE INDEX IF NOT EXISTS idx_exams_created_by ON exams(created_by)",
+		"CREATE INDEX IF NOT EXISTS idx_questions_exam_id ON questions(exam_id)",
+		"CREATE INDEX IF NOT EXISTS idx_questions_created_by ON questions(created_by)",
+		"CREATE INDEX IF NOT EXISTS idx_exam_packs_created_by ON exam_packs(created_by)",
+		"CREATE INDEX IF NOT EXISTS idx_exam_requests_teacher_id ON exam_requests(teacher_id)",
+		"CREATE INDEX IF NOT EXISTS idx_exam_requests_pack_id ON exam_requests(pack_id)",
+		"CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)",
+	}
+	for _, q := range indexQueries {
+		if _, err := DB.Exec(q); err != nil {
+			log.Printf("Failed to create index (%s): %v", q, err)
+		}
+	}
 }
 
 func createPermissionsTable() {

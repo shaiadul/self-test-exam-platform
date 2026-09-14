@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/selftest/backend/internal/domain/user"
 )
 
@@ -136,6 +137,58 @@ func (r *PostgresUserRepository) GetByID(id int) (*user.User, error) {
 	return &u, nil
 }
 
+func (r *PostgresUserRepository) GetRoleByID(id int) (string, error) {
+	var role string
+	err := r.db.QueryRow(`SELECT role FROM users WHERE id = $1`, id).Scan(&role)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", nil
+		}
+		return "", err
+	}
+	return role, nil
+}
+
+func (r *PostgresUserRepository) GetSummaryByID(id int) (*user.UserSummary, error) {
+	query := `SELECT id, name, role, institution, exam_limit, exam_pack_limit FROM users WHERE id = $1`
+	var s user.UserSummary
+	err := r.db.QueryRow(query, id).Scan(
+		&s.ID, &s.Name, &s.Role, &s.Institution, &s.ExamLimit, &s.ExamPackLimit,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &s, nil
+}
+
+func (r *PostgresUserRepository) GetSummariesByIDs(ids []int) (map[int]user.UserSummary, error) {
+	result := map[int]user.UserSummary{}
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	query := `SELECT id, name, role, institution, exam_limit, exam_pack_limit FROM users WHERE id = ANY($1)`
+	rows, err := r.db.Query(query, pq.Array(ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var s user.UserSummary
+		if err := rows.Scan(
+			&s.ID, &s.Name, &s.Role, &s.Institution, &s.ExamLimit, &s.ExamPackLimit,
+		); err != nil {
+			return nil, err
+		}
+		result[s.ID] = s
+	}
+	return result, rows.Err()
+}
+
 func (r *PostgresUserRepository) Update(u *user.User) error {
 	query := `
 		UPDATE users
@@ -250,6 +303,14 @@ func (r *PostgresUserRepository) Delete(id int) error {
 func (r *PostgresUserRepository) GetUserCountByRole(role string) (int, error) {
 	var count int
 	err := r.db.QueryRow(`SELECT COUNT(*) FROM users WHERE role = $1`, role).Scan(&count)
+	return count, err
+}
+
+func (r *PostgresUserRepository) CountIncompleteTeachers() (int, error) {
+	var count int
+	err := r.db.QueryRow(
+		`SELECT COUNT(*) FROM users WHERE role = 'teacher' AND (subject IS NULL OR subject = '')`,
+	).Scan(&count)
 	return count, err
 }
 

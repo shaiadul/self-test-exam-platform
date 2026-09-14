@@ -43,7 +43,7 @@ func NewReportService(
 }
 
 func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
-	u, err := s.userRepo.GetByID(userID)
+	u, err := s.userRepo.GetSummaryByID(userID)
 	if err != nil || u == nil {
 		return nil, ErrUserNotFound
 	}
@@ -87,36 +87,34 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 		if limit > 5 {
 			limit = 5
 		}
+
+		// Resolve every referenced exam name in a single round trip instead of
+		// one query per attempt.
+		examIDs := make([]string, 0, completed)
+		seenExam := map[string]bool{}
+		for _, a := range attempts {
+			if !seenExam[a.ExamID] {
+				seenExam[a.ExamID] = true
+				examIDs = append(examIDs, a.ExamID)
+			}
+		}
+		examNames := s.examNameMap(examIDs)
+
 		for i := 0; i < limit; i++ {
 			a := attempts[limit-1-i]
-			var examName string
-			e, _ := s.examRepo.GetExamByID(a.ExamID)
-			if e != nil {
-				examName = e.Name
-			} else {
-				examName = "Exam " + a.ExamID
-			}
-
 			accuracyData = append(accuracyData, report.ChartDataPoint{
-				Name:  examName,
+				Name:  examNameOrFallback(examNames, a.ExamID),
 				Value: a.FinalScore * 10,
 			})
 		}
 
 		for i := 0; i < limit; i++ {
 			a := attempts[i]
-			var examName string
-			e, _ := s.examRepo.GetExamByID(a.ExamID)
-			if e != nil {
-				examName = e.Name
-			} else {
-				examName = "Exam " + a.ExamID
-			}
 			recentExams = append(recentExams, report.RecentExamAttempt{
 				ID:          fmt.Sprintf("#%d", a.ID),
 				ExamID:      a.ExamID,
 				AttemptID:   a.ID,
-				Name:        examName,
+				Name:        examNameOrFallback(examNames, a.ExamID),
 				Score:       fmt.Sprintf("%.1f/%d", a.FinalScore, a.Total*2),
 				Negative:    fmt.Sprintf("%.1f", a.Negative),
 				AnswerSheet: fmt.Sprintf("/dashboard/reporting/%d", a.ID),
@@ -245,13 +243,22 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 		}
 
 		assignedPacks := []report.AssignedPackDetail{}
+		examsByPack := map[int][]exam.Exam{}
+		allExamIDs := []string{}
 		for _, p := range packs {
 			exams, _ := s.examRepo.GetExamsByPackID(p.ID)
+			examsByPack[p.ID] = exams
+			for _, e := range exams {
+				allExamIDs = append(allExamIDs, e.ID)
+			}
+		}
+		attemptStats := s.attemptStatsMap(allExamIDs)
+
+		for _, p := range packs {
 			submitCount := 0
 			hasNeg := false
-			for _, e := range exams {
-				ea, _ := s.attemptRepo.GetExamAttemptsByExamID(e.ID)
-				submitCount += len(ea)
+			for _, e := range examsByPack[p.ID] {
+				submitCount += attemptStats[e.ID].Total
 				if e.NegativeMarks > 0 {
 					hasNeg = true
 				}
@@ -274,11 +281,15 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 		if len(allAttempts) < recentLimit {
 			recentLimit = len(allAttempts)
 		}
+		pendingExamIDs := []string{}
+		for i := 0; i < recentLimit; i++ {
+			pendingExamIDs = append(pendingExamIDs, allAttempts[i].ExamID)
+		}
+		pendingExams := s.examMap(pendingExamIDs)
 		for i := 0; i < recentLimit; i++ {
 			a := allAttempts[i]
-			e, _ := s.examRepo.GetExamByID(a.ExamID)
 			examName := "Exam"
-			if e != nil {
+			if e, ok := pendingExams[a.ExamID]; ok && e.Name != "" {
 				examName = e.Name
 			}
 			pendingTasks = append(pendingTasks, report.PendingTask{
@@ -333,11 +344,15 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 		if len(allAttempts) < auditLimit {
 			auditLimit = len(allAttempts)
 		}
+		auditExamIDs := []string{}
+		for i := 0; i < auditLimit; i++ {
+			auditExamIDs = append(auditExamIDs, allAttempts[i].ExamID)
+		}
+		auditExams := s.examMap(auditExamIDs)
 		for i := 0; i < auditLimit; i++ {
 			a := allAttempts[i]
-			e, _ := s.examRepo.GetExamByID(a.ExamID)
 			examName := "Exam"
-			if e != nil {
+			if e, ok := auditExams[a.ExamID]; ok && e.Name != "" {
 				examName = e.Name
 			}
 			status := "Failed"
@@ -354,13 +369,7 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 		}
 
 		pendingAudits := []report.PendingAudit{}
-		allUsers, _ := s.userRepo.GetAll()
-		incompleteCount := 0
-		for _, userObj := range allUsers {
-			if userObj.Role == "teacher" && (userObj.Subject == nil || *userObj.Subject == "") {
-				incompleteCount++
-			}
-		}
+		incompleteCount, _ := s.userRepo.CountIncompleteTeachers()
 		if incompleteCount > 0 {
 			pendingAudits = append(pendingAudits, report.PendingAudit{
 				Type:  "user",
@@ -404,51 +413,33 @@ func (s *ReportService) GetTeacherReports(userID int) ([]report.TeacherReport, e
 		return nil, err
 	}
 
-	var reports []report.TeacherReport
+	examsByPack := map[int][]exam.Exam{}
+	allExamIDs := []string{}
 	for _, p := range packs {
 		exams, err := s.examRepo.GetExamsByPackID(p.ID)
 		if err != nil {
 			continue
 		}
-
+		examsByPack[p.ID] = exams
 		for _, e := range exams {
-			attempts, err := s.attemptRepo.GetExamAttemptsByExamID(e.ID)
-			if err != nil {
-				attempts = []attempt.ExamAttempt{}
-			}
+			allExamIDs = append(allExamIDs, e.ID)
+		}
+	}
+	stats := s.attemptStatsMap(allExamIDs)
 
-			var highest, lowest float64
-			var sum float64
-			total := len(attempts)
-
-			if total > 0 {
-				highest = attempts[0].FinalScore
-				lowest = attempts[0].FinalScore
-				for _, a := range attempts {
-					if a.FinalScore > highest {
-						highest = a.FinalScore
-					}
-					if a.FinalScore < lowest {
-						lowest = a.FinalScore
-					}
-					sum += a.FinalScore
-				}
-			}
-
-			average := 0.0
-			if total > 0 {
-				average = sum / float64(total)
-			}
-
+	var reports []report.TeacherReport
+	for _, p := range packs {
+		for _, e := range examsByPack[p.ID] {
+			st := stats[e.ID]
 			reports = append(reports, report.TeacherReport{
 				ID:            e.ID,
 				ExamName:      e.Name,
 				PackName:      p.Title,
 				StartDate:     e.StartDate,
-				Highest:       highest,
-				Lowest:        lowest,
-				Average:       average,
-				TotalStudents: total,
+				Highest:       st.Highest,
+				Lowest:        st.Lowest,
+				Average:       st.Average(),
+				TotalStudents: st.Total,
 			})
 		}
 	}
@@ -483,6 +474,16 @@ func (s *ReportService) GetTeacherReportDetails(userID int, examID string) (*rep
 	var studentAttempts []report.TeacherAttemptDetail
 
 	if total > 0 {
+		userIDs := make([]int, 0, total)
+		seenUser := map[int]bool{}
+		for _, a := range attempts {
+			if !seenUser[a.UserID] {
+				seenUser[a.UserID] = true
+				userIDs = append(userIDs, a.UserID)
+			}
+		}
+		userSummaries, _ := s.userRepo.GetSummariesByIDs(userIDs)
+
 		highest = attempts[0].FinalScore
 		lowest = attempts[0].FinalScore
 		for _, a := range attempts {
@@ -496,8 +497,7 @@ func (s *ReportService) GetTeacherReportDetails(userID int, examID string) (*rep
 
 			studentName := "Unknown Candidate"
 			studentInst := "Default Institution"
-			u, err := s.userRepo.GetByID(a.UserID)
-			if err == nil && u != nil {
+			if u, ok := userSummaries[a.UserID]; ok {
 				studentName = u.Name
 				studentInst = valOrDefault(u.Institution, "Self Study")
 			}
@@ -545,11 +545,11 @@ func (s *ReportService) isTeacher(userID int) bool {
 	if s.userRepo == nil || userID <= 0 {
 		return false
 	}
-	u, err := s.userRepo.GetByID(userID)
-	if err != nil || u == nil {
+	role, err := s.userRepo.GetRoleByID(userID)
+	if err != nil {
 		return false
 	}
-	return strings.ToLower(u.Role) == "teacher"
+	return strings.ToLower(role) == "teacher"
 }
 
 func (s *ReportService) teacherOwnsExam(userID int, e *exam.Exam) bool {
@@ -561,6 +561,48 @@ func (s *ReportService) teacherOwnsExam(userID int, e *exam.Exam) bool {
 		return false
 	}
 	return pack.CreatedBy != nil && *pack.CreatedBy == userID
+}
+
+func (s *ReportService) examMap(ids []string) map[string]exam.Exam {
+	result := map[string]exam.Exam{}
+	if len(ids) == 0 {
+		return result
+	}
+	exams, err := s.examRepo.GetExamsByIDs(ids)
+	if err != nil {
+		return result
+	}
+	for _, e := range exams {
+		result[e.ID] = e
+	}
+	return result
+}
+
+func (s *ReportService) examNameMap(ids []string) map[string]string {
+	names := map[string]string{}
+	for id, e := range s.examMap(ids) {
+		names[id] = e.Name
+	}
+	return names
+}
+
+func examNameOrFallback(names map[string]string, id string) string {
+	if n, ok := names[id]; ok && n != "" {
+		return n
+	}
+	return "Exam " + id
+}
+
+func (s *ReportService) attemptStatsMap(examIDs []string) map[string]attempt.ExamAttemptStats {
+	stats := map[string]attempt.ExamAttemptStats{}
+	if len(examIDs) == 0 {
+		return stats
+	}
+	result, err := s.attemptRepo.GetExamAttemptStatsByExamIDs(examIDs)
+	if err != nil {
+		return stats
+	}
+	return result
 }
 
 func valOrDefault(ptr *string, fallback string) string {
