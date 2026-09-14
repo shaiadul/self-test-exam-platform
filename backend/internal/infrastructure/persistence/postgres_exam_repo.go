@@ -339,7 +339,7 @@ func (r *PostgresExamRepository) CountAllQuestions() (int, error) {
 
 func (r *PostgresExamRepository) GetQuestionsByExamID(examID string) ([]exam.Question, error) {
 	query := `
-		SELECT id, exam_id, type, question_text, options, correct_answer, passage, picture_url, created_at
+		SELECT id, exam_id, type, question_text, options, correct_answer, passage, picture_url, created_by, created_at
 		FROM questions
 		WHERE exam_id = $1
 		ORDER BY id ASC`
@@ -363,6 +363,7 @@ func (r *PostgresExamRepository) GetQuestionsByExamID(examID string) ([]exam.Que
 			&q.CorrectAnswer,
 			&q.Passage,
 			&q.PictureURL,
+			&q.CreatedBy,
 			&q.CreatedAt,
 		)
 		if err != nil {
@@ -377,7 +378,7 @@ func (r *PostgresExamRepository) GetQuestionsByExamID(examID string) ([]exam.Que
 
 func (r *PostgresExamRepository) GetQuestionByID(id int) (*exam.Question, error) {
 	query := `
-		SELECT id, exam_id, type, question_text, options, correct_answer, passage, picture_url, created_at
+		SELECT id, exam_id, type, question_text, options, correct_answer, passage, picture_url, created_by, created_at
 		FROM questions
 		WHERE id = $1`
 
@@ -392,6 +393,7 @@ func (r *PostgresExamRepository) GetQuestionByID(id int) (*exam.Question, error)
 		&q.CorrectAnswer,
 		&q.Passage,
 		&q.PictureURL,
+		&q.CreatedBy,
 		&q.CreatedAt,
 	)
 	if err != nil {
@@ -406,8 +408,8 @@ func (r *PostgresExamRepository) GetQuestionByID(id int) (*exam.Question, error)
 
 func (r *PostgresExamRepository) CreateQuestion(q *exam.Question) error {
 	query := `
-		INSERT INTO questions (exam_id, type, question_text, options, correct_answer, passage, picture_url, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO questions (exam_id, type, question_text, options, correct_answer, passage, picture_url, created_by, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id`
 
 	q.CreatedAt = time.Now()
@@ -420,6 +422,7 @@ func (r *PostgresExamRepository) CreateQuestion(q *exam.Question) error {
 		q.CorrectAnswer,
 		q.Passage,
 		q.PictureURL,
+		q.CreatedBy,
 		q.CreatedAt,
 	).Scan(&q.ID)
 }

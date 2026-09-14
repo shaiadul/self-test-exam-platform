@@ -3,8 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { fetcherWithAuth } from "./fetcher";
 
-export async function getQuestionsAction(examId: string, clientToken?: string) {
-	const data = await fetcherWithAuth<any[]>(`/exams/${examId}/questions`, {}, clientToken);
+export async function getQuestionsAction(examId: string, passcode?: string, clientToken?: string) {
+	const data = await fetcherWithAuth<any[]>(
+		`/exams/${examId}/questions`,
+		passcode ? { params: { passcode } } : {},
+		clientToken
+	);
 	return data || [];
 }
 

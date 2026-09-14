@@ -22,6 +22,9 @@ var (
 	ErrMinOptionsReq      = errors.New("at least 2 options are required")
 	ErrExamLimitReached   = errors.New("exam creation limit reached")
 	ErrQuestionNotFound   = errors.New("question not found")
+	ErrInvalidPasscode    = errors.New("invalid exam passcode")
+	ErrExamNotStarted     = errors.New("exam has not started yet")
+	ErrExamEnded          = errors.New("exam has already ended")
 )
 
 type CreateExamInput struct {
@@ -89,6 +92,17 @@ type ExamService struct {
 
 func NewExamService(repo exam.ExamRepository, userRepo user.UserRepository, packRepo exampack.ExamPackRepository) *ExamService {
 	return &ExamService{repo: repo, userRepo: userRepo, packRepo: packRepo}
+}
+
+// clampPassPercent keeps the pass threshold within a valid percentage range.
+func clampPassPercent(p int) int {
+	if p <= 0 {
+		return 33
+	}
+	if p > 100 {
+		return 100
+	}
+	return p
 }
 
 func (s *ExamService) roleOf(userID int) string {
@@ -179,6 +193,27 @@ func (s *ExamService) assertExamEditByID(userID int, examID string) error {
 	return s.assertExamEdit(userID, e)
 }
 
+// assertQuestionEdit allows a teacher to manage a question when they own the
+// exam/pack, or when the question itself was authored by them.
+func (s *ExamService) assertQuestionEdit(userID int, examID string, q *exam.Question) error {
+	e, err := s.repo.GetExamByID(examID)
+	if err != nil {
+		return err
+	}
+	if e == nil {
+		return ErrExamNotFound
+	}
+	if err := s.assertExamEdit(userID, e); err == nil {
+		return nil
+	} else if err != ErrForbidden {
+		return err
+	}
+	if s.roleOf(userID) == "teacher" && q.CreatedBy != nil && *q.CreatedBy == userID {
+		return nil
+	}
+	return ErrForbidden
+}
+
 func (s *ExamService) ListExamsByPack(userID, packID int) ([]exam.Exam, error) {
 	if err := s.assertPackAccess(userID, packID); err != nil {
 		return nil, err
@@ -196,6 +231,11 @@ func (s *ExamService) GetExam(userID int, id string) (*exam.Exam, error) {
 	}
 	if err := s.assertExamView(userID, e); err != nil {
 		return nil, err
+	}
+	// Never expose the private exam passcode to students; it is verified
+	// server-side when they unlock or submit the exam.
+	if s.roleOf(userID) == "student" {
+		e.Passcode = ""
 	}
 	return e, nil
 }
@@ -275,8 +315,9 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 	} else if input.PassMark != nil && *input.PassMark > 0 {
 		e.PassingMarks = *input.PassMark
 	} else {
-		e.PassingMarks = 5
+		e.PassingMarks = 33
 	}
+	e.PassingMarks = clampPassPercent(e.PassingMarks)
 
 	if input.PerQuestionMarks != nil && *input.PerQuestionMarks > 0 {
 		e.PerQuestionMarks = *input.PerQuestionMarks
@@ -395,9 +436,9 @@ func (s *ExamService) UpdateExam(userID int, id string, input UpdateExamInput) (
 		e.TotalMarks = *input.TotalMarks
 	}
 	if input.PassingMarks != nil && *input.PassingMarks > 0 {
-		e.PassingMarks = *input.PassingMarks
+		e.PassingMarks = clampPassPercent(*input.PassingMarks)
 	} else if input.PassMark != nil && *input.PassMark > 0 {
-		e.PassingMarks = *input.PassMark
+		e.PassingMarks = clampPassPercent(*input.PassMark)
 	}
 	if input.PerQuestionMarks != nil && *input.PerQuestionMarks > 0 {
 		e.PerQuestionMarks = *input.PerQuestionMarks
@@ -464,8 +505,68 @@ func (s *ExamService) DeleteExam(userID int, id string) error {
 	return s.repo.DeleteExam(id)
 }
 
-func (s *ExamService) GetQuestions(examID string) ([]exam.Question, error) {
-	return s.repo.GetQuestionsByExamID(examID)
+// GetQuestions returns the questions of an exam. Correct answers are only
+// included for teachers who own the exam (and administrators); students receive
+// sanitized questions so the answer key cannot be read from the API.
+func (s *ExamService) GetQuestions(userID int, examID, passcode string) ([]exam.Question, error) {
+	e, err := s.repo.GetExamByID(examID)
+	if err != nil {
+		return nil, err
+	}
+	if e == nil {
+		return nil, ErrExamNotFound
+	}
+	if err := s.assertExamView(userID, e); err != nil {
+		return nil, err
+	}
+
+	// Private exams stay locked until the correct passcode is supplied.
+	if e.IsPrivate && !s.canSeeAnswers(userID, e) {
+		if strings.TrimSpace(e.Passcode) != "" && strings.TrimSpace(passcode) != strings.TrimSpace(e.Passcode) {
+			return nil, ErrInvalidPasscode
+		}
+	}
+
+	questions, err := s.repo.GetQuestionsByExamID(examID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !s.canSeeAnswers(userID, e) {
+		for i := range questions {
+			questions[i].CorrectAnswer = ""
+		}
+	}
+	return questions, nil
+}
+
+func (s *ExamService) canSeeAnswers(userID int, e *exam.Exam) bool {
+	role := s.roleOf(userID)
+	if role == "admin" {
+		return true
+	}
+	if role != "teacher" {
+		return false
+	}
+	return s.assertExamEdit(userID, e) == nil
+}
+
+// VerifyPasscode validates a private exam passcode server-side.
+func (s *ExamService) VerifyPasscode(userID int, examID, passcode string) error {
+	e, err := s.repo.GetExamByID(examID)
+	if err != nil {
+		return err
+	}
+	if e == nil {
+		return ErrExamNotFound
+	}
+	if !e.IsPrivate || strings.TrimSpace(e.Passcode) == "" {
+		return nil
+	}
+	if strings.TrimSpace(e.Passcode) != strings.TrimSpace(passcode) {
+		return ErrInvalidPasscode
+	}
+	return nil
 }
 
 func (s *ExamService) CreateQuestion(userID int, examID string, input QuestionInput) (*exam.Question, error) {
@@ -529,6 +630,9 @@ func (s *ExamService) CreateQuestion(userID int, examID string, input QuestionIn
 		Passage:       passage,
 		PictureURL:    pictureURL,
 	}
+	if userID > 0 {
+		q.CreatedBy = &userID
+	}
 
 	if err := s.repo.CreateQuestion(&q); err != nil {
 		return nil, err
@@ -538,16 +642,15 @@ func (s *ExamService) CreateQuestion(userID int, examID string, input QuestionIn
 }
 
 func (s *ExamService) UpdateQuestion(userID int, examID string, questionID int, input QuestionInput) (*exam.Question, error) {
-	if err := s.assertExamEditByID(userID, examID); err != nil {
-		return nil, err
-	}
-
 	existing, err := s.repo.GetQuestionByID(questionID)
 	if err != nil {
 		return nil, err
 	}
 	if existing == nil || existing.ExamID != examID {
 		return nil, ErrQuestionNotFound
+	}
+	if err := s.assertQuestionEdit(userID, examID, existing); err != nil {
+		return nil, err
 	}
 
 	qText := strings.TrimSpace(input.QuestionText)
@@ -612,16 +715,15 @@ func (s *ExamService) UpdateQuestion(userID int, examID string, questionID int, 
 }
 
 func (s *ExamService) DeleteQuestion(userID int, examID string, questionID int) error {
-	if err := s.assertExamEditByID(userID, examID); err != nil {
-		return err
-	}
-
 	existing, err := s.repo.GetQuestionByID(questionID)
 	if err != nil {
 		return err
 	}
 	if existing == nil || existing.ExamID != examID {
 		return ErrQuestionNotFound
+	}
+	if err := s.assertQuestionEdit(userID, examID, existing); err != nil {
+		return err
 	}
 	return s.repo.DeleteQuestion(questionID)
 }

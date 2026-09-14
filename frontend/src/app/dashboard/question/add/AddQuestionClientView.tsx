@@ -8,11 +8,14 @@ import CustomSelect from "../../../../components/ui/CustomSelect";
 import ImageUploader from "../../../../components/ui/ImageUploader";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
+import { Badge } from "../../../../components/ui/Badge";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import { useRouter } from "next/navigation";
 import {
   getExamsAction,
   createQuestionAction,
+  updateQuestionAction,
+  deleteQuestionAction,
   getQuestionsAction,
 } from "../../../../lib/actions";
 
@@ -58,10 +61,11 @@ export default function AddQuestionClientView({
   const [type, setType] = useState<QuestionType>("mcq");
   const [questionText, setQuestionText] = useState("");
   const [options, setOptions] = useState<string[]>(["", "", "", ""]);
-  const [correctAnswer, setCorrectAnswer] = useState("");
+  const [correctIndex, setCorrectIndex] = useState<number>(-1);
   const [passage, setPassage] = useState("");
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<number | string | null>(null);
 
   const handlePackSelect = async (packIdStr: string) => {
     const pId = parseInt(packIdStr);
@@ -96,25 +100,59 @@ export default function AddQuestionClientView({
   };
 
   const handleOptionChange = (index: number, val: string) => {
-    const oldVal = options[index];
     const updated = [...options];
     updated[index] = val;
     setOptions(updated);
-
-    // If edited option was the chosen correct answer, update it
-    if (correctAnswer === oldVal) {
-      setCorrectAnswer(val);
-    }
   };
 
   const handleRemoveOption = (index: number) => {
-    if (options.length > 2) {
-      const removedVal = options[index];
-      const updated = options.filter((_, i) => i !== index);
-      setOptions(updated);
-      if (correctAnswer === removedVal) {
-        setCorrectAnswer(updated[0] || "");
+    if (options.length <= 2) return;
+    const updated = options.filter((_, i) => i !== index);
+    setOptions(updated);
+    setCorrectIndex((prev) => {
+      if (prev === index) return -1;
+      if (prev > index) return prev - 1;
+      return prev;
+    });
+  };
+
+  const resetForm = () => {
+    setType("mcq");
+    setQuestionText("");
+    setOptions(["", "", "", ""]);
+    setCorrectIndex(-1);
+    setPassage("");
+    setPictureUrl(null);
+    setEditingId(null);
+  };
+
+  const handleEdit = (q: Question) => {
+    setEditingId(q.id);
+    setType(q.type || "mcq");
+    setQuestionText(q.questionText || "");
+    const qOptions = q.options && q.options.length ? [...q.options] : ["", "", "", ""];
+    setOptions(qOptions);
+    setCorrectIndex(qOptions.findIndex((o) => o === q.correctAnswer));
+    setPassage(q.passage || "");
+    setPictureUrl(q.pictureUrl || null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (q: Question) => {
+    if (!examId) return;
+    if (!window.confirm("Delete this question permanently?")) return;
+    try {
+      const res = await deleteQuestionAction(examId, q.id);
+      if (res.success) {
+        toast.success("Question deleted.");
+        if (editingId === q.id) resetForm();
+        const updatedQs = await getQuestionsAction(examId);
+        setQuestions(updatedQs || []);
+      } else {
+        toast.error(res.error || "Failed to delete question.");
       }
+    } catch {
+      toast.error("Failed to delete question.");
     }
   };
 
@@ -134,37 +172,41 @@ export default function AddQuestionClientView({
       toast.error("At least 2 non-empty options are required.");
       return;
     }
-    const targetCorrect = correctAnswer.trim() || cleanOptions[0];
-    const correctIndex = cleanOptions.indexOf(targetCorrect);
+    const targetCorrect =
+      correctIndex >= 0 && options[correctIndex] && options[correctIndex].trim()
+        ? options[correctIndex].trim()
+        : cleanOptions[0];
+    const correctPos = Math.max(0, cleanOptions.indexOf(targetCorrect));
 
     setSubmitting(true);
     try {
-      const res = await createQuestionAction(examId, {
+      const payload = {
         questionText: questionText.trim(),
         text: questionText.trim(),
         type,
         options: cleanOptions,
         correctAnswer: targetCorrect,
-        correctIndex: correctIndex >= 0 ? correctIndex : 0,
+        correctIndex: correctPos,
         passage: passage.trim() || undefined,
         pictureUrl: pictureUrl || undefined,
-      });
+      };
+
+      const res =
+        editingId !== null
+          ? await updateQuestionAction(examId, editingId, payload)
+          : await createQuestionAction(examId, payload);
 
       if (res.success) {
-        toast.success("Question created successfully!");
-        setQuestionText("");
-        setOptions(["", "", "", ""]);
-        setCorrectAnswer("");
-        setPassage("");
-        setPictureUrl(null);
+        toast.success(editingId !== null ? "Question updated successfully!" : "Question created successfully!");
+        resetForm();
         // Refresh question list
         const updatedQs = await getQuestionsAction(examId);
         setQuestions(updatedQs || []);
       } else {
-        toast.error(res.error || "Failed to create question.");
+        toast.error(res.error || `Failed to ${editingId !== null ? "update" : "create"} question.`);
       }
     } catch {
-      toast.error("Failed to create question.");
+      toast.error("Failed to save question.");
     } finally {
       setSubmitting(false);
     }
@@ -218,7 +260,9 @@ export default function AddQuestionClientView({
         {/* Left 2 Cols: Question Creator Form */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
           <div className="border-b border-gray-100 pb-3">
-            <h2 className="text-lg font-extrabold text-[#dd6b01]">Create New Question</h2>
+            <h2 className="text-lg font-extrabold text-[#dd6b01]">
+              {editingId !== null ? "Edit Question" : "Create New Question"}
+            </h2>
             <p className="text-xs text-gray-400 font-medium">Add questions, specify choices, and mark the correct answer key.</p>
           </div>
 
@@ -293,7 +337,7 @@ export default function AddQuestionClientView({
 
               {options.map((opt, idx) => {
                 const label = String.fromCharCode(65 + idx);
-                const isCorrect = correctAnswer !== "" && correctAnswer === opt;
+                const isCorrect = correctIndex === idx;
 
                 return (
                   <div key={idx} className="flex items-center gap-2">
@@ -314,7 +358,7 @@ export default function AddQuestionClientView({
                     <button
                       type="button"
                       title="Set as correct answer"
-                      onClick={() => opt.trim() && setCorrectAnswer(opt)}
+                      onClick={() => opt.trim() && setCorrectIndex(idx)}
                       disabled={!opt.trim()}
                       className={`p-2 rounded-lg text-sm border transition cursor-pointer shrink-0 ${
                         isCorrect
@@ -353,9 +397,18 @@ export default function AddQuestionClientView({
             <div>
               <label className="text-xs font-bold text-gray-700 block mb-1">Designated Correct Answer Choice *</label>
               <CustomSelect
-                options={options.filter((o) => o.trim() !== "")}
-                value={correctAnswer}
-                onChange={(val) => setCorrectAnswer(val)}
+                options={options.map(
+                  (o, i) => `${String.fromCharCode(65 + i)}. ${o || "(empty option)"}`
+                )}
+                value={
+                  correctIndex >= 0 && options[correctIndex] !== undefined
+                    ? `${String.fromCharCode(65 + correctIndex)}. ${options[correctIndex] || "(empty option)"}`
+                    : ""
+                }
+                onChange={(val) => {
+                  const idx = val.charCodeAt(0) - 65;
+                  if (idx >= 0 && idx < options.length) setCorrectIndex(idx);
+                }}
                 placeholder="Select Correct Option"
               />
             </div>
@@ -366,9 +419,24 @@ export default function AddQuestionClientView({
                 disabled={!examId || submitting}
                 className="w-full cursor-pointer disabled:opacity-50"
               >
-                {submitting ? "Saving Question..." : "Add Question to Bank"}
+                {submitting
+                  ? editingId !== null
+                    ? "Updating Question..."
+                    : "Saving Question..."
+                  : editingId !== null
+                  ? "Update Question"
+                  : "Add Question to Bank"}
               </PrimaryBtn>
             </div>
+            {editingId !== null && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="w-full text-xs font-bold text-gray-500 hover:text-[#dd6b01] cursor-pointer"
+              >
+                Cancel editing
+              </button>
+            )}
           </form>
         </div>
 
@@ -390,9 +458,29 @@ export default function AddQuestionClientView({
                   <span className="font-bold text-gray-900">
                     Q{idx + 1}. {q.questionText}
                   </span>
-                  <span className="px-2 py-0.5 bg-orange-100 text-[#dd6b01] rounded text-[10px] font-bold uppercase">
-                    {q.type}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge variant="primary" size="sm">
+                      {q.type}
+                    </Badge>
+                    <OutlineBtn
+                      type="button"
+                      title="Edit question"
+                      variant="neutral"
+                      size="sm"
+                      onClick={() => handleEdit(q)}
+                    >
+                      Edit
+                    </OutlineBtn>
+                    <OutlineBtn
+                      type="button"
+                      title="Delete question"
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDelete(q)}
+                    >
+                      Delete
+                    </OutlineBtn>
+                  </div>
                 </div>
 
                 <div className="space-y-1 text-gray-600 pl-2">

@@ -1,4 +1,4 @@
-import { getAttemptDetailsAction, getQuestionsAction, getTeacherReportDetailsAction } from "../../../../lib/actions";
+import { getAttemptDetailsAction, getAttemptQuestionsAction, getTeacherReportDetailsAction } from "../../../../lib/actions";
 import ReportingDetailClientView from "./ReportingDetailClientView";
 
 export default async function ExamInfoPage({
@@ -23,7 +23,7 @@ export default async function ExamInfoPage({
   }
 
   const [questions, reportDetails] = await Promise.all([
-    getQuestionsAction(attemptData.examId),
+    getAttemptQuestionsAction(attemptId),
     getTeacherReportDetailsAction(attemptData.examId),
   ]);
 

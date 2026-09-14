@@ -13,14 +13,16 @@ interface ScorecardProps {
     passed: boolean;
   };
   totalMarks?: number;
+  passingPercent?: number;
 }
 
-export default function Scorecard({ result, totalMarks }: ScorecardProps) {
+export default function Scorecard({ result, totalMarks, passingPercent }: ScorecardProps) {
   const { total, correct, wrong, negative, finalScore, passed } = result;
 
   const maxMarks = totalMarks || total;
   const rawPercentage = maxMarks > 0 ? (finalScore / maxMarks) * 100 : 0;
   const percentage = Math.max(0, Math.min(100, Math.round(rawPercentage)));
+  const passThreshold = maxMarks * ((passingPercent && passingPercent > 0 ? passingPercent : 33) / 100);
   
   // Calculate SVG circle properties
   const radius = 60;
@@ -134,7 +136,7 @@ export default function Scorecard({ result, totalMarks }: ScorecardProps) {
           </div>
           <div className="flex items-center gap-1 text-[10px] font-semibold text-[#dd6b01] bg-orange-100/50 px-2 py-1 rounded-lg border border-orange-200">
             <FaCheckCircle />
-            <span>Pass: {(total * 0.5).toFixed(1)}</span>
+            <span>Pass: {passThreshold.toFixed(1)}</span>
           </div>
         </div>
       </div>

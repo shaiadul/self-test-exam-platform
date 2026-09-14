@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/selftest/backend/internal/domain/attempt"
@@ -42,6 +43,22 @@ func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.Submi
 		return nil, ErrExamNotFound
 	}
 
+	// Enforce the exam window server-side; the client timer is not trusted.
+	now := time.Now()
+	if now.Before(targetExam.StartDate) {
+		return nil, ErrExamNotStarted
+	}
+	if now.After(targetExam.EndDate) {
+		return nil, ErrExamEnded
+	}
+
+	// A private exam must be unlocked with the correct passcode before grading.
+	if targetExam.IsPrivate && strings.TrimSpace(targetExam.Passcode) != "" {
+		if strings.TrimSpace(req.Passcode) != strings.TrimSpace(targetExam.Passcode) {
+			return nil, ErrInvalidPasscode
+		}
+	}
+
 	questions, err := s.examRepo.GetQuestionsByExamID(examID)
 	if err != nil {
 		return nil, err
@@ -51,6 +68,20 @@ func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.Submi
 	evalResult := attempt.EvaluateSubmission(targetExam, questions, req.Answers)
 
 	answersJSON, _ := json.Marshal(req.Answers)
+
+	// The client-reported proctoring data is advisory only; normalize it so it
+	// cannot be persisted as an absurd or negative audit value.
+	warningCount := req.WarningCount
+	if warningCount < 0 {
+		warningCount = 0
+	}
+	if warningCount > 1000 {
+		warningCount = 1000
+	}
+	securityMessage := strings.TrimSpace(req.SecurityMessage)
+	if len(securityMessage) > 500 {
+		securityMessage = securityMessage[:500]
+	}
 
 	newAttempt := attempt.ExamAttempt{
 		UserID:          userID,
@@ -62,8 +93,8 @@ func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.Submi
 		Negative:        evalResult.NegScore,
 		FinalScore:      evalResult.FinalScore,
 		Passed:          evalResult.Passed,
-		WarningCount:    req.WarningCount,
-		SecurityMessage: req.SecurityMessage,
+		WarningCount:    warningCount,
+		SecurityMessage: securityMessage,
 	}
 
 	if err := s.attemptRepo.CreateExamAttempt(&newAttempt); err != nil {
@@ -123,13 +154,48 @@ func (s *AttemptService) GetUserAttempts(userID int) ([]attempt.AttemptWithExam,
 	return results, nil
 }
 
-func (s *AttemptService) GetAttemptDetails(id int) (*attempt.AttemptDetailsResponse, error) {
+// isStaff reports whether the user is a teacher or administrator.
+func (s *AttemptService) isStaff(userID int) bool {
+	if s.userRepo == nil || userID <= 0 {
+		return false
+	}
+	u, err := s.userRepo.GetByID(userID)
+	if err != nil || u == nil {
+		return false
+	}
+	role := strings.ToLower(u.Role)
+	return role == "teacher" || role == "admin"
+}
+
+// GetAttemptQuestions returns the full question bank (including correct
+// answers) for an attempt, but only to its owner or staff members. This is the
+// authorized path used to render post-submission solutions.
+func (s *AttemptService) GetAttemptQuestions(userID, attemptID int) ([]exam.Question, error) {
+	a, err := s.attemptRepo.GetExamAttemptByID(attemptID)
+	if err != nil {
+		return nil, err
+	}
+	if a == nil {
+		return nil, ErrAttemptNotFound
+	}
+	if a.UserID != userID && !s.isStaff(userID) {
+		return nil, ErrForbidden
+	}
+	return s.examRepo.GetQuestionsByExamID(a.ExamID)
+}
+
+func (s *AttemptService) GetAttemptDetails(userID, id int) (*attempt.AttemptDetailsResponse, error) {
 	a, err := s.attemptRepo.GetExamAttemptByID(id)
 	if err != nil {
 		return nil, err
 	}
 	if a == nil {
 		return nil, ErrAttemptNotFound
+	}
+	// Prevent horizontal privilege escalation: only the owner (or staff) may
+	// read an attempt's answers, score and audit trail.
+	if a.UserID != userID && !s.isStaff(userID) {
+		return nil, ErrForbidden
 	}
 
 	examName := "Unknown Exam"

@@ -20,6 +20,7 @@ export interface Exam {
   answerSheet?: string;
   dateTime?: string;
   image?: string;
+  passed?: boolean;
 }
 
 export interface ExamPack {

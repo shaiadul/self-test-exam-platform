@@ -65,7 +65,7 @@ export default function EditExamClientView({
     image: initialExam?.image || "",
     totalMarks: initialExam?.totalMarks || 100,
     perQuestionMark: initialExam?.perQuestionMarks || initialExam?.perQuestionMark || 2,
-    passMark: initialExam?.passingMarks || initialExam?.passMark || 40,
+    passMark: initialExam?.passingMarks || initialExam?.passMark || 33,
     durationMinutes: initialExam?.durationMinutes || initialExam?.duration || 30,
     startDate: formatDateTime(initialExam?.startDate || ""),
     endDate: formatDateTime(initialExam?.endDate || ""),
@@ -107,8 +107,8 @@ export default function EditExamClientView({
       return;
     }
 
-    if (Number(examPackData.passMark) > Number(examPackData.totalMarks)) {
-      toast.error("Passing marks cannot be greater than total marks.");
+    if (Number(examPackData.passMark) <= 0 || Number(examPackData.passMark) > 100) {
+      toast.error("Pass mark percentage must be between 1 and 100.");
       return;
     }
 
@@ -120,8 +120,8 @@ export default function EditExamClientView({
         level: examPackData.level,
         batch: examPackData.batch,
         totalMarks: Number(examPackData.totalMarks) || 100,
-        passingMarks: Number(examPackData.passMark) || 40,
-        passMark: Number(examPackData.passMark) || 40,
+        passingMarks: Number(examPackData.passMark) || 33,
+        passMark: Number(examPackData.passMark) || 33,
         perQuestionMarks: Number(examPackData.perQuestionMark) || 2,
         perQuestionMark: Number(examPackData.perQuestionMark) || 2,
         startDate: start.toISOString(),
@@ -239,12 +239,13 @@ export default function EditExamClientView({
               min={1}
             />
             <Input
-              label="Passing Marks"
+              label="Pass Mark (%)"
               type="number"
-              placeholder="40"
+              placeholder="33"
               value={examPackData.passMark}
               onChange={(e) => setExamPackData({ ...examPackData, passMark: Number(e.target.value) })}
               min={1}
+              max={100}
             />
             <Input
               label="Duration (Minutes)"

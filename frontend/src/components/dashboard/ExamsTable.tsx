@@ -54,7 +54,7 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
               const numScore = parseFloat(scoreParts[0]) || 0;
               const maxScore = parseFloat(scoreParts[1]) || 20;
               const ratio = maxScore > 0 ? (numScore / maxScore) * 100 : 0;
-              const isPassed = ratio >= 50;
+              const isPassed = typeof exam.passed === "boolean" ? exam.passed : ratio >= 33;
 
               return (
                 <tr

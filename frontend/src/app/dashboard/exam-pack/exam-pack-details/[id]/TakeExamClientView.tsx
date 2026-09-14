@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PageContainer } from "../../../../../components/common/PageContainer";
 import Scorecard from "../../../../../components/dashboard/Scorecard";
 import CertificatePrintLayout from "../../../../../components/dashboard/CertificatePrintLayout";
-import { submitExamAction, getQuestionsAction, getExamDetailsAction } from "../../../../../lib/actions";
+import { submitExamAction, verifyExamPasscodeAction, getQuestionsAction, getExamDetailsAction } from "../../../../../lib/actions";
 import {
   FaEye,
   FaLock,
@@ -140,7 +140,7 @@ export default function TakeExamClientView({
     subject: initialExam?.level || initialExam?.subject || "General",
     durationMinutes: initialExam?.durationMinutes || initialExam?.duration || 30,
     totalMarks: initialExam?.totalMarks || 100,
-    passMarks: initialExam?.passingMarks || initialExam?.passMark || 40,
+    passMarks: initialExam?.passingMarks || initialExam?.passMark || 33,
     negativeMarks: initialExam?.negativeMarks ? Math.abs(Number(initialExam.negativeMarks)) : 0,
     isPrivate: initialExam?.isPrivate ?? false,
     passcode: initialExam?.passcode || "",
@@ -151,17 +151,20 @@ export default function TakeExamClientView({
   );
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
-  // Password Unlock State
-  const requiresPassword = examMeta.isPrivate && !!examMeta.passcode;
+  // Password Unlock State. The passcode itself is never sent to the client;
+  // it is verified server-side.
+  const requiresPassword = examMeta.isPrivate;
   const [isUnlocked, setIsUnlocked] = useState<boolean>(!requiresPassword);
   const [enteredPasscode, setEnteredPasscode] = useState("");
   const [passcodeError, setPasscodeError] = useState("");
+  const [verifyingPasscode, setVerifyingPasscode] = useState(false);
 
   // Exam Progress State
   const [userAnswers, setUserAnswers] = useState<Record<number, Answer>>({});
   const [examStatus, setExamStatus] = useState<"instructions" | "running" | "submitted">("instructions");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [examResult, setExamResult] = useState<any>(null);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   // Security & Anti-cheating State
   const [warnings, setWarnings] = useState<number>(0);
@@ -172,11 +175,11 @@ export default function TakeExamClientView({
   isRunningRef.current = examStatus === "running";
 
   // Client-side fallback fetch for questions & exam details
-  const fetchQuestionsFallback = useCallback(async () => {
+  const fetchQuestionsFallback = useCallback(async (passcode?: string) => {
     setLoadingQuestions(true);
     try {
       const [qs, details] = await Promise.all([
-        getQuestionsAction(examId),
+        getQuestionsAction(examId, passcode),
         getExamDetailsAction(examId),
       ]);
 
@@ -192,7 +195,7 @@ export default function TakeExamClientView({
           isPrivate: details.isPrivate ?? prev.isPrivate,
           passcode: details.passcode || prev.passcode,
         }));
-        if (!details.isPrivate || !details.passcode) {
+        if (!details.isPrivate) {
           setIsUnlocked(true);
         }
       }
@@ -208,25 +211,31 @@ export default function TakeExamClientView({
   }, [examId]);
 
   useEffect(() => {
-    if (!initialQuestions || initialQuestions.length === 0) {
-      fetchQuestionsFallback();
+    if (isUnlocked && (!initialQuestions || initialQuestions.length === 0)) {
+      fetchQuestionsFallback(enteredPasscode);
     }
-  }, [initialQuestions, fetchQuestionsFallback]);
+  }, [initialQuestions, fetchQuestionsFallback, isUnlocked, enteredPasscode]);
 
-  // Handle Passcode Unlock
-  const handleUnlockPasscode = (e: React.FormEvent) => {
+  // Handle Passcode Unlock (verified on the server)
+  const handleUnlockPasscode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!enteredPasscode.trim()) {
       setPasscodeError("Please enter the exam passcode.");
       return;
     }
-    if (enteredPasscode.trim() === examMeta.passcode.trim()) {
-      setIsUnlocked(true);
-      setPasscodeError("");
-      toast.success("Exam unlocked! Please review instructions before starting.");
-    } else {
-      setPasscodeError("Incorrect passcode. Please verify with your instructor.");
-      toast.error("Incorrect passcode.");
+    setVerifyingPasscode(true);
+    try {
+      const res = await verifyExamPasscodeAction(examId, enteredPasscode.trim());
+      if (res.success) {
+        setIsUnlocked(true);
+        setPasscodeError("");
+        toast.success("Exam unlocked! Please review instructions before starting.");
+      } else {
+        setPasscodeError(res.error || "Incorrect passcode. Please verify with your instructor.");
+        toast.error(res.error || "Incorrect passcode.");
+      }
+    } finally {
+      setVerifyingPasscode(false);
     }
   };
 
@@ -235,6 +244,7 @@ export default function TakeExamClientView({
     async (reason?: string) => {
       if (examStatus === "submitted" || isSubmitting) return;
       setIsSubmitting(true);
+      setShowSubmitConfirm(false);
 
       // Exit fullscreen if active
       if (document.fullscreenElement) {
@@ -256,7 +266,7 @@ export default function TakeExamClientView({
 
         const securityMsg = reason || (warnings > 0 ? `Completed with ${warnings} security warning(s)` : "Normal Clean Submission");
 
-        const res = await submitExamAction(examId, mappedAnswers, warnings, securityMsg);
+        const res = await submitExamAction(examId, mappedAnswers, warnings, securityMsg, enteredPasscode);
 
         if (res.success && res.result) {
           setExamResult(res.result);
@@ -272,7 +282,7 @@ export default function TakeExamClientView({
         setIsSubmitting(false);
       }
     },
-    [examId, examStatus, isSubmitting, questions, userAnswers, warnings]
+    [examId, examStatus, isSubmitting, questions, userAnswers, warnings, enteredPasscode]
   );
 
   // Trigger security violation warning
@@ -461,8 +471,12 @@ export default function TakeExamClientView({
               <OutlineBtn type="button" onClick={() => router.back()} className="flex-1 !text-sm !py-3">
                 Cancel
               </OutlineBtn>
-              <PrimaryBtn type="submit" className="flex-1 !text-sm !py-3 shadow-lg shadow-orange-500/20">
-                Unlock Exam
+              <PrimaryBtn
+                type="submit"
+                disabled={verifyingPasscode}
+                className="flex-1 !text-sm !py-3 shadow-lg shadow-orange-500/20 disabled:opacity-50"
+              >
+                {verifyingPasscode ? "Verifying..." : "Unlock Exam"}
               </PrimaryBtn>
             </div>
           </form>
@@ -546,7 +560,7 @@ export default function TakeExamClientView({
                 If questions were recently added, click refresh to synchronize the bank.
               </p>
               <button
-                onClick={fetchQuestionsFallback}
+                onClick={() => fetchQuestionsFallback(enteredPasscode)}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition cursor-pointer"
               >
                 <FaSync /> Refresh Questions
@@ -621,6 +635,7 @@ export default function TakeExamClientView({
                 passed: examResult.passed || false,
               }}
               totalMarks={examMeta.totalMarks}
+              passingPercent={examMeta.passMarks}
             />
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -712,6 +727,51 @@ export default function TakeExamClientView({
         )}
       </AnimatePresence>
 
+      {/* SUBMIT CONFIRMATION MODAL */}
+      <AnimatePresence>
+        {showSubmitConfirm && (
+          <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white max-w-md w-full rounded-3xl p-6 md:p-8 border border-gray-100 shadow-2xl text-center space-y-5"
+            >
+              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto border-2 border-emerald-200">
+                <FaCheckCircle />
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="text-xl font-black text-gray-900">Submit your exam?</h3>
+                <p className="text-xs text-gray-600 font-semibold leading-relaxed">
+                  You have answered{" "}
+                  <span className="font-black text-[#dd6b01]">{Object.keys(userAnswers).length}</span> of{" "}
+                  <span className="font-black">{questions.length}</span> questions. Once submitted, your answers
+                  are final and cannot be changed.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <OutlineBtn
+                  type="button"
+                  onClick={() => setShowSubmitConfirm(false)}
+                  className="flex-1 !text-sm !py-3"
+                >
+                  Keep Reviewing
+                </OutlineBtn>
+                <PrimaryBtn
+                  onClick={() => handleFinish()}
+                  disabled={isSubmitting}
+                  className="flex-1 !text-sm !py-3 gap-2"
+                >
+                  {isSubmitting ? "Submitting..." : "Confirm Submit"}
+                </PrimaryBtn>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Floating Proctored Security Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm px-4 sm:px-8 py-3.5">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -741,11 +801,7 @@ export default function TakeExamClientView({
               isRunning={examStatus === "running"}
             />
             <button
-              onClick={() => {
-                if (confirm("Are you ready to submit your answers? This action cannot be undone.")) {
-                  handleFinish();
-                }
-              }}
+              onClick={() => setShowSubmitConfirm(true)}
               disabled={isSubmitting}
               className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition cursor-pointer disabled:opacity-50"
             >
@@ -845,7 +901,7 @@ export default function TakeExamClientView({
           {questions.length === 0 && (
             <div className="bg-white p-12 rounded-3xl border border-gray-100 text-center space-y-3">
               <p className="text-gray-500 font-bold text-sm">No questions available in this exam.</p>
-              <PrimaryBtn onClick={fetchQuestionsFallback} className="!text-xs">
+              <PrimaryBtn onClick={() => fetchQuestionsFallback(enteredPasscode)} className="!text-xs">
                 Refresh Questions
               </PrimaryBtn>
             </div>
@@ -858,11 +914,7 @@ export default function TakeExamClientView({
             Make sure to review all answers before submitting.
           </span>
           <button
-            onClick={() => {
-              if (confirm("Are you ready to submit your exam now?")) {
-                handleFinish();
-              }
-            }}
+            onClick={() => setShowSubmitConfirm(true)}
             disabled={isSubmitting}
             className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition cursor-pointer disabled:opacity-50"
           >

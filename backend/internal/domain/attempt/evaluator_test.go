@@ -9,7 +9,7 @@ import (
 func TestEvaluateSubmission(t *testing.T) {
 	testExam := &exam.Exam{
 		TotalMarks:       10,
-		PassingMarks:     5,
+		PassingMarks:     33,
 		PerQuestionMarks: 2,
 		NegativeMarks:    -0.5,
 	}
@@ -100,7 +100,7 @@ func TestEvaluateSubmission(t *testing.T) {
 		if result.FinalScore != 1.5 {
 			t.Errorf("expected final score 1.5, got %f", result.FinalScore)
 		}
-		// Passing is 5, so should fail
+		// Passing is 33% of 10 = 3.3, so should fail
 		if result.Passed {
 			t.Errorf("expected passed=false")
 		}

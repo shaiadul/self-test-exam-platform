@@ -53,6 +53,7 @@ type RecentExamAttempt struct {
 	Score       string `json:"score"`
 	Negative    string `json:"negative"`
 	AnswerSheet string `json:"answerSheet"`
+	Passed      bool   `json:"passed"`
 }
 
 type UpcomingExamDetail struct {

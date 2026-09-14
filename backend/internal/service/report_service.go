@@ -120,6 +120,7 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 				Score:       fmt.Sprintf("%.1f/%d", a.FinalScore, a.Total*2),
 				Negative:    fmt.Sprintf("%.1f", a.Negative),
 				AnswerSheet: fmt.Sprintf("/dashboard/reporting/%d", a.ID),
+				Passed:      a.Passed,
 			})
 		}
 

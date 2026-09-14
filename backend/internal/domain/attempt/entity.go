@@ -24,6 +24,7 @@ type SubmitExamRequest struct {
 	Answers         map[string]interface{} `json:"answers"`
 	WarningCount    int                    `json:"warningCount"`
 	SecurityMessage string                 `json:"securityMessage"`
+	Passcode        string                 `json:"passcode"`
 }
 
 type SubmitExamResponse struct {

@@ -70,6 +70,16 @@ func (h *ExamHandler) HandleExams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(parts) == 2 && parts[1] == "verify-passcode" {
+		examID := parts[0]
+		if r.Method == http.MethodPost {
+			h.VerifyPasscode(w, r, examID)
+		} else {
+			http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		}
+		return
+	}
+
 	if len(parts) == 1 && parts[0] != "" {
 		id := parts[0]
 		switch r.Method {
@@ -155,14 +165,64 @@ func (h *ExamHandler) DeleteExam(w http.ResponseWriter, r *http.Request, id stri
 }
 
 func (h *ExamHandler) GetQuestions(w http.ResponseWriter, r *http.Request, examID string) {
-	questions, err := h.examService.GetQuestions(examID)
+	userID, err := middleware.GetUserIDFromContext(r.Context())
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error": "Failed to load questions: %v"}`, err), http.StatusInternalServerError)
+		http.Error(w, `{"error": "Unauthorized"}`, http.StatusUnauthorized)
 		return
+	}
+
+	questions, err := h.examService.GetQuestions(userID, examID, r.URL.Query().Get("passcode"))
+	if err != nil {
+		switch err {
+		case service.ErrExamNotFound:
+			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
+			return
+		case service.ErrForbidden:
+			http.Error(w, `{"error": "You do not have access to this exam"}`, http.StatusForbidden)
+			return
+		case service.ErrInvalidPasscode:
+			http.Error(w, `{"error": "Incorrect exam passcode"}`, http.StatusForbidden)
+			return
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "Failed to load questions: %v"}`, err), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(questions)
+}
+
+func (h *ExamHandler) VerifyPasscode(w http.ResponseWriter, r *http.Request, examID string) {
+	userID, err := middleware.GetUserIDFromContext(r.Context())
+	if err != nil {
+		http.Error(w, `{"error": "Unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	var body struct {
+		Passcode string `json:"passcode"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := h.examService.VerifyPasscode(userID, examID, body.Passcode); err != nil {
+		switch err {
+		case service.ErrExamNotFound:
+			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
+		case service.ErrInvalidPasscode:
+			http.Error(w, `{"error": "Incorrect passcode"}`, http.StatusForbidden)
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true}`))
 }
 
 func (h *ExamHandler) CreateQuestion(w http.ResponseWriter, r *http.Request, examID string) {
@@ -264,11 +324,18 @@ func (h *ExamHandler) SubmitExam(w http.ResponseWriter, r *http.Request, examID 
 
 	res, err := h.attemptService.SubmitExam(userID, examID, req)
 	if err != nil {
-		if err == service.ErrExamNotFound {
+		switch err {
+		case service.ErrExamNotFound:
 			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
-			return
+		case service.ErrInvalidPasscode:
+			http.Error(w, `{"error": "Incorrect exam passcode"}`, http.StatusForbidden)
+		case service.ErrExamNotStarted:
+			http.Error(w, `{"error": "This exam has not started yet"}`, http.StatusForbidden)
+		case service.ErrExamEnded:
+			http.Error(w, `{"error": "This exam has already ended"}`, http.StatusForbidden)
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
 		}
-		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
 		return
 	}
 

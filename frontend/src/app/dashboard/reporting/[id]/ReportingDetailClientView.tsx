@@ -262,6 +262,7 @@ export default function ReportingDetailClientView({
               passed: attempt.passed || false,
             }}
             totalMarks={attempt.totalMarks || attempt.total || 100}
+            passingPercent={attempt.passingMarks || 33}
           />
         </div>
 

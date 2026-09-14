@@ -77,7 +77,19 @@ func EvaluateSubmission(targetExam *exam.Exam, questions []exam.Question, answer
 	if finalScore < 0 {
 		finalScore = 0
 	}
-	passed := finalScore >= float64(targetExam.PassingMarks)
+
+	// PassingMarks is stored as a percentage of the total marks. Fall back to the
+	// maximum achievable score when total marks are not configured.
+	passPercent := float64(targetExam.PassingMarks)
+	if passPercent <= 0 {
+		passPercent = 33
+	}
+	maxScore := float64(targetExam.TotalMarks)
+	if maxScore <= 0 {
+		maxScore = float64(len(questions)) * perQMark
+	}
+	passingScore := maxScore * passPercent / 100
+	passed := finalScore >= passingScore
 
 	return EvaluationResult{
 		Total:      len(questions),

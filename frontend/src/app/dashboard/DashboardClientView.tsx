@@ -50,13 +50,11 @@ export default function DashboardClientView({
   const normRole = role.toLowerCase();
 
   useEffect(() => {
-    // Dynamic time-of-day greeting
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Good morning");
     else if (hour < 18) setGreeting("Good afternoon");
     else setGreeting("Good evening");
 
-    // Format current human-readable date
     const now = new Date();
     setCurrentDateStr(
       now.toLocaleDateString("en-US", {

@@ -125,7 +125,7 @@ func createUsersTable() {
 		level VARCHAR(50),
 		batch VARCHAR(50),
 		total_marks INT DEFAULT 10,
-		passing_marks INT DEFAULT 5,
+		passing_marks INT DEFAULT 33,
 		per_question_marks INT DEFAULT 1,
 		negative_marks NUMERIC(4, 2) DEFAULT -0.5,
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -146,10 +146,21 @@ func createUsersTable() {
 		correct_answer TEXT NOT NULL,
 		passage TEXT,
 		picture_url TEXT,
+		created_by INT REFERENCES users(id) ON DELETE SET NULL,
 		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	);`)
 	if err != nil {
 		log.Fatalf("Failed to create questions table: %v", err)
+	}
+
+	// Question authorship: lets a teacher manage questions they created.
+	questionAlterQueries := []string{
+		"ALTER TABLE questions ADD COLUMN IF NOT EXISTS created_by INT REFERENCES users(id) ON DELETE SET NULL",
+	}
+	for _, aq := range questionAlterQueries {
+		if _, err := DB.Exec(aq); err != nil {
+			log.Fatalf("Failed to alter questions table: %v", err)
+		}
 	}
 
 	// Create exam_attempts table
