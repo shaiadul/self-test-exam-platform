@@ -53,7 +53,12 @@ func InitDB() {
 
 	var err error
 	DB, err = gorm.Open(postgres.Open(dbURL), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Warn),
+		Logger: logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
+			SlowThreshold:             time.Second,
+			LogLevel:                  logger.Warn,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  true,
+		}),
 	})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -64,11 +69,12 @@ func InitDB() {
 		log.Fatalf("Failed to access underlying database handle: %v", err)
 	}
 
-	// Pool tuning for a serverless (Supabase/Neon) database: keep a warm set of
-	// connections, recycle them before they go stale, and avoid the default
-	// short idle timeout tearing down connections between requests.
-	sqlDB.SetMaxOpenConns(25)
-	sqlDB.SetMaxIdleConns(25)
+	// Pool tuning for the Supabase session pooler. The pooler caps the number
+	// of server-side connections (Pool Size in the dashboard, 15 by default),
+	// so stay comfortably below that. Recycle connections before they go stale
+	// and avoid the default short idle timeout tearing them down.
+	sqlDB.SetMaxOpenConns(10)
+	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 
