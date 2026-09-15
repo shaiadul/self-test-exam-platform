@@ -22,7 +22,7 @@ func main() {
 
 	// Initialize Database connection
 	config.InitDB()
-	defer config.DB.Close()
+	defer config.CloseDB()
 
 	// 1. Initialize Infrastructure Repositories & Storage
 	userRepo := persistence.NewPostgresUserRepository(config.DB)

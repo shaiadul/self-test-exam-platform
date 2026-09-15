@@ -1,123 +1,47 @@
 package persistence
 
 import (
-	"database/sql"
 	"errors"
-	"time"
 
-	"github.com/lib/pq"
+	"gorm.io/gorm"
+
 	"github.com/selftest/backend/internal/domain/attempt"
 )
 
 type PostgresAttemptRepository struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewPostgresAttemptRepository(db *sql.DB) *PostgresAttemptRepository {
+func NewPostgresAttemptRepository(db *gorm.DB) *PostgresAttemptRepository {
 	return &PostgresAttemptRepository{db: db}
 }
 
 func (r *PostgresAttemptRepository) CreateExamAttempt(a *attempt.ExamAttempt) error {
-	query := `
-		INSERT INTO exam_attempts (user_id, exam_id, answers, total, correct, wrong, negative, final_score, passed, warning_count, security_message, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-		RETURNING id`
-
-	a.CreatedAt = time.Now()
-	return r.db.QueryRow(
-		query,
-		a.UserID,
-		a.ExamID,
-		a.Answers,
-		a.Total,
-		a.Correct,
-		a.Wrong,
-		a.Negative,
-		a.FinalScore,
-		a.Passed,
-		a.WarningCount,
-		a.SecurityMessage,
-		a.CreatedAt,
-	).Scan(&a.ID)
+	return r.db.Create(a).Error
 }
 
 func (r *PostgresAttemptRepository) GetExamAttemptsByUserID(userID int) ([]attempt.ExamAttempt, error) {
-	query := `
-		SELECT id, user_id, exam_id, answers, total, correct, wrong, negative, final_score, passed, warning_count, security_message, created_at
-		FROM exam_attempts
-		WHERE user_id = $1
-		ORDER BY created_at DESC`
-
-	rows, err := r.db.Query(query, userID)
+	attempts := []attempt.ExamAttempt{}
+	err := r.db.Model(&attempt.ExamAttempt{}).
+		Where("user_id = ?", userID).
+		Order("created_at DESC").
+		Find(&attempts).Error
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var attempts []attempt.ExamAttempt
-	for rows.Next() {
-		var a attempt.ExamAttempt
-		err := rows.Scan(
-			&a.ID,
-			&a.UserID,
-			&a.ExamID,
-			&a.Answers,
-			&a.Total,
-			&a.Correct,
-			&a.Wrong,
-			&a.Negative,
-			&a.FinalScore,
-			&a.Passed,
-			&a.WarningCount,
-			&a.SecurityMessage,
-			&a.CreatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		attempts = append(attempts, a)
-	}
-
 	return attempts, nil
 }
 
 func (r *PostgresAttemptRepository) GetExamAttemptsByExamID(examID string) ([]attempt.ExamAttempt, error) {
-	query := `
-		SELECT id, user_id, exam_id, total, correct, wrong, negative, final_score, passed, warning_count, security_message, created_at
-		FROM exam_attempts
-		WHERE exam_id = $1
-		ORDER BY created_at DESC`
-
-	rows, err := r.db.Query(query, examID)
+	attempts := []attempt.ExamAttempt{}
+	err := r.db.Model(&attempt.ExamAttempt{}).
+		Where("exam_id = ?", examID).
+		Order("created_at DESC").
+		Find(&attempts).Error
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var attempts []attempt.ExamAttempt
-	for rows.Next() {
-		var a attempt.ExamAttempt
-		err := rows.Scan(
-			&a.ID,
-			&a.UserID,
-			&a.ExamID,
-			&a.Total,
-			&a.Correct,
-			&a.Wrong,
-			&a.Negative,
-			&a.FinalScore,
-			&a.Passed,
-			&a.WarningCount,
-			&a.SecurityMessage,
-			&a.CreatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		attempts = append(attempts, a)
-	}
-
-	return attempts, rows.Err()
+	return attempts, nil
 }
 
 func (r *PostgresAttemptRepository) GetExamAttemptStatsByExamIDs(examIDs []string) (map[string]attempt.ExamAttemptStats, error) {
@@ -126,97 +50,59 @@ func (r *PostgresAttemptRepository) GetExamAttemptStatsByExamIDs(examIDs []strin
 		return stats, nil
 	}
 
-	query := `
-		SELECT exam_id,
-			COUNT(*)::int,
-			COALESCE(SUM(CASE WHEN passed THEN 1 ELSE 0 END), 0)::int,
-			COALESCE(MAX(final_score), 0),
-			COALESCE(MIN(final_score), 0),
-			COALESCE(SUM(final_score), 0)
-		FROM exam_attempts
-		WHERE exam_id = ANY($1)
-		GROUP BY exam_id`
+	var rows []struct {
+		ExamID  string
+		Total   int
+		Passed  int
+		Highest float64
+		Lowest  float64
+		Sum     float64
+	}
 
-	rows, err := r.db.Query(query, pq.Array(examIDs))
+	err := r.db.Model(&attempt.ExamAttempt{}).
+		Select(`
+			exam_id,
+			COUNT(*)::int AS total,
+			COALESCE(SUM(CASE WHEN passed THEN 1 ELSE 0 END), 0)::int AS passed,
+			COALESCE(MAX(final_score), 0) AS highest,
+			COALESCE(MIN(final_score), 0) AS lowest,
+			COALESCE(SUM(final_score), 0) AS sum`).
+		Where("exam_id IN ?", examIDs).
+		Group("exam_id").
+		Scan(&rows).Error
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var examID string
-		var s attempt.ExamAttemptStats
-		if err := rows.Scan(&examID, &s.Total, &s.Passed, &s.Highest, &s.Lowest, &s.Sum); err != nil {
-			return nil, err
+	for _, row := range rows {
+		stats[row.ExamID] = attempt.ExamAttemptStats{
+			Total:   row.Total,
+			Passed:  row.Passed,
+			Highest: row.Highest,
+			Lowest:  row.Lowest,
+			Sum:     row.Sum,
 		}
-		stats[examID] = s
 	}
 
-	return stats, rows.Err()
+	return stats, nil
 }
 
 func (r *PostgresAttemptRepository) GetAllExamAttempts() ([]attempt.ExamAttempt, error) {
-	query := `
-		SELECT id, user_id, exam_id, total, correct, wrong, negative, final_score, passed, warning_count, security_message, created_at
-		FROM exam_attempts
-		ORDER BY created_at DESC`
-
-	rows, err := r.db.Query(query)
+	attempts := []attempt.ExamAttempt{}
+	err := r.db.Model(&attempt.ExamAttempt{}).
+		Order("created_at DESC").
+		Find(&attempts).Error
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var attempts []attempt.ExamAttempt
-	for rows.Next() {
-		var a attempt.ExamAttempt
-		err := rows.Scan(
-			&a.ID,
-			&a.UserID,
-			&a.ExamID,
-			&a.Total,
-			&a.Correct,
-			&a.Wrong,
-			&a.Negative,
-			&a.FinalScore,
-			&a.Passed,
-			&a.WarningCount,
-			&a.SecurityMessage,
-			&a.CreatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		attempts = append(attempts, a)
-	}
-
-	return attempts, rows.Err()
+	return attempts, nil
 }
 
 func (r *PostgresAttemptRepository) GetExamAttemptByID(id int) (*attempt.ExamAttempt, error) {
-	query := `
-		SELECT id, user_id, exam_id, answers, total, correct, wrong, negative, final_score, passed, warning_count, security_message, created_at
-		FROM exam_attempts
-		WHERE id = $1`
-
 	var a attempt.ExamAttempt
-	err := r.db.QueryRow(query, id).Scan(
-		&a.ID,
-		&a.UserID,
-		&a.ExamID,
-		&a.Answers,
-		&a.Total,
-		&a.Correct,
-		&a.Wrong,
-		&a.Negative,
-		&a.FinalScore,
-		&a.Passed,
-		&a.WarningCount,
-		&a.SecurityMessage,
-		&a.CreatedAt,
-	)
+	err := r.db.First(&a, id).Error
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err

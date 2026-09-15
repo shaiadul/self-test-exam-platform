@@ -1,165 +1,72 @@
 package persistence
 
 import (
-	"database/sql"
 	"errors"
-	"time"
 
-	"github.com/lib/pq"
+	"gorm.io/gorm"
+
 	"github.com/selftest/backend/internal/domain/user"
 )
 
 type PostgresUserRepository struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewPostgresUserRepository(db *sql.DB) *PostgresUserRepository {
+func NewPostgresUserRepository(db *gorm.DB) *PostgresUserRepository {
 	return &PostgresUserRepository{db: db}
 }
 
 func (r *PostgresUserRepository) Create(u *user.User) error {
-	query := `
-		INSERT INTO users (name, email, password, role, image, phone, level, batch, board, institution, address, subject, designation, admin_tier, admin_dept, admin_base, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-		RETURNING id`
-
-	now := time.Now()
-	u.CreatedAt = now
-	u.UpdatedAt = now
 	if u.Role == "" {
 		u.Role = "student"
 	}
-
-	err := r.db.QueryRow(
-		query,
-		u.Name,
-		u.Email,
-		u.Password,
-		u.Role,
-		u.Image,
-		u.Phone,
-		u.Level,
-		u.Batch,
-		u.Board,
-		u.Institution,
-		u.Address,
-		u.Subject,
-		u.Designation,
-		u.AdminTier,
-		u.AdminDept,
-		u.AdminBase,
-		u.CreatedAt,
-		u.UpdatedAt,
-	).Scan(&u.ID)
-
-	return err
+	return r.db.Create(u).Error
 }
 
 func (r *PostgresUserRepository) GetByEmail(email string) (*user.User, error) {
-	query := `
-		SELECT id, name, email, password, role, image, phone, level, batch, board, institution, address, subject, designation, admin_tier, admin_dept, admin_base, exam_limit, exam_pack_limit, created_at, updated_at
-		FROM users
-		WHERE email = $1`
-
 	var u user.User
-	err := r.db.QueryRow(query, email).Scan(
-		&u.ID,
-		&u.Name,
-		&u.Email,
-		&u.Password,
-		&u.Role,
-		&u.Image,
-		&u.Phone,
-		&u.Level,
-		&u.Batch,
-		&u.Board,
-		&u.Institution,
-		&u.Address,
-		&u.Subject,
-		&u.Designation,
-		&u.AdminTier,
-		&u.AdminDept,
-		&u.AdminBase,
-		&u.ExamLimit,
-		&u.ExamPackLimit,
-		&u.CreatedAt,
-		&u.UpdatedAt,
-	)
-
+	err := r.db.Where("email = ?", email).First(&u).Error
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil // Not found, no error
 		}
 		return nil, err
 	}
-
 	return &u, nil
 }
 
 func (r *PostgresUserRepository) GetByID(id int) (*user.User, error) {
-	query := `
-		SELECT id, name, email, password, role, image, phone, level, batch, board, institution, address, subject, designation, admin_tier, admin_dept, admin_base, exam_limit, exam_pack_limit, created_at, updated_at
-		FROM users
-		WHERE id = $1`
-
 	var u user.User
-	err := r.db.QueryRow(query, id).Scan(
-		&u.ID,
-		&u.Name,
-		&u.Email,
-		&u.Password,
-		&u.Role,
-		&u.Image,
-		&u.Phone,
-		&u.Level,
-		&u.Batch,
-		&u.Board,
-		&u.Institution,
-		&u.Address,
-		&u.Subject,
-		&u.Designation,
-		&u.AdminTier,
-		&u.AdminDept,
-		&u.AdminBase,
-		&u.ExamLimit,
-		&u.ExamPackLimit,
-		&u.CreatedAt,
-		&u.UpdatedAt,
-	)
-
+	err := r.db.First(&u, id).Error
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil // Not found
 		}
 		return nil, err
 	}
-
 	return &u, nil
 }
 
 func (r *PostgresUserRepository) GetRoleByID(id int) (string, error) {
 	var role string
-	err := r.db.QueryRow(`SELECT role FROM users WHERE id = $1`, id).Scan(&role)
+	err := r.db.Model(&user.User{}).Where("id = ?", id).Pluck("role", &role).Error
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", nil
-		}
 		return "", err
 	}
 	return role, nil
 }
 
 func (r *PostgresUserRepository) GetSummaryByID(id int) (*user.UserSummary, error) {
-	query := `SELECT id, name, role, institution, exam_limit, exam_pack_limit FROM users WHERE id = $1`
 	var s user.UserSummary
-	err := r.db.QueryRow(query, id).Scan(
-		&s.ID, &s.Name, &s.Role, &s.Institution, &s.ExamLimit, &s.ExamPackLimit,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
+	res := r.db.Model(&user.User{}).
+		Select("id, name, role, institution, exam_limit, exam_pack_limit").
+		Where("id = ?", id).
+		Scan(&s)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, nil
 	}
 	return &s, nil
 }
@@ -170,148 +77,90 @@ func (r *PostgresUserRepository) GetSummariesByIDs(ids []int) (map[int]user.User
 		return result, nil
 	}
 
-	query := `SELECT id, name, role, institution, exam_limit, exam_pack_limit FROM users WHERE id = ANY($1)`
-	rows, err := r.db.Query(query, pq.Array(ids))
-	if err != nil {
+	var summaries []user.UserSummary
+	if err := r.db.Model(&user.User{}).
+		Select("id, name, role, institution, exam_limit, exam_pack_limit").
+		Where("id IN ?", ids).
+		Scan(&summaries).Error; err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var s user.UserSummary
-		if err := rows.Scan(
-			&s.ID, &s.Name, &s.Role, &s.Institution, &s.ExamLimit, &s.ExamPackLimit,
-		); err != nil {
-			return nil, err
-		}
+	for _, s := range summaries {
 		result[s.ID] = s
 	}
-	return result, rows.Err()
+	return result, nil
 }
 
 func (r *PostgresUserRepository) Update(u *user.User) error {
-	query := `
-		UPDATE users
-		SET name = $1, image = $2, phone = $3, level = $4, batch = $5, board = $6, institution = $7, address = $8, subject = $9, designation = $10, admin_tier = $11, admin_dept = $12, admin_base = $13, updated_at = $14
-		WHERE id = $15`
-
-	u.UpdatedAt = time.Now()
-	_, err := r.db.Exec(
-		query,
-		u.Name,
-		u.Image,
-		u.Phone,
-		u.Level,
-		u.Batch,
-		u.Board,
-		u.Institution,
-		u.Address,
-		u.Subject,
-		u.Designation,
-		u.AdminTier,
-		u.AdminDept,
-		u.AdminBase,
-		u.UpdatedAt,
-		u.ID,
-	)
-
-	return err
+	return r.db.Model(&user.User{}).
+		Where("id = ?", u.ID).
+		Select(
+			"name", "image", "phone", "level", "batch", "board",
+			"institution", "address", "subject", "designation",
+			"admin_tier", "admin_dept", "admin_base", "updated_at",
+		).
+		Updates(u).Error
 }
 
 func (r *PostgresUserRepository) GetAll() ([]user.User, error) {
-	query := `
-		SELECT u.id, u.name, u.email, u.role, u.image, u.phone, u.level, u.batch, u.board, u.institution, u.address, u.subject, u.designation, u.admin_tier, u.admin_dept, u.admin_base, u.exam_limit, u.exam_pack_limit, COALESCE(COUNT(e.id), 0)::int AS created_exams_count, (SELECT COUNT(*) FROM exam_packs p WHERE p.created_by = u.id)::int AS created_packs_count, u.created_at, u.updated_at
-		FROM users u
-		LEFT JOIN exams e ON e.created_by = u.id
-		GROUP BY u.id
-		ORDER BY u.id ASC`
+	var users []user.User
 
-	rows, err := r.db.Query(query)
+	err := r.db.Table("users AS u").
+		Select(`
+			u.id, u.name, u.email, u.role, u.image, u.phone, u.level, u.batch, u.board,
+			u.institution, u.address, u.subject, u.designation, u.admin_tier, u.admin_dept,
+			u.admin_base, u.exam_limit, u.exam_pack_limit,
+			COALESCE(COUNT(e.id), 0)::int AS created_exams_count,
+			(SELECT COUNT(*) FROM exam_packs p WHERE p.created_by = u.id)::int AS created_packs_count,
+			u.created_at, u.updated_at`).
+		Joins("LEFT JOIN exams e ON e.created_by = u.id").
+		Group("u.id").
+		Order("u.id ASC").
+		Scan(&users).Error
 	if err != nil {
 		return nil, err
-	}
-	defer rows.Close()
-
-	var users []user.User
-	for rows.Next() {
-		var u user.User
-		err := rows.Scan(
-			&u.ID,
-			&u.Name,
-			&u.Email,
-			&u.Role,
-			&u.Image,
-			&u.Phone,
-			&u.Level,
-			&u.Batch,
-			&u.Board,
-			&u.Institution,
-			&u.Address,
-			&u.Subject,
-			&u.Designation,
-			&u.AdminTier,
-			&u.AdminDept,
-			&u.AdminBase,
-			&u.ExamLimit,
-			&u.ExamPackLimit,
-			&u.CreatedExamsCount,
-			&u.CreatedPacksCount,
-			&u.CreatedAt,
-			&u.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		users = append(users, u)
 	}
 
 	return users, nil
 }
 
 func (r *PostgresUserRepository) UpdateRole(id int, role string) error {
-	query := `UPDATE users SET role = $1, updated_at = $2 WHERE id = $3`
-	_, err := r.db.Exec(query, role, time.Now(), id)
-	return err
+	return r.db.Model(&user.User{}).Where("id = ?", id).Update("role", role).Error
 }
 
 func (r *PostgresUserRepository) UpdateRoleAndLimit(id int, role *string, examLimit *int) error {
-	if role != nil && examLimit != nil {
-		query := `UPDATE users SET role = $1, exam_limit = $2, updated_at = $3 WHERE id = $4`
-		_, err := r.db.Exec(query, *role, *examLimit, time.Now(), id)
-		return err
-	} else if role != nil {
+	switch {
+	case role != nil && examLimit != nil:
+		return r.db.Model(&user.User{}).Where("id = ?", id).
+			Updates(map[string]interface{}{"role": *role, "exam_limit": *examLimit}).Error
+	case role != nil:
 		return r.UpdateRole(id, *role)
-	} else if examLimit != nil {
-		query := `UPDATE users SET exam_limit = $1, updated_at = $2 WHERE id = $3`
-		_, err := r.db.Exec(query, *examLimit, time.Now(), id)
-		return err
+	case examLimit != nil:
+		return r.db.Model(&user.User{}).Where("id = ?", id).Update("exam_limit", *examLimit).Error
 	}
 	return nil
 }
 
 func (r *PostgresUserRepository) UpdateExamPackLimit(id int, limit int) error {
-	query := `UPDATE users SET exam_pack_limit = $1, updated_at = $2 WHERE id = $3`
-	_, err := r.db.Exec(query, limit, time.Now(), id)
-	return err
+	return r.db.Model(&user.User{}).Where("id = ?", id).Update("exam_pack_limit", limit).Error
 }
 
 func (r *PostgresUserRepository) Delete(id int) error {
-	_, err := r.db.Exec("DELETE FROM users WHERE id = $1", id)
-	return err
+	return r.db.Delete(&user.User{}, id).Error
 }
 
 func (r *PostgresUserRepository) GetUserCountByRole(role string) (int, error) {
-	var count int
-	err := r.db.QueryRow(`SELECT COUNT(*) FROM users WHERE role = $1`, role).Scan(&count)
-	return count, err
+	var count int64
+	err := r.db.Model(&user.User{}).Where("role = ?", role).Count(&count).Error
+	return int(count), err
 }
 
 func (r *PostgresUserRepository) CountIncompleteTeachers() (int, error) {
-	var count int
-	err := r.db.QueryRow(
-		`SELECT COUNT(*) FROM users WHERE role = 'teacher' AND (subject IS NULL OR subject = '')`,
-	).Scan(&count)
-	return count, err
+	var count int64
+	err := r.db.Model(&user.User{}).
+		Where("role = 'teacher' AND (subject IS NULL OR subject = '')").
+		Count(&count).Error
+	return int(count), err
 }
 
 func (r *PostgresUserRepository) GetStudentRank(userID int) (int, error) {
@@ -330,8 +179,7 @@ func (r *PostgresUserRepository) GetStudentRank(userID int) (int, error) {
 		), 0)`
 
 	var rank int
-	err := r.db.QueryRow(query, userID).Scan(&rank)
-	if err != nil {
+	if err := r.db.Raw(query, userID).Scan(&rank).Error; err != nil {
 		return 0, err
 	}
 	return rank, nil

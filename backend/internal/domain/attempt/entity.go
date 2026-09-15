@@ -5,19 +5,19 @@ import (
 )
 
 type ExamAttempt struct {
-	ID              int       `json:"id" db:"id"`
-	UserID          int       `json:"userId" db:"user_id"`
-	ExamID          string    `json:"examId" db:"exam_id"`
-	Answers         string    `json:"answers" db:"answers"` // JSON string map of question ID to chosen option
-	Total           int       `json:"total" db:"total"`
-	Correct         int       `json:"correct" db:"correct"`
-	Wrong           int       `json:"wrong" db:"wrong"`
-	Negative        float64   `json:"negative" db:"negative"`
-	FinalScore      float64   `json:"finalScore" db:"final_score"`
-	Passed          bool      `json:"passed" db:"passed"`
-	WarningCount    int       `json:"warningCount" db:"warning_count"`
+	ID              int       `json:"id" db:"id" gorm:"primaryKey;autoIncrement"`
+	UserID          int       `json:"userId" db:"user_id" gorm:"not null"`
+	ExamID          string    `json:"examId" db:"exam_id" gorm:"type:varchar(50);not null"`
+	Answers         string    `json:"answers" db:"answers" gorm:"type:jsonb;not null"` // JSON string map of question ID to chosen option
+	Total           int       `json:"total" db:"total" gorm:"not null"`
+	Correct         int       `json:"correct" db:"correct" gorm:"not null"`
+	Wrong           int       `json:"wrong" db:"wrong" gorm:"not null"`
+	Negative        float64   `json:"negative" db:"negative" gorm:"type:numeric(6,2);not null"`
+	FinalScore      float64   `json:"finalScore" db:"final_score" gorm:"type:numeric(6,2);not null"`
+	Passed          bool      `json:"passed" db:"passed" gorm:"not null"`
+	WarningCount    int       `json:"warningCount" db:"warning_count" gorm:"default:0"`
 	SecurityMessage string    `json:"securityMessage" db:"security_message"`
-	CreatedAt       time.Time `json:"createdAt" db:"created_at"`
+	CreatedAt       time.Time `json:"createdAt" db:"created_at" gorm:"autoCreateTime"`
 }
 
 type SubmitExamRequest struct {

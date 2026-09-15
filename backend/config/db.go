@@ -8,11 +8,43 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+
+	"github.com/selftest/backend/internal/domain/attempt"
+	"github.com/selftest/backend/internal/domain/exam"
+	"github.com/selftest/backend/internal/domain/exampack"
+	"github.com/selftest/backend/internal/domain/examrequest"
+	"github.com/selftest/backend/internal/domain/system"
+	"github.com/selftest/backend/internal/domain/user"
 )
 
-var DB *sql.DB
+// DB is the shared GORM database handle used by every repository.
+var DB *gorm.DB
 
+// sqlDB holds the underlying *sql.DB so we can tune the connection pool and
+// keep the serverless (Supabase/Neon) compute warm.
+var sqlDB *sql.DB
+
+// models lists every domain entity that maps to a database table. Used by
+// AutoMigrate to create/update the schema.
+func models() []interface{} {
+	return []interface{}{
+		&user.User{},
+		&exampack.ExamPack{},
+		&exam.Exam{},
+		&exam.Question{},
+		&attempt.ExamAttempt{},
+		&system.Permission{},
+		&system.SystemAsset{},
+		&system.Transaction{},
+		&examrequest.ExamRequest{},
+	}
+}
+
+// InitDB opens a pooled GORM connection to Supabase (PostgreSQL), verifies it
+// and synchronises the schema.
 func InitDB() {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -20,37 +52,55 @@ func InitDB() {
 	}
 
 	var err error
-	DB, err = sql.Open("postgres", dbURL)
+	DB, err = gorm.Open(postgres.Open(dbURL), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Warn),
+	})
 	if err != nil {
-		log.Fatalf("Failed to open database connection: %v", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// Pool tuning for a serverless (Neon) database: keep a warm set of
+	sqlDB, err = DB.DB()
+	if err != nil {
+		log.Fatalf("Failed to access underlying database handle: %v", err)
+	}
+
+	// Pool tuning for a serverless (Supabase/Neon) database: keep a warm set of
 	// connections, recycle them before they go stale, and avoid the default
 	// short idle timeout tearing down connections between requests.
-	DB.SetMaxOpenConns(25)
-	DB.SetMaxIdleConns(25)
-	DB.SetConnMaxLifetime(30 * time.Minute)
-	DB.SetConnMaxIdleTime(5 * time.Minute)
+	sqlDB.SetMaxOpenConns(25)
+	sqlDB.SetMaxIdleConns(25)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 
 	// Verify the connection is working
-	err = DB.Ping()
-	if err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := sqlDB.PingContext(ctx); err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
-	// Keep Neon's compute from suspending between bursts of traffic so the
+	// Keep Supabase's compute from suspending between bursts of traffic so the
 	// first request after an idle period does not pay a cold-start handshake.
 	startDBKeepAlive()
 
-	fmt.Println("Connected to PostgreSQL (Neon) successfully!")
+	fmt.Println("Connected to PostgreSQL (Supabase) via GORM successfully!")
 
-	// Create tables if they do not exist
-	createUsersTable()
+	// Synchronise the schema from the domain models.
+	migrate()
+
+	// Tables that are not backed by a domain entity.
+	createAppMetaTable()
 
 	// One-time cleanup: drop any legacy/demo rows while keeping user accounts.
 	// The app never seeds demo data — this only runs once per database.
 	clearLegacyDummyDataOnce()
+}
+
+// CloseDB closes the underlying connection pool.
+func CloseDB() {
+	if sqlDB != nil {
+		_ = sqlDB.Close()
+	}
 }
 
 // startDBKeepAlive periodically pings the database in the background.
@@ -60,7 +110,7 @@ func startDBKeepAlive() {
 		defer ticker.Stop()
 		for range ticker.C {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			if err := DB.PingContext(ctx); err != nil {
+			if err := sqlDB.PingContext(ctx); err != nil {
 				log.Printf("database keepalive ping failed: %v", err)
 			}
 			cancel()
@@ -68,151 +118,13 @@ func startDBKeepAlive() {
 	}()
 }
 
-func createUsersTable() {
-	query := `
-	CREATE TABLE IF NOT EXISTS users (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL,
-		email VARCHAR(255) UNIQUE NOT NULL,
-		password VARCHAR(255) NOT NULL,
-		role VARCHAR(50) NOT NULL DEFAULT 'student',
-		image TEXT,
-		phone VARCHAR(50),
-		level VARCHAR(50),
-		batch VARCHAR(50),
-		board VARCHAR(50),
-		institution VARCHAR(255),
-		address TEXT,
-		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-	);`
-
-	_, err := DB.Exec(query)
-	if err != nil {
-		log.Fatalf("Failed to create users table: %v", err)
+// migrate runs GORM AutoMigrate for every domain model, then creates the
+// indexes that GORM cannot express (e.g. descending order indexes).
+func migrate() {
+	if err := DB.AutoMigrate(models()...); err != nil {
+		log.Fatalf("Failed to auto-migrate database schema: %v", err)
 	}
 
-	// Alter users and exams table to add new columns if they do not exist
-	alterQueries := []string{
-		"ALTER TABLE users ADD COLUMN IF NOT EXISTS subject VARCHAR(100)",
-		"ALTER TABLE users ADD COLUMN IF NOT EXISTS designation VARCHAR(100)",
-		"ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_tier VARCHAR(100)",
-		"ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_dept VARCHAR(100)",
-		"ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_base VARCHAR(100)",
-		"ALTER TABLE users ADD COLUMN IF NOT EXISTS exam_limit INT DEFAULT 5",
-		"ALTER TABLE users ADD COLUMN IF NOT EXISTS exam_pack_limit INT DEFAULT 3",
-		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT false",
-		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS passcode VARCHAR(100) DEFAULT ''",
-		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS duration_minutes INT DEFAULT 30",
-		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS created_by INT REFERENCES users(id) ON DELETE SET NULL",
-	}
-	for _, aq := range alterQueries {
-		if _, err := DB.Exec(aq); err != nil {
-			log.Fatalf("Failed to alter users/exams table: %v", err)
-		}
-	}
-
-	// Create exam_packs table
-	_, err = DB.Exec(`
-	CREATE TABLE IF NOT EXISTS exam_packs (
-		id SERIAL PRIMARY KEY,
-		title VARCHAR(255) NOT NULL,
-		description TEXT NOT NULL,
-		image TEXT NOT NULL,
-		category VARCHAR(100) NOT NULL,
-		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-	);`)
-	if err != nil {
-		log.Fatalf("Failed to create exam_packs table: %v", err)
-	}
-
-	// Pack ownership + per-pack exam creation limit
-	packAlterQueries := []string{
-		"ALTER TABLE exam_packs ADD COLUMN IF NOT EXISTS created_by INT REFERENCES users(id) ON DELETE SET NULL",
-		"ALTER TABLE exam_packs ADD COLUMN IF NOT EXISTS exam_limit INT DEFAULT 6",
-	}
-	for _, aq := range packAlterQueries {
-		if _, err := DB.Exec(aq); err != nil {
-			log.Fatalf("Failed to alter exam_packs table: %v", err)
-		}
-	}
-
-	// Create exams table
-	_, err = DB.Exec(`
-	CREATE TABLE IF NOT EXISTS exams (
-		id VARCHAR(50) PRIMARY KEY,
-		exam_pack_id INT NOT NULL REFERENCES exam_packs(id) ON DELETE CASCADE,
-		name VARCHAR(255) NOT NULL,
-		start_date TIMESTAMP NOT NULL,
-		end_date TIMESTAMP NOT NULL,
-		level VARCHAR(50),
-		batch VARCHAR(50),
-		total_marks INT DEFAULT 10,
-		passing_marks INT DEFAULT 33,
-		per_question_marks INT DEFAULT 1,
-		negative_marks NUMERIC(4, 2) DEFAULT -0.5,
-		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-	);`)
-	if err != nil {
-		log.Fatalf("Failed to create exams table: %v", err)
-	}
-
-	// Create questions table
-	_, err = DB.Exec(`
-	CREATE TABLE IF NOT EXISTS questions (
-		id SERIAL PRIMARY KEY,
-		exam_id VARCHAR(50) NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
-		type VARCHAR(50) NOT NULL,
-		question_text TEXT NOT NULL,
-		options TEXT[] NOT NULL,
-		correct_answer TEXT NOT NULL,
-		passage TEXT,
-		picture_url TEXT,
-		created_by INT REFERENCES users(id) ON DELETE SET NULL,
-		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-	);`)
-	if err != nil {
-		log.Fatalf("Failed to create questions table: %v", err)
-	}
-
-	// Question authorship: lets a teacher manage questions they created.
-	questionAlterQueries := []string{
-		"ALTER TABLE questions ADD COLUMN IF NOT EXISTS created_by INT REFERENCES users(id) ON DELETE SET NULL",
-	}
-	for _, aq := range questionAlterQueries {
-		if _, err := DB.Exec(aq); err != nil {
-			log.Fatalf("Failed to alter questions table: %v", err)
-		}
-	}
-
-	// Create exam_attempts table
-	_, err = DB.Exec(`
-	CREATE TABLE IF NOT EXISTS exam_attempts (
-		id SERIAL PRIMARY KEY,
-		user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-		exam_id VARCHAR(50) NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
-		answers JSONB NOT NULL,
-		total INT NOT NULL,
-		correct INT NOT NULL,
-		wrong INT NOT NULL,
-		negative NUMERIC(6, 2) NOT NULL,
-		final_score NUMERIC(6, 2) NOT NULL,
-		passed BOOLEAN NOT NULL,
-		warning_count INT DEFAULT 0,
-		security_message TEXT,
-		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-	);`)
-	if err != nil {
-		log.Fatalf("Failed to create exam_attempts table: %v", err)
-	}
-
-	createPermissionsTable()
-	createAssetsTable()
-	createTransactionsTable()
-	createExamRequestsTable()
-	createAppMetaTable()
 	createIndexes()
 
 	fmt.Println("Database tables verified/created successfully!")
@@ -236,78 +148,19 @@ func createIndexes() {
 		"CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)",
 	}
 	for _, q := range indexQueries {
-		if _, err := DB.Exec(q); err != nil {
+		if err := DB.Exec(q).Error; err != nil {
 			log.Printf("Failed to create index (%s): %v", q, err)
 		}
 	}
 }
 
-func createPermissionsTable() {
-	_, err := DB.Exec(`
-	CREATE TABLE IF NOT EXISTS permissions (
-		id SERIAL PRIMARY KEY,
-		role VARCHAR(100) NOT NULL,
-		module VARCHAR(100) NOT NULL,
-		access VARCHAR(50) NOT NULL
-	);`)
-	if err != nil {
-		log.Fatalf("Failed to create permissions table: %v", err)
-	}
-}
-
-func createAssetsTable() {
-	_, err := DB.Exec(`
-	CREATE TABLE IF NOT EXISTS system_assets (
-		id SERIAL PRIMARY KEY,
-		type VARCHAR(50) NOT NULL,
-		value VARCHAR(100) NOT NULL UNIQUE
-	);`)
-	if err != nil {
-		log.Fatalf("Failed to create system_assets table: %v", err)
-	}
-}
-
-func createTransactionsTable() {
-	_, err := DB.Exec(`
-	CREATE TABLE IF NOT EXISTS transactions (
-		id SERIAL PRIMARY KEY,
-		type VARCHAR(50) NOT NULL,
-		amount NUMERIC(12, 2) NOT NULL,
-		description TEXT NOT NULL,
-		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-	);`)
-	if err != nil {
-		log.Fatalf("Failed to create transactions table: %v", err)
-	}
-}
-
-func createExamRequestsTable() {
-	_, err := DB.Exec(`
-	CREATE TABLE IF NOT EXISTS exam_requests (
-		id SERIAL PRIMARY KEY,
-		teacher_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-		type VARCHAR(50) NOT NULL,
-		pack_id INT REFERENCES exam_packs(id) ON DELETE CASCADE,
-		title VARCHAR(255) NOT NULL,
-		description TEXT,
-		requested_limit INT NOT NULL DEFAULT 0,
-		status VARCHAR(50) NOT NULL DEFAULT 'pending',
-		admin_note TEXT,
-		created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-	);`)
-	if err != nil {
-		log.Fatalf("Failed to create exam_requests table: %v", err)
-	}
-}
-
 func createAppMetaTable() {
-	_, err := DB.Exec(`
+	query := `
 	CREATE TABLE IF NOT EXISTS app_meta (
 		key VARCHAR(100) PRIMARY KEY,
 		value TEXT NOT NULL
-	);`)
-	if err != nil {
+	);`
+	if err := DB.Exec(query).Error; err != nil {
 		log.Fatalf("Failed to create app_meta table: %v", err)
 	}
 }
@@ -318,9 +171,9 @@ func createAppMetaTable() {
 // never runs again on subsequent starts.
 func clearLegacyDummyDataOnce() {
 	var cleared bool
-	if err := DB.QueryRow(
+	if err := DB.Raw(
 		"SELECT EXISTS(SELECT 1 FROM app_meta WHERE key = 'legacy_dummy_data_cleared')",
-	).Scan(&cleared); err != nil {
+	).Scan(&cleared).Error; err != nil {
 		log.Printf("Failed to check legacy-data cleanup flag: %v", err)
 		return
 	}
@@ -328,7 +181,7 @@ func clearLegacyDummyDataOnce() {
 		return
 	}
 
-	if _, err := DB.Exec(`
+	err := DB.Exec(`
 		TRUNCATE TABLE
 			exam_attempts,
 			questions,
@@ -338,14 +191,15 @@ func clearLegacyDummyDataOnce() {
 			permissions,
 			system_assets,
 			transactions
-		RESTART IDENTITY CASCADE`); err != nil {
+		RESTART IDENTITY CASCADE`).Error
+	if err != nil {
 		log.Printf("Failed to clear legacy/dummy data: %v", err)
 		return
 	}
 
-	if _, err := DB.Exec(
+	if err := DB.Exec(
 		"INSERT INTO app_meta (key, value) VALUES ('legacy_dummy_data_cleared', 'true') ON CONFLICT (key) DO NOTHING",
-	); err != nil {
+	).Error; err != nil {
 		log.Printf("Failed to record legacy-data cleanup: %v", err)
 		return
 	}

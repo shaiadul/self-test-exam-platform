@@ -18,17 +18,17 @@ const (
 )
 
 type ExamRequest struct {
-	ID             int       `json:"id" db:"id"`
-	TeacherID      int       `json:"teacherId" db:"teacher_id"`
-	TeacherName    string    `json:"teacherName,omitempty" db:"teacher_name"`
-	Type           string    `json:"type" db:"type"`
+	ID             int       `json:"id" db:"id" gorm:"primaryKey;autoIncrement"`
+	TeacherID      int       `json:"teacherId" db:"teacher_id" gorm:"not null"`
+	TeacherName    string    `json:"teacherName,omitempty" db:"teacher_name" gorm:"->;-:migration"`
+	Type           string    `json:"type" db:"type" gorm:"not null"`
 	PackID         *int      `json:"packId,omitempty" db:"pack_id"`
-	PackTitle      string    `json:"packTitle,omitempty" db:"pack_title"`
-	Title          string    `json:"title" db:"title"`
+	PackTitle      string    `json:"packTitle,omitempty" db:"pack_title" gorm:"->;-:migration"`
+	Title          string    `json:"title" db:"title" gorm:"not null"`
 	Description    string    `json:"description" db:"description"`
-	RequestedLimit int       `json:"requestedLimit" db:"requested_limit"`
-	Status         string    `json:"status" db:"status"`
+	RequestedLimit int       `json:"requestedLimit" db:"requested_limit" gorm:"not null;default:0"`
+	Status         string    `json:"status" db:"status" gorm:"not null;default:pending"`
 	AdminNote      *string   `json:"adminNote,omitempty" db:"admin_note"`
-	CreatedAt      time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
+	CreatedAt      time.Time `json:"created_at" db:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt      time.Time `json:"updated_at" db:"updated_at" gorm:"autoUpdateTime"`
 }

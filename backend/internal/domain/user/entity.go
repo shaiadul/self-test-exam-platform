@@ -3,29 +3,29 @@ package user
 import "time"
 
 type User struct {
-	ID          int        `json:"id" db:"id"`
-	Name        string     `json:"name" db:"name"`
-	Email       string     `json:"email" db:"email"`
-	Password    string     `json:"-" db:"password"`
-	Role        string     `json:"role" db:"role"`
-	Image       *string    `json:"image" db:"image"`
-	Phone       *string    `json:"phone" db:"phone"`
-	Level       *string    `json:"level" db:"level"`
-	Batch       *string    `json:"batch" db:"batch"`
-	Board       *string    `json:"board" db:"board"`
-	Institution *string    `json:"institution" db:"institution"`
-	Address     *string    `json:"address" db:"address"`
-	Subject     *string    `json:"subject" db:"subject"`
-	Designation *string    `json:"designation" db:"designation"`
-	AdminTier   *string    `json:"adminTier" db:"admin_tier"`
-	AdminDept   *string    `json:"adminDept" db:"admin_dept"`
-	AdminBase         *string    `json:"adminBase" db:"admin_base"`
-	ExamLimit         *int       `json:"examLimit,omitempty" db:"exam_limit"`
-	ExamPackLimit     *int       `json:"examPackLimit,omitempty" db:"exam_pack_limit"`
-	CreatedExamsCount int        `json:"createdExamsCount,omitempty"`
-	CreatedPacksCount int        `json:"createdPacksCount,omitempty"`
-	CreatedAt         time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at" db:"updated_at"`
+	ID                int       `json:"id" db:"id" gorm:"primaryKey;autoIncrement"`
+	Name              string    `json:"name" db:"name" gorm:"not null"`
+	Email             string    `json:"email" db:"email" gorm:"uniqueIndex;not null"`
+	Password          string    `json:"-" db:"password" gorm:"not null"`
+	Role              string    `json:"role" db:"role" gorm:"not null;default:student"`
+	Image             *string   `json:"image" db:"image"`
+	Phone             *string   `json:"phone" db:"phone"`
+	Level             *string   `json:"level" db:"level"`
+	Batch             *string   `json:"batch" db:"batch"`
+	Board             *string   `json:"board" db:"board"`
+	Institution       *string   `json:"institution" db:"institution"`
+	Address           *string   `json:"address" db:"address"`
+	Subject           *string   `json:"subject" db:"subject"`
+	Designation       *string   `json:"designation" db:"designation"`
+	AdminTier         *string   `json:"adminTier" db:"admin_tier" gorm:"column:admin_tier"`
+	AdminDept         *string   `json:"adminDept" db:"admin_dept" gorm:"column:admin_dept"`
+	AdminBase         *string   `json:"adminBase" db:"admin_base" gorm:"column:admin_base"`
+	ExamLimit         *int      `json:"examLimit,omitempty" db:"exam_limit" gorm:"default:5"`
+	ExamPackLimit     *int      `json:"examPackLimit,omitempty" db:"exam_pack_limit" gorm:"default:3"`
+	CreatedExamsCount int       `json:"createdExamsCount,omitempty" gorm:"->;-:migration"`
+	CreatedPacksCount int       `json:"createdPacksCount,omitempty" gorm:"->;-:migration"`
+	CreatedAt         time.Time `json:"created_at" db:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt         time.Time `json:"updated_at" db:"updated_at" gorm:"autoUpdateTime"`
 }
 
 type UserSummary struct {
