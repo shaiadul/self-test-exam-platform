@@ -13,6 +13,7 @@ import {
   FaFilter,
 } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
+import EmptyState from "../../../../components/common/EmptyState";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 
@@ -103,148 +104,151 @@ export default function TeacherReportDetailClientView({
 
   if (!report) {
     return (
-      <PageContainer>
-        <div className="text-center py-20 px-4 bg-white rounded-3xl border border-slate-200/80 shadow-sm max-w-lg mx-auto">
-          <h2 className="text-xl font-black text-slate-900 mb-2">
-            Exam Report Not Found
-          </h2>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mb-6">
-            We couldn&apos;t load the evaluation report for this exam. It may have been archived or removed.
-          </p>
-          <PrimaryBtn
-            link="/dashboard/teacher-reports"
-            className="!text-xs !py-2.5 !px-5 gap-2 shadow-sm"
-          >
-            <FaArrowLeft className="text-xs" />
-            <span>Return to Exam Reports</span>
-          </PrimaryBtn>
+      <PageContainer className="py-12">
+        <div className="text-center py-16 px-4 bg-white rounded border border-slate-200/80 shadow-2xs max-w-lg mx-auto">
+          <EmptyState
+            compact
+            type="reports"
+            title="Exam Report Not Found"
+            description="We couldn't load the evaluation report for this exam. It may have been archived or removed."
+            actionLabel="Return to Exam Reports"
+            actionHref="/dashboard/teacher-reports"
+          />
         </div>
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer className="space-y-8 animate-fadeIn">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+      {/* Header Command Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
           <OutlineBtn
             link="/dashboard/teacher-reports"
-            className="!p-2.5 !rounded-xl !text-slate-600 hover:!text-[#dd6b01] shadow-xs"
+            className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200"
             title="Back to Reports"
           >
             <FaArrowLeft className="text-xs" />
           </OutlineBtn>
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 bg-orange-100 text-[#dd6b01] font-extrabold text-[11px] rounded-full">
-                {report.packName || "Exam Pack"}
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                EVALUATION // {report.packName || "EXAM_PACK"}
               </span>
-              <span className="text-xs text-gray-400 font-semibold">• Code: #{report.id || examId}</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
+                #{report.id || examId}
+              </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               {report.examName}
             </h1>
-            <p className="text-xs text-slate-500 font-medium mt-1">
-              Evaluated on {report.startDate || "Recent"} • Total Attended: {report.attempts?.length || 0} Students
-            </p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 font-mono text-xs text-slate-500">
+          <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
+            DATE: {report.startDate || "RECENT"}
+          </span>
+          <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold">
+            {report.attempts?.length || 0} SUBMISSIONS
+          </span>
         </div>
       </div>
 
-      {/* Unified Summary Strip (Cohesive metrics replacing bulky cards) */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+      {/* Unified Summary Strip */}
+      <div className="rounded border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
         <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-          <div className="p-4 sm:p-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold shrink-0">
+          <div className="p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center text-sm font-bold shrink-0">
               <FaTrophy />
             </div>
             <div>
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                Highest Score
+              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                HIGHEST SCORE
               </p>
-              <p className="text-xl font-black text-slate-900">{report.highest ?? 0}</p>
+              <p className="text-lg font-black font-mono text-slate-900">{report.highest ?? 0}</p>
             </div>
           </div>
 
-          <div className="p-4 sm:p-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold shrink-0">
+          <div className="p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded bg-blue-50 text-blue-600 border border-blue-200/60 flex items-center justify-center text-sm font-bold shrink-0">
               <FaChartLine />
             </div>
             <div>
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                Average Score
+              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                AVERAGE SCORE
               </p>
-              <p className="text-xl font-black text-blue-600">{report.average ?? 0}</p>
+              <p className="text-lg font-black font-mono text-blue-600">{report.average ?? 0}</p>
             </div>
           </div>
 
-          <div className="p-4 sm:p-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center text-sm font-bold shrink-0">
+          <div className="p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded bg-rose-50 text-rose-500 border border-rose-200/60 flex items-center justify-center text-sm font-bold shrink-0">
               <FaArrowDown />
             </div>
             <div>
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                Lowest Score
+              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                LOWEST SCORE
               </p>
-              <p className="text-xl font-black text-rose-500">{report.lowest ?? 0}</p>
+              <p className="text-lg font-black font-mono text-rose-500">{report.lowest ?? 0}</p>
             </div>
           </div>
 
-          <div className="p-4 sm:p-5 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm font-bold shrink-0">
+          <div className="p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded bg-purple-50 text-purple-600 border border-purple-200/60 flex items-center justify-center text-sm font-bold shrink-0">
               <FaGraduationCap />
             </div>
             <div>
-              <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                Pass Rate
+              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                PASS RATE
               </p>
-              <p className="text-xl font-black text-purple-600">{passRate}</p>
+              <p className="text-lg font-black font-mono text-purple-600">{passRate}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filter and Table */}
-      <div className="bg-white rounded-none border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-none border border-slate-200/80 shadow-2xs overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/50">
           <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">
-              Merit List & Student Submissions
-            </h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600">
+              MERIT LIST &amp; CANDIDATE SUBMISSIONS
+            </span>
+            <p className="text-[11px] text-slate-400 font-medium">
               Ranked candidate scores and evaluated answer sheets.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 w-full md:w-auto">
             {/* Standard Search Input */}
-            <div className="flex items-center w-full md:w-64 border border-[#dd6b01] rounded-lg px-3 py-2 bg-white">
-              <FaSearch className="text-[#dd6b01] mr-2 text-xs" />
+            <div className="flex items-center w-full md:w-60 border border-slate-200/80 rounded px-2.5 py-1.5 bg-white shadow-2xs focus-within:border-primary transition">
+              <FaSearch className="text-slate-400 mr-2 text-xs" />
               <input
                 type="text"
                 placeholder="Search student or institution..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="outline-none text-xs font-medium bg-transparent w-full text-gray-700 placeholder-gray-400"
+                className="outline-none text-xs font-medium bg-transparent w-full text-slate-700 placeholder-slate-400"
               />
             </div>
 
             {/* Reusable Dropdown */}
-            <div className="relative w-full md:w-48">
+            <div className="relative w-full md:w-44">
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-xs bg-white hover:border-[#dd6b01] transition text-gray-700 cursor-pointer"
+                className="w-full flex items-center justify-between border border-slate-200/80 rounded px-2.5 py-1.5 text-xs bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shadow-2xs font-medium"
               >
                 <span className="flex items-center gap-1">
-                  <FaFilter className="text-[10px] text-gray-400 mr-1" />
+                  <FaFilter className="text-[10px] text-slate-400 mr-1" />
                   {sortOptions.find((o) => o.value === sortBy)?.label}
                 </span>
-                <span className="text-[10px] text-gray-400">▼</span>
+                <span className="text-[10px] text-slate-400">▼</span>
               </button>
 
               {showDropdown && (
-                <div className="absolute right-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                <div className="absolute right-0 mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-20 overflow-hidden">
                   {sortOptions.map((opt) => (
                     <button
                       key={opt.value}
@@ -252,10 +256,10 @@ export default function TeacherReportDetailClientView({
                         setSortBy(opt.value as any);
                         setShowDropdown(false);
                       }}
-                      className={`w-full text-left px-3 py-2 text-xs hover:bg-orange-50 transition cursor-pointer ${
+                      className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition cursor-pointer ${
                         sortBy === opt.value
-                          ? "font-bold text-[#dd6b01] bg-orange-50/50"
-                          : "text-gray-700"
+                          ? "font-bold text-primary bg-primary/5 font-mono"
+                          : "text-slate-700"
                       }`}
                     >
                       {opt.label}
@@ -268,13 +272,13 @@ export default function TeacherReportDetailClientView({
             {/* Toggle Order Button */}
             <button
               onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="flex items-center justify-center border border-gray-300 rounded-lg p-2.5 bg-white hover:border-[#dd6b01] transition text-gray-700 cursor-pointer shrink-0"
+              className="flex items-center justify-center border border-slate-200/80 rounded p-2 bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shrink-0 shadow-2xs"
               title={`Sort Order: ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
             >
               {sortOrder === "asc" ? (
-                <FaSortAmountUp className="text-[#dd6b01] text-xs" />
+                <FaSortAmountUp className="text-primary text-xs" />
               ) : (
-                <FaSortAmountDown className="text-[#dd6b01] text-xs" />
+                <FaSortAmountDown className="text-primary text-xs" />
               )}
             </button>
           </div>
@@ -283,35 +287,35 @@ export default function TeacherReportDetailClientView({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-gray-400 font-bold text-xs uppercase tracking-wider border-b border-gray-100">
-                <th className="py-4 px-6">Rank</th>
-                <th className="py-4 px-6">Student Name</th>
-                <th className="py-4 px-6">Institution</th>
-                <th className="py-4 px-6">Completion Time</th>
-                <th className="py-4 px-6 text-center">Score Marks</th>
-                <th className="py-4 px-6 text-right">Result Status</th>
+              <tr className="bg-slate-50/70 border-b border-slate-200/80 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider">
+                <th className="py-3 px-4">Rank</th>
+                <th className="py-3 px-4">Student Name</th>
+                <th className="py-3 px-4">Institution</th>
+                <th className="py-3 px-4">Completion Time</th>
+                <th className="py-3 px-4 text-center">Score Marks</th>
+                <th className="py-3 px-4 text-right">Result Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
+            <tbody className="divide-y divide-slate-100 text-xs">
               {sortedStudents.map((st) => (
-                <tr key={st.id} className="hover:bg-gray-50/50 transition">
-                  <td className="py-4 px-6 font-black text-gray-900">
-                    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
-                      st.meritRank === 1 ? "bg-amber-100 text-amber-800" :
-                      st.meritRank === 2 ? "bg-gray-200 text-gray-800" :
-                      st.meritRank === 3 ? "bg-orange-100 text-orange-800" :
-                      "bg-gray-100 text-gray-600"
+                <tr key={st.id} className="hover:bg-slate-50/50 transition">
+                  <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                    <span className={`inline-flex items-center justify-center px-1.5 py-0.2 rounded text-[11px] font-mono font-bold border ${
+                      st.meritRank === 1 ? "bg-amber-100 text-amber-800 border-amber-200" :
+                      st.meritRank === 2 ? "bg-slate-200 text-slate-800 border-slate-300" :
+                      st.meritRank === 3 ? "bg-orange-100 text-orange-800 border-orange-200" :
+                      "bg-slate-100 text-slate-600 border-slate-200"
                     }`}>
                       #{st.meritRank}
                     </span>
                   </td>
-                  <td className="py-4 px-6 font-bold text-gray-900">{st.name}</td>
-                  <td className="py-4 px-6 text-gray-600 text-xs font-semibold">{st.institution || "N/A"}</td>
-                  <td className="py-4 px-6 text-gray-500 text-xs">{st.time || "Recent"}</td>
-                  <td className="py-4 px-6 text-center font-extrabold text-gray-900">{st.score}</td>
-                  <td className="py-4 px-6 text-right">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase ${
-                      st.passed ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                  <td className="py-3 px-4 font-bold text-slate-900">{st.name}</td>
+                  <td className="py-3 px-4 text-slate-500 text-[11px] font-medium">{st.institution || "—"}</td>
+                  <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">{st.time || "Recent"}</td>
+                  <td className="py-3 px-4 text-center font-mono font-black text-slate-900 text-sm">{st.score}</td>
+                  <td className="py-3 px-4 text-right">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
+                      st.passed ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"
                     }`}>
                       {st.passed ? "PASSED" : "FAILED"}
                     </span>
@@ -321,8 +325,13 @@ export default function TeacherReportDetailClientView({
 
               {sortedStudents.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-gray-500 font-medium">
-                    No student submissions found.
+                  <td colSpan={6} className="py-8 text-center">
+                    <EmptyState
+                      compact
+                      type="reports"
+                      title="No Submissions Found"
+                      description="No student attempts match your criteria."
+                    />
                   </td>
                 </tr>
               )}

@@ -145,54 +145,57 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
   const roleOptions = ["student", "teacher", "admin"];
 
   return (
-    <PageContainer className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 pb-5">
+    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/80 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <FaUsers className="text-[#dd6b01] text-2xl" />
-            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
-              User &amp; Role Management
-            </h1>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              SECURITY &amp; ACCESS CONTROL // [MOD-USR]
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
+              {users.length} REGISTERED
+            </span>
           </div>
-          <p className="text-xs md:text-sm text-gray-500 font-medium mt-1">
-            System administration tool to configure platform access rights, roles and teacher exam quotas.
-          </p>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            User &amp; Role Management
+          </h1>
         </div>
 
         <button
           onClick={() => setAddUserOpen(true)}
-          className="flex items-center gap-2 bg-[#dd6b01] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:bg-orange-600 transition cursor-pointer"
+          className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-hover text-white px-3.5 py-2 rounded font-bold text-xs shadow-2xs transition cursor-pointer"
         >
-          <FaUserPlus /> Add User
+          <FaUserPlus className="text-xs" /> Add User Account
         </button>
       </div>
 
-      <div className="bg-white rounded-none border border-slate-200/80 shadow-xs overflow-hidden">
+      <div className="bg-white rounded-none border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider">
-                <th className="py-4 px-6">ID</th>
-                <th className="py-4 px-6">Name</th>
-                <th className="py-4 px-6">Email</th>
-                <th className="py-4 px-6">Assigned Role</th>
-                <th className="py-4 px-6">Exam Quota</th>
-                <th className="py-4 px-6 text-right">Actions</th>
+              <tr className="bg-slate-50/70 border-b border-slate-200/80 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider">
+                <th className="py-3 px-4">ID</th>
+                <th className="py-3 px-4">Name</th>
+                <th className="py-3 px-4">Email Address</th>
+                <th className="py-3 px-4">Assigned Role</th>
+                <th className="py-3 px-4">Exam Quota</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
+            <tbody className="divide-y divide-slate-100 text-xs">
               {users.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-50/50 transition">
-                  <td className="py-4 px-6 font-mono text-xs text-gray-400">#{u.id}</td>
-                  <td className="py-4 px-6 font-bold text-gray-900">{u.name}</td>
-                  <td className="py-4 px-6 text-gray-600">{u.email}</td>
-                  <td className="py-4 px-6">
+                <tr key={u.id} className="hover:bg-slate-50/50 transition">
+                  <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">#{u.id}</td>
+                  <td className="py-3.5 px-4 font-bold text-slate-900">{u.name}</td>
+                  <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">{u.email}</td>
+                  <td className="py-3.5 px-4">
                     {editingUserId === u.id ? (
                       <div className="flex items-center gap-2">
                         <select
                           value={selectedRole}
                           onChange={(e) => setSelectedRole(e.target.value)}
-                          className="border border-gray-300 rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none focus:border-[#dd6b01]"
+                          className="border border-slate-200 rounded px-2 py-1 text-xs font-semibold focus:outline-none focus:border-primary bg-white"
                         >
                           <option value="student">Student</option>
                           <option value="teacher">Teacher</option>
@@ -200,66 +203,66 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                         </select>
                         <button
                           onClick={() => handleRoleChange(u.id, selectedRole)}
-                          className="bg-emerald-600 text-white px-2.5 py-1 rounded text-xs font-bold hover:bg-emerald-700 cursor-pointer"
+                          className="bg-emerald-600 text-white px-2 py-1 rounded text-xs font-bold hover:bg-emerald-700 cursor-pointer font-mono"
                         >
-                          Save
+                          SAVE
                         </button>
                         <button
                           onClick={() => setEditingUserId(null)}
-                          className="text-gray-400 hover:text-gray-600 text-xs px-1 cursor-pointer"
+                          className="text-slate-400 hover:text-slate-600 text-xs px-1 cursor-pointer"
                         >
                           Cancel
                         </button>
                       </div>
                     ) : (
                       <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
                           u.role === "admin"
                             ? "bg-purple-50 text-purple-700 border-purple-200"
                             : u.role === "teacher"
                             ? "bg-blue-50 text-blue-700 border-blue-200"
-                            : "bg-orange-50 text-[#dd6b01] border-orange-200"
+                            : "bg-slate-100 text-slate-700 border-slate-200"
                         }`}
                       >
-                        {u.role.toUpperCase()}
+                        {u.role}
                       </span>
                     )}
                   </td>
 
-                  {/* Exam Quota column — only meaningful for teachers */}
-                  <td className="py-4 px-6">
+                  {/* Exam Quota column */}
+                  <td className="py-3.5 px-4">
                     {u.role === "teacher" ? (
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-gray-700">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <span className="text-xs font-bold text-slate-800">
                             {(u.createdExamsCount ?? 0)}
                           </span>
-                          <span className="text-xs text-gray-400">/</span>
+                          <span className="text-xs text-slate-400">/</span>
                           <span className={`text-xs font-bold ${
                             u.examLimit === -1
                               ? "text-emerald-600"
                               : (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
-                              ? "text-red-500"
-                              : "text-gray-700"
+                              ? "text-rose-600"
+                              : "text-slate-700"
                           }`}>
                             {u.examLimit === -1 ? "∞" : (u.examLimit ?? 5)}
                           </span>
                           {u.examLimit !== -1 && (
-                            <span className={`ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                            <span className={`ml-1 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border uppercase ${
                               (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
-                                ? "bg-red-50 text-red-600 border border-red-200"
-                                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                ? "bg-rose-50 text-rose-600 border-rose-200"
+                                : "bg-emerald-50 text-emerald-700 border-emerald-200"
                             }`}>
-                              {(u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) ? "LIMIT REACHED" : "OK"}
+                              {(u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) ? "LIMIT_REACHED" : "AVAILABLE"}
                             </span>
                           )}
                         </div>
-                        <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="w-24 h-1 bg-slate-100 rounded overflow-hidden">
                           {u.examLimit !== -1 && (
                             <div
-                              className={`h-full rounded-full transition-all ${
+                              className={`h-full rounded transition-all ${
                                 (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
-                                  ? "bg-red-500"
+                                  ? "bg-rose-500"
                                   : (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) * 0.8
                                   ? "bg-amber-400"
                                   : "bg-emerald-500"
@@ -270,24 +273,24 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                             />
                           )}
                           {u.examLimit === -1 && (
-                            <div className="h-full w-full bg-emerald-400 rounded-full" />
+                            <div className="h-full w-full bg-emerald-400 rounded" />
                           )}
                         </div>
                       </div>
                     ) : (
-                      <span className="text-xs text-gray-300 italic">N/A</span>
+                      <span className="text-[11px] font-mono text-slate-400">—</span>
                     )}
                   </td>
 
-                  <td className="py-4 px-6 text-right space-x-2">
+                  <td className="py-3.5 px-4 text-right space-x-1.5">
                     <button
                       onClick={() => {
                         setEditingUserId(u.id);
                         setSelectedRole(u.role);
                       }}
-                      className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-bold p-1 hover:bg-blue-50 rounded transition cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-bold px-2 py-1 hover:bg-blue-50 rounded transition cursor-pointer font-mono"
                     >
-                      <FaUserCog /> Change Role
+                      <FaUserCog /> ROLE
                     </button>
                     {u.role === "teacher" && (
                       <button
@@ -295,16 +298,16 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                           setLimitModalUser(u);
                           setLimitValue(u.examLimit ?? 5);
                         }}
-                        className="inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-bold p-1 hover:bg-violet-50 rounded transition cursor-pointer"
+                        className="inline-flex items-center gap-1 text-[11px] text-violet-600 hover:text-violet-800 font-bold px-2 py-1 hover:bg-violet-50 rounded transition cursor-pointer font-mono"
                       >
-                        <FaGraduationCap /> Set Limit
+                        <FaGraduationCap /> QUOTA
                       </button>
                     )}
                     <button
                       onClick={() => handleDeleteUser(u.id, u.name)}
-                      className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-800 font-bold p-1 hover:bg-red-50 rounded transition cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[11px] text-rose-600 hover:text-rose-800 font-bold px-2 py-1 hover:bg-rose-50 rounded transition cursor-pointer font-mono"
                     >
-                      <FaTrashAlt /> Delete
+                      <FaTrashAlt /> DEL
                     </button>
                   </td>
                 </tr>
@@ -312,7 +315,7 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
 
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-gray-500 font-medium">
+                  <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">
                     No users registered in system.
                   </td>
                 </tr>
@@ -324,47 +327,46 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
 
       {/* ── Exam Limit Edit Modal ─────────────────────────────────── */}
       {limitModalUser && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-100">
-            <div className="flex justify-between items-center pb-4 mb-5 border-b border-gray-100">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded border border-slate-200/80 max-w-sm w-full p-5 shadow-2xl animate-fadeIn">
+            <div className="flex justify-between items-center pb-3 mb-4 border-b border-slate-100">
               <div>
-                <h3 className="text-lg font-black text-gray-900">Set Exam Creation Limit</h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Teacher: <span className="font-bold text-gray-700">{limitModalUser.name}</span>
-                </p>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                  TEACHER // QUOTA_CONFIG
+                </span>
+                <h3 className="text-base font-black text-slate-900">Set Exam Creation Limit</h3>
               </div>
               <button
                 onClick={() => setLimitModalUser(null)}
-                className="text-gray-400 hover:text-gray-600 transition cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 transition cursor-pointer"
               >
                 <FaTimes />
               </button>
             </div>
 
-            <form onSubmit={handleSaveLimit} className="space-y-5">
-              {/* Current usage info */}
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700 font-medium">
-                Currently created:{" "}
-                <span className="font-bold">{limitModalUser.createdExamsCount ?? 0} exam(s)</span>
+            <form onSubmit={handleSaveLimit} className="space-y-4">
+              <div className="bg-slate-50 border border-slate-200/80 rounded p-2.5 text-xs text-slate-700 font-mono">
+                Teacher: <span className="font-bold text-slate-900">{limitModalUser.name}</span>
+                <br />
+                Currently created: <span className="font-bold text-primary">{limitModalUser.createdExamsCount ?? 0} exam(s)</span>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-2">
-                  Maximum Exams Allowed
-                  <span className="ml-1 text-gray-400 font-normal">(use -1 for unlimited)</span>
+                <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                  Maximum Exams Allowed <span className="text-slate-400 font-normal">(-1 = unlimited)</span>
                 </label>
 
                 {/* Quick presets */}
-                <div className="flex flex-wrap gap-2 mb-3">
+                <div className="flex flex-wrap gap-1.5 mb-3 font-mono">
                   {[-1, 3, 5, 10, 20, 50].map((preset) => (
                     <button
                       key={preset}
                       type="button"
                       onClick={() => setLimitValue(preset)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                      className={`px-2.5 py-1 rounded text-xs font-bold border transition cursor-pointer ${
                         limitValue === preset
-                          ? "bg-violet-600 text-white border-violet-600 shadow-sm"
-                          : "bg-gray-50 text-gray-600 border-gray-200 hover:border-violet-400 hover:text-violet-600"
+                          ? "bg-violet-600 text-white border-violet-600 shadow-2xs"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:border-violet-400 hover:text-violet-600"
                       }`}
                     >
                       {preset === -1 ? "∞ Unlimited" : preset}
@@ -373,32 +375,32 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500 font-medium">Custom:</span>
+                  <span className="text-xs text-slate-500 font-medium">Custom:</span>
                   <input
                     type="number"
                     min={-1}
                     max={999}
                     value={limitValue}
                     onChange={(e) => setLimitValue(parseInt(e.target.value) || 0)}
-                    className="w-24 border-2 border-gray-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-violet-500 transition"
+                    className="w-24 border border-slate-200 rounded px-2.5 py-1.5 text-xs font-bold font-mono outline-none focus:border-violet-500 transition"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2 border-t border-gray-100">
+              <div className="flex gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setLimitModalUser(null)}
-                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition cursor-pointer"
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingLimit}
-                  className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded-xl transition shadow-md cursor-pointer disabled:opacity-50"
+                  className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs rounded transition shadow-2xs cursor-pointer disabled:opacity-50 font-mono"
                 >
-                  {savingLimit ? "Saving..." : "Save Limit"}
+                  {savingLimit ? "Saving..." : "Commit Quota"}
                 </button>
               </div>
             </form>
@@ -408,30 +410,34 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
 
       {/* ── Add User Modal ─────────────────────────────────────────── */}
       {addUserOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 animate-fadeIn">
-            <div className="flex justify-between items-center pb-4 mb-4 border-b border-gray-100">
-              <h3 className="text-xl font-black text-gray-900">Create New Account</h3>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded border border-slate-200/80 max-w-md w-full p-5 sm:p-6 shadow-2xl animate-fadeIn">
+            <div className="flex justify-between items-center pb-3 mb-4 border-b border-slate-100">
+              <div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                  IDENTITY // PROVISION_ACCOUNT
+                </span>
+                <h3 className="text-base font-black text-slate-900">Provision New User Account</h3>
+              </div>
               <button
                 onClick={() => setAddUserOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 transition cursor-pointer"
               >
                 <FaTimes />
               </button>
             </div>
 
             {addError && (
-              <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-semibold">
-                {addError}
+              <div className="mb-4 p-2.5 bg-rose-50 text-rose-700 border border-rose-200 rounded text-xs font-mono font-semibold">
+                [ERROR] {addError}
               </div>
             )}
 
-            <form onSubmit={handleAddUser} className="space-y-4">
+            <form onSubmit={handleAddUser} className="space-y-3.5">
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Full Name</label>
                 <Input
-                  icon={<FaUser className="text-gray-400" />}
-                  placeholder="John Doe"
+                  label="Full Name"
+                  placeholder="e.g. John Doe"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   required
@@ -439,11 +445,10 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Email Address</label>
                 <Input
-                  icon={<FaEnvelope className="text-gray-400" />}
+                  label="Email Address"
                   type="email"
-                  placeholder="john@example.com"
+                  placeholder="e.g. john@example.com"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   required
@@ -451,9 +456,8 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Initial Password</label>
                 <Input
-                  icon={<FaLock className="text-gray-400" />}
+                  label="Temporary Password"
                   type="password"
                   placeholder="••••••••"
                   value={newPassword}
@@ -463,7 +467,7 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Access Role</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Assigned Access Role</label>
                 <CustomSelect
                   options={roleOptions}
                   value={newRole}
@@ -474,21 +478,20 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
 
               {/* Exam limit — only shown when teacher is selected */}
               {newRole === "teacher" && (
-                <div className="p-3 bg-violet-50 border border-violet-100 rounded-xl space-y-2">
-                  <label className="text-xs font-bold text-violet-800 block">
-                    Exam Creation Limit
-                    <span className="ml-1 text-violet-500 font-normal">(−1 = unlimited)</span>
+                <div className="p-3 bg-violet-50/70 border border-violet-200/60 rounded space-y-2">
+                  <label className="text-xs font-bold text-violet-900 block">
+                    Teacher Exam Creation Quota <span className="text-violet-500 font-normal">(-1 = unlimited)</span>
                   </label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 font-mono">
                     {[-1, 3, 5, 10, 20].map((preset) => (
                       <button
                         key={preset}
                         type="button"
                         onClick={() => setNewExamLimit(preset)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                        className={`px-2.5 py-1 rounded text-xs font-bold border transition cursor-pointer ${
                           newExamLimit === preset
                             ? "bg-violet-600 text-white border-violet-600"
-                            : "bg-white text-gray-600 border-gray-200 hover:border-violet-400"
+                            : "bg-white text-slate-700 border-slate-200 hover:border-violet-400"
                         }`}
                       >
                         {preset === -1 ? "∞" : preset}
@@ -496,33 +499,33 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                     ))}
                   </div>
                   <div className="flex items-center gap-2 pt-1">
-                    <span className="text-xs text-violet-600 font-semibold">Custom:</span>
+                    <span className="text-xs text-violet-700 font-medium">Custom:</span>
                     <input
                       type="number"
                       min={-1}
                       max={999}
                       value={newExamLimit}
                       onChange={(e) => setNewExamLimit(parseInt(e.target.value) || 0)}
-                      className="w-20 border border-violet-200 rounded-lg px-2 py-1.5 text-sm font-bold outline-none focus:border-violet-500 bg-white"
+                      className="w-20 border border-violet-200 rounded px-2 py-1 text-xs font-mono font-bold outline-none focus:border-violet-500 bg-white"
                     />
                   </div>
                 </div>
               )}
 
-              <div className="flex gap-3 pt-4 border-t border-gray-100">
+              <div className="flex gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setAddUserOpen(false)}
-                  className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition"
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 py-2.5 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-xs rounded-xl transition shadow-md"
+                  className="flex-1 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded transition shadow-2xs font-mono"
                 >
-                  {submitting ? "Creating..." : "Create Account"}
+                  {submitting ? "PROVISIONING..." : "CREATE ACCOUNT"}
                 </button>
               </div>
             </form>

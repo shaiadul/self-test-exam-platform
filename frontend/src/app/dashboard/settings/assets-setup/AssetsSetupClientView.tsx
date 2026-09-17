@@ -73,71 +73,95 @@ export default function AssetsSetupClientView({ initialAssets }: AssetsSetupClie
   const batches = assets.filter((a) => a.type === "batch");
 
   return (
-    <PageContainer className="space-y-6 animate-fadeIn">
-      <div>
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Assets Setup</h1>
-        <p className="text-gray-500 font-medium">
-          Configure levels, boards, batches and other parameters used throughout mock exams and profiles.
-        </p>
+    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/80 pb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              TAXONOMY &amp; PARAMETERS // [MOD-AST]
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
+              {assets.length} TAXONOMY NODES
+            </span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            Curriculum Assets &amp; Taxonomies
+          </h1>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Levels */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md flex flex-col justify-between">
+        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs flex flex-col justify-between space-y-4">
           <div>
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-              <div className="p-2.5 bg-orange-100 text-[#dd6b01] rounded-2xl">
-                <FaLayerGroup />
+            <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-orange-50 text-primary border border-orange-200/60 rounded shadow-2xs text-xs">
+                  <FaLayerGroup />
+                </div>
+                <div>
+                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                    [AST-01]
+                  </span>
+                  <h3 className="font-bold text-slate-900 text-xs">Academic Levels</h3>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Academic Levels</h3>
-                <p className="text-xs text-gray-400">Class 10, HSC, Admission, etc.</p>
-              </div>
+              <span className="text-[10px] font-mono text-slate-500 font-bold">
+                {levels.length} NODES
+              </span>
             </div>
 
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-3">
               <Input
-                placeholder="e.g. Class 12"
+                placeholder="e.g. Class 12, HSC"
                 value={newLevel}
                 onChange={(e) => setNewLevel(e.target.value)}
               />
               <button
                 onClick={() => handleAddAsset("level", newLevel, () => setNewLevel(""))}
                 disabled={addingType === "level"}
-                className="px-4 bg-[#dd6b01] hover:bg-orange-600 text-white rounded-xl font-bold text-xs flex items-center gap-1 shadow transition cursor-pointer"
+                className="px-3 bg-primary hover:bg-primary-hover text-white rounded font-bold font-mono text-xs flex items-center gap-1 shadow-2xs transition cursor-pointer disabled:opacity-50"
               >
-                <FaPlus /> Add
+                <FaPlus className="text-[9px]" /> ADD
               </button>
             </div>
 
-            <div className="space-y-2 max-h-60 overflow-y-auto">
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
               {levels.map((item) => (
-                <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl text-xs font-bold text-gray-800 border border-gray-100">
+                <div key={item.id} className="flex justify-between items-center p-2 bg-slate-50/70 rounded text-xs font-mono font-bold text-slate-800 border border-slate-200/70 hover:bg-slate-50 transition">
                   <span>{item.value}</span>
-                  <button onClick={() => handleDeleteAsset(item.id)} className="text-gray-400 hover:text-red-500 transition cursor-pointer">
-                    <FaTimes />
+                  <button onClick={() => handleDeleteAsset(item.id)} className="text-slate-400 hover:text-rose-500 transition cursor-pointer p-0.5" title="Delete">
+                    <FaTimes className="text-[10px]" />
                   </button>
                 </div>
               ))}
-              {levels.length === 0 && <p className="text-xs text-gray-400 text-center py-4">No levels configured.</p>}
+              {levels.length === 0 && <p className="text-xs text-slate-400 text-center py-4 font-mono">No levels configured.</p>}
             </div>
           </div>
         </div>
 
         {/* Education Boards */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md flex flex-col justify-between">
+        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs flex flex-col justify-between space-y-4">
           <div>
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-              <div className="p-2.5 bg-blue-100 text-blue-600 rounded-2xl">
-                <FaGlobe />
+            <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-50 text-blue-600 border border-blue-200/60 rounded shadow-2xs text-xs">
+                  <FaGlobe />
+                </div>
+                <div>
+                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                    [AST-02]
+                  </span>
+                  <h3 className="font-bold text-slate-900 text-xs">Education Boards</h3>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Education Boards</h3>
-                <p className="text-xs text-gray-400">Dhaka, Rajshahi, Cambridge, etc.</p>
-              </div>
+              <span className="text-[10px] font-mono text-slate-500 font-bold">
+                {boards.length} NODES
+              </span>
             </div>
 
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-3">
               <Input
                 placeholder="e.g. Dhaka Board"
                 value={newBoard}
@@ -146,40 +170,47 @@ export default function AssetsSetupClientView({ initialAssets }: AssetsSetupClie
               <button
                 onClick={() => handleAddAsset("board", newBoard, () => setNewBoard(""))}
                 disabled={addingType === "board"}
-                className="px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs flex items-center gap-1 shadow transition cursor-pointer"
+                className="px-3 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold font-mono text-xs flex items-center gap-1 shadow-2xs transition cursor-pointer disabled:opacity-50"
               >
-                <FaPlus /> Add
+                <FaPlus className="text-[9px]" /> ADD
               </button>
             </div>
 
-            <div className="space-y-2 max-h-60 overflow-y-auto">
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
               {boards.map((item) => (
-                <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl text-xs font-bold text-gray-800 border border-gray-100">
+                <div key={item.id} className="flex justify-between items-center p-2 bg-slate-50/70 rounded text-xs font-mono font-bold text-slate-800 border border-slate-200/70 hover:bg-slate-50 transition">
                   <span>{item.value}</span>
-                  <button onClick={() => handleDeleteAsset(item.id)} className="text-gray-400 hover:text-red-500 transition cursor-pointer">
-                    <FaTimes />
+                  <button onClick={() => handleDeleteAsset(item.id)} className="text-slate-400 hover:text-rose-500 transition cursor-pointer p-0.5" title="Delete">
+                    <FaTimes className="text-[10px]" />
                   </button>
                 </div>
               ))}
-              {boards.length === 0 && <p className="text-xs text-gray-400 text-center py-4">No boards configured.</p>}
+              {boards.length === 0 && <p className="text-xs text-slate-400 text-center py-4 font-mono">No boards configured.</p>}
             </div>
           </div>
         </div>
 
         {/* Batches */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md flex flex-col justify-between">
+        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs flex flex-col justify-between space-y-4">
           <div>
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-              <div className="p-2.5 bg-purple-100 text-purple-600 rounded-2xl">
-                <FaCalendarAlt />
+            <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-purple-50 text-purple-600 border border-purple-200/60 rounded shadow-2xs text-xs">
+                  <FaCalendarAlt />
+                </div>
+                <div>
+                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                    [AST-03]
+                  </span>
+                  <h3 className="font-bold text-slate-900 text-xs">Target Batches</h3>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Target Batches</h3>
-                <p className="text-xs text-gray-400">Batch 2025, Batch 2026, etc.</p>
-              </div>
+              <span className="text-[10px] font-mono text-slate-500 font-bold">
+                {batches.length} NODES
+              </span>
             </div>
 
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-3">
               <Input
                 placeholder="e.g. Batch 2026"
                 value={newBatch}
@@ -188,22 +219,22 @@ export default function AssetsSetupClientView({ initialAssets }: AssetsSetupClie
               <button
                 onClick={() => handleAddAsset("batch", newBatch, () => setNewBatch(""))}
                 disabled={addingType === "batch"}
-                className="px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs flex items-center gap-1 shadow transition cursor-pointer"
+                className="px-3 bg-purple-600 hover:bg-purple-700 text-white rounded font-bold font-mono text-xs flex items-center gap-1 shadow-2xs transition cursor-pointer disabled:opacity-50"
               >
-                <FaPlus /> Add
+                <FaPlus className="text-[9px]" /> ADD
               </button>
             </div>
 
-            <div className="space-y-2 max-h-60 overflow-y-auto">
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
               {batches.map((item) => (
-                <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl text-xs font-bold text-gray-800 border border-gray-100">
+                <div key={item.id} className="flex justify-between items-center p-2 bg-slate-50/70 rounded text-xs font-mono font-bold text-slate-800 border border-slate-200/70 hover:bg-slate-50 transition">
                   <span>{item.value}</span>
-                  <button onClick={() => handleDeleteAsset(item.id)} className="text-gray-400 hover:text-red-500 transition cursor-pointer">
-                    <FaTimes />
+                  <button onClick={() => handleDeleteAsset(item.id)} className="text-slate-400 hover:text-rose-500 transition cursor-pointer p-0.5" title="Delete">
+                    <FaTimes className="text-[10px]" />
                   </button>
                 </div>
               ))}
-              {batches.length === 0 && <p className="text-xs text-gray-400 text-center py-4">No batches configured.</p>}
+              {batches.length === 0 && <p className="text-xs text-slate-400 text-center py-4 font-mono">No batches configured.</p>}
             </div>
           </div>
         </div>

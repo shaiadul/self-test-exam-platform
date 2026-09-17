@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { FaPlus, FaListUl } from "react-icons/fa";
+import { FaPlus, FaListUl, FaMoneyBillWave } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
+import EmptyState from "../../../../components/common/EmptyState";
 import { createTransactionAction } from "../../../../lib/actions";
 import { Input } from "../../../../components/ui/Input";
 import CustomSelect from "../../../../components/ui/CustomSelect";
@@ -78,43 +79,70 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
   const typeOptions = ["income", "expense"];
 
   return (
-    <PageContainer className="space-y-8 animate-fadeIn">
-      <div>
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Financial Report</h1>
-        <p className="text-gray-500 font-medium">Manage organization ledger records, income, and expenditures.</p>
+    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/80 pb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              LEDGER &amp; FISCAL AUDIT // [MOD-FIN]
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
+              {transactions.length} JOURNAL ENTRIES
+            </span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            Financial Ledger &amp; Balance Sheet
+          </h1>
+        </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md">
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Total Income</span>
-          <p className="text-3xl font-black text-emerald-600">${summary?.total_income?.toFixed(2) || "0.00"}</p>
+      {/* Overview Metric HUD */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block mb-1">
+            [FISCAL-01] TOTAL REVENUE
+          </span>
+          <p className="text-2xl font-black font-mono text-emerald-600">
+            ${summary?.total_income?.toFixed(2) || "0.00"}
+          </p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md">
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Total Expense</span>
-          <p className="text-3xl font-black text-rose-500">${summary?.total_expense?.toFixed(2) || "0.00"}</p>
+        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block mb-1">
+            [FISCAL-02] TOTAL EXPENDITURES
+          </span>
+          <p className="text-2xl font-black font-mono text-rose-500">
+            ${summary?.total_expense?.toFixed(2) || "0.00"}
+          </p>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md">
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Net Balance</span>
-          <p className={`text-3xl font-black ${(summary?.net_balance || 0) >= 0 ? "text-[#dd6b01]" : "text-red-600"}`}>
+        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs">
+          <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider block mb-1">
+            [FISCAL-03] NET FISCAL BALANCE
+          </span>
+          <p className={`text-2xl font-black font-mono ${(summary?.net_balance || 0) >= 0 ? "text-primary" : "text-rose-600"}`}>
             ${summary?.net_balance?.toFixed(2) || "0.00"}
           </p>
         </div>
       </div>
 
-      {/* Main Grid: Form & Table */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Main Grid: Form & Ledger Table */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Form Card */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md h-fit">
-          <h3 className="text-lg font-extrabold text-gray-900 mb-4 flex items-center gap-2">
-            <FaPlus className="text-[#dd6b01]" /> Record Transaction
-          </h3>
+        <div className="lg:col-span-4 bg-white p-5 rounded border border-slate-200/80 shadow-2xs space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+              [TX-01] MANUAL ENTRY
+            </span>
+            <h3 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+              <FaPlus className="text-primary text-xs" /> Record Journal Entry
+            </h3>
+          </div>
 
-          <form onSubmit={handleAddTransaction} className="space-y-4">
+          <form onSubmit={handleAddTransaction} className="space-y-3.5">
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Type</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Transaction Type</label>
               <CustomSelect
                 options={typeOptions}
                 value={txType}
@@ -124,7 +152,7 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
             </div>
 
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Amount ($)</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Amount ($ USD)</label>
               <Input
                 type="number"
                 step="0.01"
@@ -136,9 +164,9 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
             </div>
 
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Description</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Description / Memo</label>
               <Input
-                placeholder="Exam Pack Sales, Server Host, etc."
+                placeholder="e.g. Exam Pack Sales, Server Host"
                 value={txDesc}
                 onChange={(e) => setTxDesc(e.target.value)}
                 required
@@ -148,48 +176,53 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer"
+              className="w-full py-2 bg-primary hover:bg-primary-hover text-white font-bold font-mono text-xs rounded shadow-2xs transition cursor-pointer disabled:opacity-60"
             >
-              {submitting ? "Submitting..." : "Add Record"}
+              {submitting ? "RECORDING..." : "COMMIT ENTRY"}
             </button>
           </form>
         </div>
 
         {/* Ledger Table */}
-        <div className="lg:col-span-2 bg-white rounded-none border border-slate-200/80 shadow-xs overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
-            <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
-              <FaListUl className="text-[#dd6b01]" /> Transaction History
-            </h3>
+        <div className="lg:col-span-8 bg-white rounded-none border border-slate-200/80 shadow-2xs overflow-hidden">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600">
+                AUDITED TRANSACTION LOG
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-200/70 text-slate-700 font-bold">
+                {transactions.length} ENTRIES
+              </span>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 text-gray-400 font-bold text-xs uppercase tracking-wider border-b border-gray-100">
-                  <th className="py-3 px-6">Type</th>
-                  <th className="py-3 px-6">Description</th>
-                  <th className="py-3 px-6">Amount</th>
-                  <th className="py-3 px-6">Date</th>
+                <tr className="bg-slate-50/70 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider border-b border-slate-200/80">
+                  <th className="py-3 px-4">Type</th>
+                  <th className="py-3 px-4">Description</th>
+                  <th className="py-3 px-4">Amount</th>
+                  <th className="py-3 px-4">Timestamp</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
+              <tbody className="divide-y divide-slate-100 text-xs">
                 {transactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-gray-50/50 transition">
-                    <td className="py-3.5 px-6 font-bold">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase ${
-                        tx.type === "income" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                  <tr key={tx.id} className="hover:bg-slate-50/50 transition">
+                    <td className="py-3.5 px-4 font-bold">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
+                        tx.type === "income" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"
                       }`}>
                         {tx.type}
                       </span>
                     </td>
-                    <td className="py-3.5 px-6 font-semibold text-gray-800">{tx.description}</td>
-                    <td className={`py-3.5 px-6 font-extrabold ${
+                    <td className="py-3.5 px-4 font-semibold text-slate-800">{tx.description}</td>
+                    <td className={`py-3.5 px-4 font-mono font-black ${
                       tx.type === "income" ? "text-emerald-600" : "text-rose-500"
                     }`}>
                       {tx.type === "income" ? "+" : "-"}${tx.amount?.toFixed(2)}
                     </td>
-                    <td className="py-3.5 px-6 text-xs text-gray-400 font-mono">
+                    <td className="py-3.5 px-4 text-[11px] text-slate-400 font-mono">
                       {tx.created_at ? new Date(tx.created_at).toLocaleDateString() : "Recent"}
                     </td>
                   </tr>
@@ -198,8 +231,13 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
             </table>
 
             {transactions.length === 0 && (
-              <div className="p-8 text-center text-gray-400 font-semibold text-sm">
-                No financial transactions recorded yet.
+              <div className="py-6">
+                <EmptyState
+                  compact
+                  type="reports"
+                  title="No Transactions Logged"
+                  description="No journal or ledger entries have been recorded yet."
+                />
               </div>
             )}
           </div>

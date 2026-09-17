@@ -7,83 +7,113 @@ import {
   FaChartLine,
   FaCogs,
   FaTools,
+  FaSlidersH,
+  FaArrowRight,
 } from "react-icons/fa";
 import Link from "next/link";
 import { PageContainer } from "../../../components/common/PageContainer";
 
 const settingsModules = [
   {
-    title: "User Management",
-    description: "Create, edit & manage users and roles",
+    code: "MOD-USR",
+    title: "User & Role Management",
+    description: "Create, edit, assign permissions, and control teacher exam creation quotas.",
     icon: FaUsers,
-    color: "bg-orange-100 text-orange-600",
     href: "/dashboard/settings/user-management",
   },
   {
-    title: "Permission Management",
-    description: "Manage permissions & access levels",
+    code: "MOD-PRM",
+    title: "Permission Matrix",
+    description: "Configure granular access privileges across student, teacher, and admin roles.",
     icon: FaUserShield,
-    color: "bg-red-100 text-red-600",
     href: "/dashboard/settings/permission-management",
   },
   {
-    title: "Financial Report",
-    description: "Organizer income & finance overview",
+    code: "MOD-FIN",
+    title: "Financial Ledger",
+    description: "Inspect organization balances, track exam pack sales, and record expenditures.",
     icon: FaMoneyBillWave,
-    color: "bg-green-100 text-green-600",
     href: "/dashboard/settings/financial-report",
   },
   {
-    title: "Exam Analysis",
-    description: "Exam, student, pack, teacher reports",
+    code: "MOD-ANL",
+    title: "Exam & System Analytics",
+    description: "Aggregate system health, total student engagements, and question pack telemetry.",
     icon: FaChartLine,
-    color: "bg-blue-100 text-blue-600",
     href: "/dashboard/settings/exam-analysis",
   },
   {
-    title: "Assets Setup",
-    description: "Level, board, batch & other setups",
+    code: "MOD-AST",
+    title: "Curriculum Assets Setup",
+    description: "Manage academic levels, education boards, batches, and categorical taxonomies.",
     icon: FaCogs,
-    color: "bg-purple-100 text-purple-600",
     href: "/dashboard/settings/assets-setup",
   },
   {
-    title: "Tools",
-    description: "Future tools & utilities (coming soon)",
+    code: "MOD-TLS",
+    title: "Developer Tools & Utilities",
+    description: "Internal administrative utilities, maintenance tools, and system diagnostics.",
     icon: FaTools,
-    color: "bg-gray-100 text-gray-600",
     href: "/dashboard/settings/tools",
   },
 ];
 
 export default function SettingsPage() {
   return (
-    <PageContainer className="space-y-8">
-      <h1 className="text-3xl font-bold text-[#dd6b01]">Settings</h1>
-      <p className="text-gray-500">
-        Configure your system modules, permissions, finances and assets.
-      </p>
+    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded bg-blue-50 text-blue-600 flex items-center justify-center text-base border border-blue-200/60 shadow-2xs">
+            <FaSlidersH />
+          </div>
+          <div>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+              SYSTEM // CORE_CONFIGURATION_MATRIX
+            </span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Administration &amp; System Settings
+            </h1>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 text-slate-600 border border-slate-200 text-xs font-mono font-bold">
+          {settingsModules.length} MODULES READY
+        </span>
+      </div>
+
+      {/* Modules Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {settingsModules.map((module) => {
           const Icon = module.icon;
           return (
             <Link
-              key={module.title}
+              key={module.code}
               href={module.href}
-              className="flex flex-col items-center justify-center p-6 bg-white cursor-pointer"
+              className="group relative overflow-hidden rounded border border-slate-200/80 bg-white p-5 shadow-2xs hover:border-primary/50 hover:shadow-xs transition flex flex-col justify-between gap-4"
             >
-              <div
-                className={`w-16 h-16 flex items-center justify-center rounded-full mb-4 ${module.color}`}
-              >
-                <Icon className="text-2xl" />
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-9 h-9 rounded flex items-center justify-center text-base border border-slate-200/60 bg-slate-50 text-slate-700 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/30 transition shadow-2xs">
+                    <Icon />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                    [{module.code}]
+                  </span>
+                </div>
+
+                <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">
+                  {module.title}
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">
+                  {module.description}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold text-gray-700 text-center">
-                {module.title}
-              </h3>
-              <p className="text-gray-400 text-center mt-1 text-sm">
-                {module.description}
-              </p>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-[11px] font-mono font-bold text-slate-400 group-hover:text-primary transition">
+                <span>MANAGE_MODULE</span>
+                <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
+              </div>
             </Link>
           );
         })}

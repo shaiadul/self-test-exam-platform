@@ -41,43 +41,55 @@ export default function PermissionManagementClientView({ initialPermissions }: P
   }
 
   return (
-    <PageContainer className="space-y-6 animate-fadeIn">
-      <div>
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Permission Management</h1>
-        <p className="text-gray-500 font-medium">Manage access permissions for different system roles.</p>
+    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/80 pb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              PRIVILEGE MATRIX // [MOD-PRM]
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
+              {permissions.length} RULES DEFINED
+            </span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            Role Permission Matrix
+          </h1>
+        </div>
       </div>
 
-      <div className="overflow-x-auto bg-white border border-slate-200/80 rounded-none shadow-xs">
-        <table className="min-w-full border-collapse">
-          <thead className="bg-[#fff4ec] text-[#dd6b01] border-b border-orange-100/50">
-            <tr>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">ID</th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Role</th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Module</th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Access</th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Actions</th>
+      <div className="overflow-x-auto bg-white border border-slate-200/80 rounded-none shadow-2xs">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50/70 border-b border-slate-200/80 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider">
+              <th className="py-3 px-4">Rule ID</th>
+              <th className="py-3 px-4">Target Role</th>
+              <th className="py-3 px-4">Module Namespace</th>
+              <th className="py-3 px-4">Access Level</th>
+              <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-slate-100 text-xs">
             {permissions.map((perm) => (
-              <tr key={perm.id} className="hover:bg-[#ffedd5]/25 transition font-semibold">
-                <td className="px-6 py-4 text-sm font-mono font-bold text-gray-400">#PERM-{perm.id}</td>
-                <td className="px-6 py-4 font-bold text-gray-950">
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-black border uppercase tracking-wider ${
+              <tr key={perm.id} className="hover:bg-slate-50/50 transition">
+                <td className="py-3.5 px-4 font-mono font-bold text-slate-400 text-[11px]">#PERM-{perm.id}</td>
+                <td className="py-3.5 px-4 font-bold text-slate-900">
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border uppercase ${
                     perm.role === "admin" ? "bg-purple-50 text-purple-700 border-purple-200" :
                     perm.role === "teacher" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                    "bg-orange-50 text-[#dd6b01] border-orange-200"
+                    "bg-slate-100 text-slate-700 border-slate-200"
                   }`}>
                     {perm.role}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-700 font-bold">{perm.module}</td>
-                <td className="px-6 py-4 text-sm">
+                <td className="py-3.5 px-4 text-slate-800 font-mono font-bold">{perm.module}</td>
+                <td className="py-3.5 px-4">
                   {editingId === perm.id ? (
                     <select
                       value={selectedAccess}
                       onChange={(e) => setSelectedAccess(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-2.5 py-1 text-xs font-bold text-gray-800 bg-white outline-none focus:border-[#dd6b01]"
+                      className="border border-slate-200 rounded px-2 py-1 text-xs font-bold font-mono text-slate-800 bg-white outline-none focus:border-primary"
                     >
                       <option value="Full Access">Full Access</option>
                       <option value="Read & Create">Read & Create</option>
@@ -85,7 +97,7 @@ export default function PermissionManagementClientView({ initialPermissions }: P
                       <option value="Restricted Access">Restricted Access</option>
                     </select>
                   ) : (
-                    <span className={`px-3 py-1 rounded-full text-xs font-extrabold border ${
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
                       perm.access.includes("Full") ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
                       perm.access.includes("Read & Create") ? "bg-blue-50 text-blue-700 border-blue-200" :
                       perm.access.includes("Read Only") ? "bg-amber-50 text-amber-700 border-amber-200" :
@@ -95,22 +107,22 @@ export default function PermissionManagementClientView({ initialPermissions }: P
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-sm">
+                <td className="py-3.5 px-4 text-right">
                   {editingId === perm.id ? (
-                    <div className="flex items-center gap-2">
+                    <div className="inline-flex items-center gap-1.5">
                       <button
                         onClick={() => handleUpdateAccess(perm.id, selectedAccess)}
-                        className="p-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition"
+                        className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold font-mono transition"
                         title="Save Permission"
                       >
-                        <FaSave />
+                        SAVE
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="p-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition"
+                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold transition"
                         title="Cancel"
                       >
-                        <FaTimes />
+                        Cancel
                       </button>
                     </div>
                   ) : (
@@ -119,7 +131,7 @@ export default function PermissionManagementClientView({ initialPermissions }: P
                         setEditingId(perm.id);
                         setSelectedAccess(perm.access);
                       }}
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer"
                       title="Edit Permission"
                     >
                       <FaEdit />
@@ -131,7 +143,7 @@ export default function PermissionManagementClientView({ initialPermissions }: P
 
             {permissions.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 font-semibold text-sm">
+                <td colSpan={5} className="py-8 text-center text-slate-400 font-medium">
                   No system permissions configured.
                 </td>
               </tr>

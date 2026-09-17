@@ -3,7 +3,7 @@
 import React, { useRef, useState, DragEvent } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
-import { FaCloudUploadAlt, FaExclamationTriangle } from "react-icons/fa";
+import { FaCloudUploadAlt, FaExclamationTriangle, FaArrowLeft } from "react-icons/fa";
 import CustomSelect from "../../../../../components/ui/CustomSelect";
 import { Input } from "../../../../../components/ui/Input";
 import DateTimePicker from "../../../../../components/ui/DateTimePicker";

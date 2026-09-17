@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FaEdit, FaTrashAlt, FaPlus, FaSpinner } from "react-icons/fa";
+import { FaEdit, FaTrashAlt, FaPlus, FaSpinner, FaArrowLeft } from "react-icons/fa";
 import { MdOutlineEditNote } from "react-icons/md";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";

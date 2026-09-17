@@ -113,31 +113,31 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
         </PrimaryBtn>
       </div>
 
-      {/* Unified Summary Strip (Reduces disjointed card boxes into cohesive enterprise metrics) */}
+      {/* Unified Summary Strip */}
       {reports.length > 0 && (
-        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+        <div className="rounded border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100">
             <div className="p-4 sm:p-5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#dd6b01] flex items-center justify-center text-sm font-bold shrink-0">
+              <div className="w-10 h-10 rounded bg-orange-50 text-primary border border-orange-200/60 flex items-center justify-center text-sm font-bold shrink-0">
                 <FaClipboardList />
               </div>
               <div>
-                <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                   Total Attended
                 </p>
-                <p className="text-xl font-black text-slate-900">{summary.totalExams}</p>
+                <p className="text-xl font-black font-mono text-slate-900">{summary.totalExams}</p>
               </div>
             </div>
 
             <div className="p-4 sm:p-5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold shrink-0">
+              <div className="w-10 h-10 rounded bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center text-sm font-bold shrink-0">
                 <FaCheckDouble />
               </div>
               <div>
-                <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                   Passed Tests
                 </p>
-                <p className="text-xl font-black text-emerald-600">
+                <p className="text-xl font-black font-mono text-emerald-600">
                   {summary.passedExams}{" "}
                   <span className="text-xs font-semibold text-slate-400">
                     ({summary.passRate}%)
@@ -147,63 +147,63 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
             </div>
 
             <div className="p-4 sm:p-5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center text-sm font-bold shrink-0">
+              <div className="w-10 h-10 rounded bg-rose-50 text-rose-500 border border-rose-200/60 flex items-center justify-center text-sm font-bold shrink-0">
                 <FaTimesCircle />
               </div>
               <div>
-                <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                   Failed Tests
                 </p>
-                <p className="text-xl font-black text-rose-500">{summary.failedExams}</p>
+                <p className="text-xl font-black font-mono text-rose-500">{summary.failedExams}</p>
               </div>
             </div>
 
             <div className="p-4 sm:p-5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold shrink-0">
+              <div className="w-10 h-10 rounded bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center text-sm font-bold shrink-0">
                 <FaChartBar />
               </div>
               <div>
-                <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                   Average Score
                 </p>
-                <p className="text-xl font-black text-[#dd6b01]">{summary.avgScore}</p>
+                <p className="text-xl font-black font-mono text-primary">{summary.avgScore}</p>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ---- Controls (Matching other dashboard pages) ---- */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+      {/* ---- Controls Toolbar ---- */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-3 mb-6">
         {/* Search Input */}
-        <div className="flex items-center w-full md:w-1/2 border border-[#dd6b01] rounded-lg px-3 py-2 bg-white">
-          <FaSearch className="text-[#dd6b01] mr-2" />
+        <div className="flex items-center w-full md:w-1/2 border border-slate-200/80 rounded px-3 py-2 bg-white shadow-2xs focus-within:border-primary transition">
+          <FaSearch className="text-slate-400 mr-2 text-xs" />
           <input
             type="text"
-            placeholder="Search by Exam, Pack Name or Attempt ID..."
+            placeholder="Search by exam, pack name or attempt ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full outline-none text-sm text-gray-700 placeholder-gray-400"
+            className="w-full outline-none text-xs font-medium text-slate-800 placeholder-slate-400 bg-transparent"
           />
         </div>
 
         {/* Sort & Order */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+        <div className="flex items-center gap-2 w-full md:w-auto justify-end">
           {/* Custom Dropdown */}
           <div className="relative w-full md:w-48">
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white hover:border-[#dd6b01] transition text-gray-700 cursor-pointer"
+              className="w-full flex items-center justify-between border border-slate-200/80 rounded px-3 py-2 text-xs bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shadow-2xs font-medium"
             >
-              <span className="flex items-center gap-1">
-                <FaFilter className="text-xs text-gray-400 mr-1" />
+              <span className="flex items-center gap-1.5">
+                <FaFilter className="text-[10px] text-slate-400" />
                 {sortOptions.find((o) => o.value === sortBy)?.label}
               </span>
-              <span className="text-xs text-gray-400">▼</span>
+              <span className="text-[10px] text-slate-400">▼</span>
             </button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+              <div className="absolute right-0 mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-20 overflow-hidden">
                 {sortOptions.map((option) => (
                   <button
                     key={option.value}
@@ -211,10 +211,10 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
                       setSortBy(option.value);
                       setShowDropdown(false);
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-orange-50 transition cursor-pointer ${
+                    className={`w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 transition cursor-pointer ${
                       sortBy === option.value
-                        ? "font-bold text-[#dd6b01] bg-orange-50/50"
-                        : "text-gray-700"
+                        ? "font-bold text-primary bg-primary/5 font-mono"
+                        : "text-slate-700"
                     }`}
                   >
                     {option.label}
@@ -227,13 +227,13 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
           {/* Toggle Order Button */}
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="flex items-center justify-center border border-gray-300 rounded-lg p-2.5 bg-white hover:border-[#dd6b01] transition text-gray-700 cursor-pointer"
+            className="flex items-center justify-center border border-slate-200/80 rounded p-2.5 bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shadow-2xs"
             title={`Sort Order: ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
           >
             {sortOrder === "asc" ? (
-              <FaSortAmountUp className="text-[#dd6b01]" />
+              <FaSortAmountUp className="text-primary text-xs" />
             ) : (
-              <FaSortAmountDown className="text-[#dd6b01]" />
+              <FaSortAmountDown className="text-primary text-xs" />
             )}
           </button>
         </div>
