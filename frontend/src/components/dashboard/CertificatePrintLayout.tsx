@@ -71,7 +71,7 @@ export default function CertificatePrintLayout({
       `}} />
 
       {/* Decorative Ornate Frame */}
-      <div className="border-8 border-double border-[#dd6b01] rounded-3xl p-6 h-full flex flex-col justify-between relative bg-white box-border">
+      <div className="border-8 border-double border-[#dd6b01] rounded p-6 h-full flex flex-col justify-between relative bg-white box-border">
         
         {/* Certificate Corners */}
         <div className="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-[#dd6b01]" />

@@ -58,7 +58,7 @@ export default function DashboardLayoutClient({
   const isExamPage = pathname.includes("/dashboard/exam-pack/exam-pack-details/");
 
   return (
-    <div className={`min-h-screen flex flex-col bg-[#fafafa] print:bg-white print:p-0 ${!isExamPage ? "lg:flex-row" : ""}`}>
+    <div className={`min-h-screen flex flex-col bg-slate-50/50 print:bg-white print:p-0 ${!isExamPage ? "lg:flex-row" : ""}`}>
       {!isExamPage && (
         <div className="print:hidden">
           <Sidebar role={userRole} />
@@ -71,20 +71,20 @@ export default function DashboardLayoutClient({
         </div>
       )}
 
-      <div className="flex-1 flex flex-col min-h-screen print:p-0 relative">
+      <div className="flex-1 flex flex-col min-h-screen print:p-0 relative w-full overflow-x-hidden">
         {!isExamPage && (
           <div className="print:hidden">
             <DashboardHeader />
           </div>
         )}
 
-        <main className={`flex-1 overflow-y-auto print:overflow-visible ${!isExamPage ? "pt-20" : "pt-0"}`}>
-          <div className="p-6 max-w-7xl mx-auto print:p-0 print:max-w-none">
+        <main className={`flex-1 overflow-y-auto print:overflow-visible ${!isExamPage ? "pt-16" : "pt-0"}`}>
+          <div className={isExamPage ? "w-full p-0 max-w-none print:p-0" : "p-3.5 sm:p-5 max-w-7xl mx-auto print:p-0 print:max-w-none"}>
             {allowed ? (
               children
             ) : (
               <div className="min-h-[70vh] flex items-center justify-center p-4">
-                <div className="bg-white border border-gray-100 rounded-3xl p-10 shadow-xl max-w-lg w-full text-center relative overflow-hidden">
+                <div className="bg-white border border-gray-100 rounded-xl p-8 shadow-xl max-w-lg w-full text-center relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-orange-500"></div>
 
                   <div className="w-20 h-20 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-3xl mx-auto mb-6 border border-red-100 shadow-inner relative">

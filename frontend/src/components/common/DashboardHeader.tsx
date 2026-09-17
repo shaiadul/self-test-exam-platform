@@ -139,6 +139,21 @@ export const DashboardHeader = () => {
   }, []);
 
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcut Ctrl+K / Cmd+K to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        setShowSearchDropdown(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
   };
@@ -155,14 +170,15 @@ export const DashboardHeader = () => {
   };
 
   return (
-    <header className="h-20 bg-white/95 backdrop-blur-md border-b border-[#dd6b01]/10 fixed top-0 left-0 lg:left-72 right-0 z-40 transition-all">
-      <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-6">
+    <header className="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 fixed top-0 left-0 lg:left-72 right-0 z-40 transition-all select-none">
+      <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-4 sm:px-6">
         
         {/* Functional Search Bar */}
-        <div ref={searchRef} className="flex items-center gap-4 w-full max-w-md relative">
+        <div ref={searchRef} className="flex items-center gap-4 w-full max-w-sm sm:max-w-md relative">
           <div className="relative w-full">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
             <input 
+              ref={inputRef}
               type="text" 
               placeholder="Search exams, packs..." 
               value={searchQuery}
@@ -171,38 +187,41 @@ export const DashboardHeader = () => {
                 setShowSearchDropdown(true);
               }}
               onFocus={() => setShowSearchDropdown(true)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#dd6b01]/20 focus:border-[#dd6b01] transition-all font-sans text-sm"
+              className="w-full pl-9 pr-14 py-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-xs font-medium text-slate-800 placeholder:text-slate-400"
             />
+            <kbd className="hidden sm:inline-flex absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 bg-white border border-slate-200 rounded shadow-2xs pointer-events-none">
+              ⌘K
+            </kbd>
           </div>
 
           {/* Search Dropdown Overlay */}
           {showSearchDropdown && searchQuery.trim() !== "" && (
-            <div className="absolute top-full left-0 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 p-2 text-left font-sans max-h-80 overflow-y-auto">
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider px-3 py-1.5 block">Search Results</span>
+            <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200/80 rounded-2xl shadow-xl z-50 p-2 text-left font-sans max-h-80 overflow-y-auto custom-scrollbar">
+              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider px-3 py-1.5 block">Search Results</span>
               {matchingItems.length > 0 ? (
                 <div className="space-y-1 mt-1">
                   {matchingItems.map((item) => (
                     <button
                       key={item.id}
                       onClick={() => handleSearchSelect(item.href)}
-                      className="w-full flex items-start gap-3 p-2.5 rounded-xl hover:bg-orange-50/50 hover:text-[#dd6b01] text-left transition-all group"
+                      className="w-full flex items-start gap-3 p-2.5 rounded-xl hover:bg-primary/5 hover:text-primary text-left transition-all group cursor-pointer"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#dd6b01] flex items-center justify-center text-sm shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs shrink-0">
                         <FaBookOpen />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-[#dd6b01]">{item.title}</p>
-                          <span className="text-[9px] bg-orange-100/50 text-[#dd6b01] font-bold px-1.5 py-0.5 rounded border border-orange-200 uppercase leading-none shrink-0">{item.category}</span>
+                          <p className="text-xs font-bold text-slate-800 truncate group-hover:text-primary">{item.title}</p>
+                          <span className="text-[9px] bg-primary/10 text-primary font-extrabold px-1.5 py-0.5 rounded border border-primary/20 uppercase leading-none shrink-0">{item.category}</span>
                         </div>
-                        <p className="text-xs text-gray-400 truncate mt-0.5">{item.desc}</p>
+                        <p className="text-[11px] text-slate-400 truncate mt-0.5">{item.desc}</p>
                       </div>
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="py-6 text-center text-gray-400">
-                  <FaSearch className="mx-auto text-xl mb-2 opacity-50" />
+                <div className="py-6 text-center text-slate-400">
+                  <FaSearch className="mx-auto text-lg mb-1.5 opacity-40" />
                   <p className="text-xs font-semibold">No results found for &quot;{searchQuery}&quot;</p>
                 </div>
               )}
@@ -211,17 +230,18 @@ export const DashboardHeader = () => {
         </div>
 
         {/* Action Controls & Notifications */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 sm:gap-5">
           
           {/* Functional Notification Center */}
           <div ref={notifRef} className="relative">
             <button 
               onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-              className="relative p-2 text-gray-500 hover:bg-gray-50 rounded-full transition-colors cursor-pointer"
+              className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              aria-label="View notifications"
             >
-              <FaBell className="text-xl" />
+              <FaBell className="text-lg" />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white rounded-full border border-white text-[9px] font-bold flex items-center justify-center animate-pulse">
+                <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white rounded-full border-2 border-white text-[9px] font-black flex items-center justify-center animate-pulse">
                   {unreadCount}
                 </span>
               )}
@@ -229,55 +249,56 @@ export const DashboardHeader = () => {
 
             {/* Notifications Dropdown Panel */}
             {showNotifDropdown && (
-              <div className="absolute top-full right-0 w-80 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 p-4 text-left font-sans">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-3">
+              <div className="absolute top-full right-0 w-80 sm:w-88 mt-2 bg-white border border-slate-200/80 rounded-2xl shadow-xl z-50 p-4 text-left font-sans animate-in fade-in zoom-in-95">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                   <div>
-                    <h3 className="text-sm font-bold text-gray-800">Notifications</h3>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{unreadCount} unread items</p>
+                    <h3 className="text-xs font-bold text-slate-900">Notifications</h3>
+                    <p className="text-[10px] text-slate-400">{unreadCount} unread update(s)</p>
                   </div>
                   {unreadCount > 0 && (
                     <button 
                       onClick={markAllAsRead}
-                      className="text-[10px] font-bold text-[#dd6b01] hover:underline"
+                      className="text-[10px] font-bold text-primary hover:underline cursor-pointer"
                     >
-                      Mark all as read
+                      Mark all read
                     </button>
                   )}
                 </div>
 
                 {notifications.length > 0 ? (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                  <div className="space-y-1.5 max-h-64 overflow-y-auto custom-scrollbar pr-1">
                     {notifications.map((n) => (
                       <div 
                         key={n.id} 
-                        className={`flex items-start gap-2.5 p-2.5 rounded-xl border border-transparent transition relative group ${
-                          n.unread ? "bg-orange-50/20 border-orange-100/50" : "hover:bg-gray-50"
+                        className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-all relative group ${
+                          n.unread ? "bg-primary/5 border-primary/20" : "border-transparent hover:bg-slate-50"
                         }`}
                       >
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5 ${
-                          n.type === "success" ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
+                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs shrink-0 mt-0.5 ${
+                          n.type === "success" ? "bg-emerald-50 text-emerald-600" : "bg-sky-50 text-sky-600"
                         }`}>
                           {n.type === "success" ? <FaCheckCircle /> : <FaExclamationCircle />}
                         </div>
                         <div className="flex-1 pr-4">
-                          <p className={`text-xs ${n.unread ? "font-bold text-gray-800" : "text-gray-600"}`}>{n.title}</p>
-                          <p className="text-[10px] text-gray-400 mt-0.5 leading-normal">{n.desc}</p>
-                          <span className="text-[9px] text-gray-400 mt-1 block">{n.time}</span>
+                          <p className={`text-xs ${n.unread ? "font-bold text-slate-900" : "text-slate-700"}`}>{n.title}</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5 leading-normal">{n.desc}</p>
+                          <span className="text-[9px] text-slate-400 mt-1 block">{n.time}</span>
                         </div>
                         <button
                           onClick={(e) => deleteNotification(n.id, e)}
-                          className="absolute top-2 right-2 p-1 text-gray-300 hover:text-gray-600 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-2 right-2 p-1 text-slate-300 hover:text-slate-600 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          aria-label="Delete notification"
                         >
-                          <FaTimes className="text-[10px]" />
+                          <FaTimes className="text-[9px]" />
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="py-8 text-center text-gray-400">
-                    <FaBell className="mx-auto text-2xl mb-2 opacity-50" />
-                    <p className="text-xs font-semibold">All caught up!</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">No new notifications here.</p>
+                  <div className="py-8 text-center text-slate-400">
+                    <FaBell className="mx-auto text-xl mb-1.5 opacity-40" />
+                    <p className="text-xs font-semibold text-slate-600">All caught up!</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">No new notifications here.</p>
                   </div>
                 )}
               </div>
@@ -285,14 +306,14 @@ export const DashboardHeader = () => {
           </div>
 
           {/* User Account Info */}
-          <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
+          <div className="flex items-center gap-3 pl-3 sm:pl-4 border-l border-slate-200/80">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-gray-800 leading-none">{userName}</p>
-              <p className="text-xs text-gray-500 mt-1">{userRoleLabel}</p>
+              <p className="text-xs font-bold text-slate-900 leading-none">{userName}</p>
+              <p className="text-[10px] text-slate-400 mt-1 font-semibold">{userRoleLabel}</p>
             </div>
             <div 
               onClick={() => router.push("/dashboard/edit-profile")}
-              className="w-10 h-10 rounded-full border-2 border-[#dd6b01]/20 overflow-hidden shadow-sm hover:border-[#dd6b01] transition-all cursor-pointer relative bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center font-bold text-[#dd6b01] text-sm shrink-0 select-none"
+              className="w-9 h-9 rounded-xl border border-slate-200/80 overflow-hidden shadow-xs hover:border-primary transition-all cursor-pointer relative bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center font-bold text-white text-xs shrink-0 select-none"
               title="View & Edit Profile"
             >
               {userAvatar ? (

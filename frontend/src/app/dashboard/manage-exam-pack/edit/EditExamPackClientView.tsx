@@ -2,12 +2,15 @@
 
 import React, { useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { FaArrowLeft, FaSave, FaInfoCircle, FaEdit } from "react-icons/fa";
 import CustomSelect from "../../../../components/ui/CustomSelect";
 import { Input } from "../../../../components/ui/Input";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import ImageUploader from "../../../../components/ui/ImageUploader";
+import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
+import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { updateExamPackAction } from "../../../../lib/actions";
-import { useRouter } from "next/navigation";
 
 interface EditExamPackClientViewProps {
   packId: number;
@@ -31,12 +34,16 @@ export default function EditExamPackClientView({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!examPackData.name.trim()) {
+      toast.error("Please provide an Exam Pack title.");
+      return;
+    }
 
+    setLoading(true);
     try {
       const res = await updateExamPackAction(packId, {
-        title: examPackData.name,
-        description: examPackData.details,
+        title: examPackData.name.trim(),
+        description: examPackData.details.trim(),
         category: examPackData.level || "General",
         image: examPackData.image,
       });
@@ -55,57 +62,140 @@ export default function EditExamPackClientView({
   };
 
   return (
-    <PageContainer>
-      <h1 className="text-3xl font-bold text-[#dd6b01] mb-6">Edit Exam Pack: {examPackData.name}</h1>
-
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4 max-w-3xl">
-        <Input
-          placeholder="Exam Pack Title"
-          value={examPackData.name}
-          onChange={(e) => setExamPackData({ ...examPackData, name: e.target.value })}
-          required
-        />
-
-        <textarea
-          className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#dd6b01] min-h-[100px]"
-          placeholder="Exam Pack Details / Description"
-          value={examPackData.details}
-          onChange={(e) => setExamPackData({ ...examPackData, details: e.target.value })}
-        />
-
-        <CustomSelect
-          options={["Class 10", "HSC", "Admission", "General"]}
-          value={examPackData.level}
-          onChange={(val) => setExamPackData({ ...examPackData, level: val })}
-          placeholder="Select Category Level"
-        />
-
-        <div>
-          <ImageUploader
-            label="Exam Pack Cover Image"
-            folder="exam-packs"
-            height="h-64"
-            value={examPackData.image}
-            onChange={(url) => setExamPackData({ ...examPackData, image: url || "" })}
-            description="JPG, PNG, or WebP cover image for this pack."
-          />
+    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+        <div className="flex items-center gap-3">
+          <OutlineBtn
+            link="/dashboard/manage-exam-pack"
+            className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200"
+            title="Return to Pack List"
+          >
+            <FaArrowLeft className="text-xs" />
+          </OutlineBtn>
+          <div>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+              CURRICULUM // EDIT_CONTAINER #{packId}
+            </span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Edit Exam Pack: {examPackData.name || `#${packId}`}
+            </h1>
+          </div>
         </div>
 
-        <div className="flex justify-end gap-4 pt-4">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2.5 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-sm rounded-xl shadow transition cursor-pointer"
-          >
-            {loading ? "Updating..." : "Update Pack"}
-          </button>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200 text-xs font-mono font-bold">
+          <FaEdit className="text-xs" />
+          MODIFY_CONTAINER
+        </span>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Cover Media Column */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 p-4 shadow-2xs">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                [CFG-01] PACK HERO BANNER
+              </span>
+              <ImageUploader
+                folder="exam-packs"
+                height="h-64"
+                value={examPackData.image}
+                onChange={(url) => setExamPackData((prev) => ({ ...prev, image: url || "" }))}
+                description="Aspect ratio 16:9 recommended. Max 2MB."
+              />
+            </div>
+
+            {/* Architecture Guidelines Callout */}
+            <div className="relative overflow-hidden rounded bg-slate-50 border border-slate-200/80 p-4 text-[11px] leading-relaxed text-slate-600 space-y-2">
+              <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                <FaInfoCircle className="text-blue-500 text-xs" />
+                <span>Container Structure</span>
+              </div>
+              <p>
+                Updates will be reflected immediately in all enrolled student rosters and curriculum browsing matrices.
+              </p>
+            </div>
+          </div>
+
+          {/* Form Fields Column */}
+          <div className="lg:col-span-8 space-y-4">
+            <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-5">
+              <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                    [CFG-02] METADATA SPECIFICATION
+                  </span>
+                  <h2 className="text-base font-black text-slate-900 tracking-tight">
+                    Pack Configuration
+                  </h2>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
+                  ID: #{packId}
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <Input
+                  label="Exam Pack Title"
+                  placeholder="e.g. HSC Physics Model Tests 2025"
+                  value={examPackData.name}
+                  onChange={(e) => setExamPackData({ ...examPackData, name: e.target.value })}
+                  required
+                />
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 ml-0.5 block">
+                    Curriculum Description & Syllabus
+                  </label>
+                  <textarea
+                    className="w-full p-3 border border-slate-200 rounded text-xs font-medium text-slate-800 placeholder:text-slate-400 outline-none transition-all duration-150 focus:border-primary focus:ring-1 focus:ring-primary/20 min-h-[110px]"
+                    placeholder="Provide overview, covered chapters, and target test takers..."
+                    value={examPackData.details}
+                    onChange={(e) => setExamPackData({ ...examPackData, details: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 ml-0.5 block mb-1">
+                      Academic Level / Category
+                    </label>
+                    <CustomSelect
+                      options={["Class 10", "HSC", "Admission", "General"]}
+                      value={examPackData.level}
+                      onChange={(val) => setExamPackData({ ...examPackData, level: val })}
+                      placeholder="Select Category Level"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action HUD */}
+            <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex items-center justify-between">
+              <span className="text-xs text-slate-500 font-medium">
+                Changes persist instantly across platform upon commit.
+              </span>
+              <div className="flex items-center gap-3">
+                <OutlineBtn
+                  type="button"
+                  onClick={() => router.back()}
+                  className="!text-xs !py-2 !px-4 !rounded"
+                >
+                  Cancel
+                </OutlineBtn>
+                <PrimaryBtn
+                  type="submit"
+                  disabled={loading}
+                  className="!text-xs !py-2 !px-5 !rounded gap-2"
+                >
+                  <FaSave className="text-xs" />
+                  <span>{loading ? "Committing..." : "Commit Changes"}</span>
+                </PrimaryBtn>
+              </div>
+            </div>
+          </div>
         </div>
       </form>
     </PageContainer>

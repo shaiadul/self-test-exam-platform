@@ -1,27 +1,43 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageContainer } from "../../../../../components/common/PageContainer";
 import Scorecard from "../../../../../components/dashboard/Scorecard";
 import CertificatePrintLayout from "../../../../../components/dashboard/CertificatePrintLayout";
-import { submitExamAction, verifyExamPasscodeAction, getQuestionsAction, getExamDetailsAction } from "../../../../../lib/actions";
+import {
+  submitExamAction,
+  verifyExamPasscodeAction,
+  getQuestionsAction,
+  getExamDetailsAction,
+} from "../../../../../lib/actions";
 import {
   FaEye,
   FaLock,
   FaShieldAlt,
   FaExclamationTriangle,
   FaExpand,
+  FaCompress,
   FaCheckCircle,
   FaSync,
   FaKey,
+  FaFlag,
+  FaThLarge,
+  FaArrowLeft,
+  FaArrowRight,
+  FaEraser,
+  FaBookOpen,
+  FaFileImage,
+  FaCheck,
+  FaTimes,
 } from "react-icons/fa";
 import { PrimaryBtn } from "../../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../../components/ui/OutlineBtn";
 import { Input } from "../../../../../components/ui/Input";
+import { cn } from "../../../../../lib/utils";
 
 // --- TYPES ---
 type Answer = string;
@@ -75,20 +91,26 @@ const Timer = ({ duration, onTimeUp, isRunning }: TimerProps) => {
       .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isLowTime = timeLeft < 300; // less than 5 minutes
+  const isCriticalTime = timeLeft < 180; // less than 3 minutes
+  const isLowTime = timeLeft < 600; // less than 10 minutes
 
   return (
     <div
-      className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border shadow-inner transition-colors ${
-        isLowTime
-          ? "bg-rose-50 border-rose-200 text-rose-700 animate-pulse"
-          : "bg-[#fff4ec] border-orange-200 text-[#dd6b01]"
-      }`}
+      className={cn(
+        "flex items-center gap-2 px-3 py-1.5 rounded border transition-all select-none",
+        isCriticalTime
+          ? "bg-rose-50 border-rose-300 text-rose-700 animate-pulse"
+          : isLowTime
+          ? "bg-amber-50 border-amber-300 text-amber-800"
+          : "bg-slate-50 border-slate-200/90 text-slate-800"
+      )}
     >
-      <span className="text-xl">⏱️</span>
+      <span className="text-sm">⏱️</span>
       <div>
-        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Remaining Time</p>
-        <p className="text-lg font-black font-mono leading-none">
+        <p className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none">
+          {isCriticalTime ? "Critical Time" : "Time Left"}
+        </p>
+        <p className="text-sm sm:text-base font-black font-mono leading-tight tracking-tight">
           {formatTime(timeLeft)}
         </p>
       </div>
@@ -151,8 +173,7 @@ export default function TakeExamClientView({
   );
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
-  // Password Unlock State. The passcode itself is never sent to the client;
-  // it is verified server-side.
+  // Password Unlock State
   const requiresPassword = examMeta.isPrivate;
   const [isUnlocked, setIsUnlocked] = useState<boolean>(!requiresPassword);
   const [enteredPasscode, setEnteredPasscode] = useState("");
@@ -166,6 +187,13 @@ export default function TakeExamClientView({
   const [examResult, setExamResult] = useState<any>(null);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
+  // Focus Navigation & Question State
+  const [currentQuestionIdx, setCurrentQuestionIdx] = useState<number>(0);
+  const [markedForReview, setMarkedForReview] = useState<Set<number>>(new Set());
+  const [visitedQuestions, setVisitedQuestions] = useState<Set<number>>(new Set());
+  const [filterStatus, setFilterStatus] = useState<"all" | "answered" | "unanswered" | "review">("all");
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
   // Security & Anti-cheating State
   const [warnings, setWarnings] = useState<number>(0);
   const [showWarningModal, setShowWarningModal] = useState(false);
@@ -173,6 +201,21 @@ export default function TakeExamClientView({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const isRunningRef = useRef(false);
   isRunningRef.current = examStatus === "running";
+
+  // Mark current question as visited
+  useEffect(() => {
+    if (questions.length > 0 && examStatus === "running") {
+      const currentQ = questions[currentQuestionIdx];
+      if (currentQ) {
+        setVisitedQuestions((prev) => {
+          if (prev.has(currentQ.id)) return prev;
+          const next = new Set(prev);
+          next.add(currentQ.id);
+          return next;
+        });
+      }
+    }
+  }, [currentQuestionIdx, questions, examStatus]);
 
   // Client-side fallback fetch for questions & exam details
   const fetchQuestionsFallback = useCallback(async (passcode?: string) => {
@@ -216,7 +259,7 @@ export default function TakeExamClientView({
     }
   }, [initialQuestions, fetchQuestionsFallback, isUnlocked, enteredPasscode]);
 
-  // Handle Passcode Unlock (verified on the server)
+  // Handle Passcode Unlock
   const handleUnlockPasscode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!enteredPasscode.trim()) {
@@ -246,7 +289,6 @@ export default function TakeExamClientView({
       setIsSubmitting(true);
       setShowSubmitConfirm(false);
 
-      // Exit fullscreen if active
       if (document.fullscreenElement) {
         try {
           await document.exitFullscreen();
@@ -264,7 +306,8 @@ export default function TakeExamClientView({
           }
         });
 
-        const securityMsg = reason || (warnings > 0 ? `Completed with ${warnings} security warning(s)` : "Normal Clean Submission");
+        const securityMsg =
+          reason || (warnings > 0 ? `Completed with ${warnings} security warning(s)` : "Normal Clean Submission");
 
         const res = await submitExamAction(examId, mappedAnswers, warnings, securityMsg, enteredPasscode);
 
@@ -321,6 +364,20 @@ export default function TakeExamClientView({
     }
   };
 
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   // Start Exam
   const handleStartExam = async () => {
     if (questions.length === 0) {
@@ -335,21 +392,18 @@ export default function TakeExamClientView({
   useEffect(() => {
     if (examStatus !== "running") return;
 
-    // 1. Tab visibility change (switching tabs or minimizing)
     const handleVisibilityChange = () => {
       if (document.hidden && isRunningRef.current) {
         triggerSecurityWarning("Tab switched or browser minimized.");
       }
     };
 
-    // 2. Window blur (alt-tabbing or clicking outside window)
     const handleBlur = () => {
       if (isRunningRef.current) {
         triggerSecurityWarning("Window lost focus or another application was opened.");
       }
     };
 
-    // 3. Fullscreen change
     const handleFullscreenChange = () => {
       const active = !!document.fullscreenElement;
       setIsFullscreen(active);
@@ -358,7 +412,6 @@ export default function TakeExamClientView({
       }
     };
 
-    // 4. Keyboard Shortcuts Interception (DevTools, View Source, Print, Save)
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isRunningRef.current) return;
 
@@ -369,40 +422,59 @@ export default function TakeExamClientView({
         return;
       }
 
-      // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (Inspect)
+      // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && ["I", "i", "J", "j", "C", "c"].includes(e.key)) {
         e.preventDefault();
         triggerSecurityWarning("Inspect Element shortcut blocked.");
         return;
       }
 
-      // Ctrl+U (View Source)
+      // Ctrl+U
       if ((e.ctrlKey || e.metaKey) && ["U", "u"].includes(e.key)) {
         e.preventDefault();
         triggerSecurityWarning("View Source shortcut blocked.");
         return;
       }
 
-      // Ctrl+P (Print)
-      if ((e.ctrlKey || e.metaKey) && ["P", "p"].includes(e.key)) {
-        e.preventDefault();
-        return;
-      }
+      // Keyboard option selection: A, B, C, D (or 1, 2, 3, 4)
+      const currentQ = questions[currentQuestionIdx];
+      if (currentQ && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const key = e.key.toUpperCase();
+        let targetOptIdx = -1;
+        if (key === "A" || key === "1") targetOptIdx = 0;
+        else if (key === "B" || key === "2") targetOptIdx = 1;
+        else if (key === "C" || key === "3") targetOptIdx = 2;
+        else if (key === "D" || key === "4") targetOptIdx = 3;
 
-      // Ctrl+S (Save)
-      if ((e.ctrlKey || e.metaKey) && ["S", "s"].includes(e.key)) {
-        e.preventDefault();
-        return;
+        if (targetOptIdx >= 0 && targetOptIdx < currentQ.options.length) {
+          e.preventDefault();
+          const chosen = currentQ.options[targetOptIdx];
+          setUserAnswers((prev) => ({ ...prev, [currentQ.id]: chosen }));
+          return;
+        }
+
+        // Arrow keys for Next / Previous question
+        if (e.key === "ArrowRight") {
+          e.preventDefault();
+          if (currentQuestionIdx < questions.length - 1) {
+            setCurrentQuestionIdx((i) => i + 1);
+          }
+          return;
+        }
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          if (currentQuestionIdx > 0) {
+            setCurrentQuestionIdx((i) => i - 1);
+          }
+          return;
+        }
       }
     };
 
-    // 5. Prevent copy, cut, paste, context menu
-    const preventContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-    };
+    const preventContextMenu = (e: MouseEvent) => e.preventDefault();
     const preventCopyCutPaste = (e: ClipboardEvent) => {
       e.preventDefault();
-      toast.error("Copying or pasting exam content is strictly disabled.");
+      toast.error("Copying or pasting exam content is disabled.");
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -424,8 +496,9 @@ export default function TakeExamClientView({
       document.removeEventListener("cut", preventCopyCutPaste);
       document.removeEventListener("paste", preventCopyCutPaste);
     };
-  }, [examStatus, triggerSecurityWarning]);
+  }, [examStatus, triggerSecurityWarning, currentQuestionIdx, questions]);
 
+  // Option selection
   const handleSelectOption = (questionId: number, option: Answer) => {
     setUserAnswers((prev) => ({
       ...prev,
@@ -433,26 +506,104 @@ export default function TakeExamClientView({
     }));
   };
 
+  // Clear answer
+  const handleClearAnswer = (questionId: number) => {
+    setUserAnswers((prev) => {
+      const next = { ...prev };
+      delete next[questionId];
+      return next;
+    });
+  };
+
+  // Toggle mark for review
+  const toggleMarkForReview = (questionId: number) => {
+    setMarkedForReview((prev) => {
+      const next = new Set(prev);
+      if (next.has(questionId)) {
+        next.delete(questionId);
+      } else {
+        next.add(questionId);
+      }
+      return next;
+    });
+  };
+
+  // Mark for review and proceed to next
+  const handleMarkAndNext = (questionId: number) => {
+    setMarkedForReview((prev) => {
+      const next = new Set(prev);
+      next.add(questionId);
+      return next;
+    });
+    if (currentQuestionIdx < questions.length - 1) {
+      setCurrentQuestionIdx((i) => i + 1);
+    }
+  };
+
+  // Psychological status of each question
+  const getQuestionStatus = useCallback(
+    (qId: number): "answered" | "review" | "unanswered" | "not-visited" => {
+      if (markedForReview.has(qId)) return "review";
+      if (userAnswers[qId] !== undefined) return "answered";
+      if (visitedQuestions.has(qId)) return "unanswered";
+      return "not-visited";
+    },
+    [markedForReview, userAnswers, visitedQuestions]
+  );
+
+  // Filter questions for the sidebar palette
+  const filteredQuestions = useMemo(() => {
+    return questions.map((q, idx) => ({ q, idx })).filter(({ q }) => {
+      const status = getQuestionStatus(q.id);
+      if (filterStatus === "answered") return status === "answered";
+      if (filterStatus === "review") return status === "review";
+      if (filterStatus === "unanswered") return status === "unanswered" || status === "not-visited";
+      return true;
+    });
+  }, [questions, filterStatus, getQuestionStatus]);
+
+  // Calculated counters
+  const answeredCount = Object.keys(userAnswers).length;
+  const reviewCount = markedForReview.size;
+  const answeredPercentage =
+    questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0;
+
+  // Active question and question type helpers
+  const currentQ = questions[currentQuestionIdx];
+  const nextQ = questions[currentQuestionIdx + 1];
+
+  const getTypeLabel = (type?: string) => {
+    if (type === "passage") return "Passage Comprehension";
+    if (type === "picture") return "Visual Context / Diagram";
+    return "Multiple Choice (MCQ)";
+  };
+
+  const getTypeIcon = (type?: string) => {
+    if (type === "passage") return <FaBookOpen className="text-xs" />;
+    if (type === "picture") return <FaFileImage className="text-xs" />;
+    return <FaCheckCircle className="text-xs" />;
+  };
+
   // --- 1. PASSWORD CHALLENGE SCREEN ---
   if (!isUnlocked) {
     return (
-      <PageContainer className="max-w-xl mx-auto py-16">
-        <div className="bg-white rounded-3xl p-8 md:p-10 border border-gray-100 shadow-xl text-center space-y-6">
-          <div className="w-16 h-16 bg-orange-100 text-[#dd6b01] rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-inner border border-orange-200">
+      <PageContainer className="max-w-md mx-auto py-16 px-4">
+        <div className="bg-white rounded p-6 sm:p-7 border border-slate-200/80 shadow-xs text-center space-y-4">
+          <div className="w-12 h-12 bg-primary/10 text-primary rounded flex items-center justify-center text-xl mx-auto border border-primary/20">
             <FaLock />
           </div>
 
-          <div className="space-y-2">
-            <span className="px-3 py-1 bg-rose-50 text-rose-700 font-extrabold text-[11px] rounded-full uppercase tracking-wider border border-rose-200">
-              Protected Exam
+          <div className="space-y-1">
+            <span className="px-2 py-0.5 bg-rose-50 text-rose-700 font-mono font-bold text-[10px] rounded uppercase tracking-wider border border-rose-200">
+              Passcode Protected
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-900">{examMeta.title}</h1>
-            <p className="text-xs text-gray-500 font-semibold">
-              This examination is private and password-protected. Please enter the access passcode provided by your instructor.
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{examMeta.title}</h1>
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+              This is a private examination. Enter your student access passcode provided by the instructor to proceed.
             </p>
           </div>
 
-          <form onSubmit={handleUnlockPasscode} className="space-y-4 text-left pt-2">
+          <form onSubmit={handleUnlockPasscode} className="space-y-4 text-left pt-1">
             <Input
               label="Exam Access Passcode"
               type="password"
@@ -467,14 +618,18 @@ export default function TakeExamClientView({
               autoFocus
             />
 
-            <div className="flex gap-3 pt-2">
-              <OutlineBtn type="button" onClick={() => router.back()} className="flex-1 !text-sm !py-3">
+            <div className="flex gap-2.5 pt-2">
+              <OutlineBtn
+                type="button"
+                onClick={() => router.back()}
+                className="flex-1 !text-xs !py-2.5 !rounded"
+              >
                 Cancel
               </OutlineBtn>
               <PrimaryBtn
                 type="submit"
                 disabled={verifyingPasscode}
-                className="flex-1 !text-sm !py-3 shadow-lg shadow-orange-500/20 disabled:opacity-50"
+                className="flex-1 !text-xs !py-2.5 !rounded shadow-xs disabled:opacity-50"
               >
                 {verifyingPasscode ? "Verifying..." : "Unlock Exam"}
               </PrimaryBtn>
@@ -488,97 +643,97 @@ export default function TakeExamClientView({
   // --- 2. INSTRUCTIONS SCREEN ---
   if (examStatus === "instructions") {
     return (
-      <PageContainer className="max-w-4xl mx-auto py-12">
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl space-y-6">
-          <div className="border-b border-gray-100 pb-6 text-center space-y-2">
-            <span className="px-3.5 py-1.5 bg-orange-100 text-[#dd6b01] font-extrabold text-xs rounded-full uppercase tracking-wider">
+      <PageContainer className="max-w-3xl mx-auto py-10 px-4">
+        <div className="bg-white rounded p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+          {/* Header */}
+          <div className="border-b border-slate-100 pb-5 text-center space-y-2">
+            <span className="px-2.5 py-0.5 bg-primary/10 text-primary font-mono font-bold text-[10px] rounded uppercase tracking-wider border border-primary/20">
               {examMeta.subject}
             </span>
-            <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
               {examMeta.title}
             </h1>
-            <p className="text-sm text-gray-500 font-semibold">
-              Please review all exam parameters and security rules carefully before starting.
+            <p className="text-xs text-slate-500 font-medium">
+              Please review all proctored parameters and security protocols before launching.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-orange-50/40 border border-orange-100 rounded-2xl text-center">
-            <div>
-              <p className="text-[10px] text-gray-400 font-extrabold uppercase">Total Questions</p>
-              <p className="text-xl font-black text-gray-900">
+          {/* Exam Parameters Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50 border border-slate-200/80 rounded text-center">
+            <div className="p-2">
+              <p className="text-[10px] font-mono text-slate-400 uppercase">Questions</p>
+              <p className="text-xl font-mono font-black text-slate-900">
                 {loadingQuestions ? "..." : questions.length}
               </p>
             </div>
-            <div>
-              <p className="text-[10px] text-gray-400 font-extrabold uppercase">Duration</p>
-              <p className="text-xl font-black text-[#dd6b01]">{examMeta.durationMinutes} Mins</p>
+            <div className="p-2 border-l border-slate-200/80">
+              <p className="text-[10px] font-mono text-slate-400 uppercase">Duration</p>
+              <p className="text-xl font-mono font-black text-primary">{examMeta.durationMinutes} Mins</p>
             </div>
-            <div>
-              <p className="text-[10px] text-gray-400 font-extrabold uppercase">Total Marks</p>
-              <p className="text-xl font-black text-blue-600">{examMeta.totalMarks}</p>
+            <div className="p-2 border-t sm:border-t-0 sm:border-l border-slate-200/80">
+              <p className="text-[10px] font-mono text-slate-400 uppercase">Total Marks</p>
+              <p className="text-xl font-mono font-black text-slate-900">{examMeta.totalMarks}</p>
             </div>
-            <div>
-              <p className="text-[10px] text-gray-400 font-extrabold uppercase">Negative Marking</p>
-              <p className="text-xl font-black text-rose-500">
+            <div className="p-2 border-t sm:border-t-0 border-l border-slate-200/80">
+              <p className="text-[10px] font-mono text-slate-400 uppercase">Negative Marks</p>
+              <p className="text-xl font-mono font-black text-rose-500">
                 {examMeta.negativeMarks > 0 ? `-${examMeta.negativeMarks}` : "None"}
               </p>
             </div>
           </div>
 
-          {/* Security Rules Notice */}
-          <div className="space-y-3 pt-2 bg-slate-50 border border-slate-200/80 rounded-2xl p-5">
-            <div className="flex items-center gap-2 text-rose-600 font-extrabold text-sm">
-              <FaShieldAlt className="text-lg" />
-              <span>Strict Anti-Cheating & Proctored Guidelines:</span>
+          {/* Psychological Guidelines */}
+          <div className="space-y-3 bg-slate-50/70 border border-slate-200/80 rounded p-4 sm:p-5">
+            <div className="flex items-center gap-2 text-rose-600 font-mono font-bold text-xs uppercase tracking-wider">
+              <FaShieldAlt className="text-sm" />
+              <span>Strict Proctored Examination Rules:</span>
             </div>
-            <ul className="text-xs text-gray-600 space-y-2 list-disc list-inside font-semibold">
+            <ul className="text-xs text-slate-600 space-y-2 list-disc list-inside font-medium leading-relaxed">
               <li>
-                <span className="font-bold text-gray-800">Fullscreen Enforcement:</span> The exam runs in fullscreen mode. Exiting triggers an immediate warning.
+                <strong className="text-slate-900 font-bold">Proctored Fullscreen:</strong> Exam launches in fullscreen. Exiting generates an audit violation.
               </li>
               <li>
-                <span className="font-bold text-gray-800">Tab Switch & Blur Tracking:</span> Switching tabs, minimizing, or clicking other applications will increment your warning count.
+                <strong className="text-slate-900 font-bold">Focus Tracking:</strong> Tab switching, minimizing browser, or opening developer tools increments your security warning count.
               </li>
               <li>
-                <span className="font-bold text-gray-800">3-Strike Automatic Termination:</span> Accumulating 3 security warnings will instantly terminate and submit your exam for review.
+                <strong className="text-slate-900 font-bold">3-Violation Auto-Submit:</strong> Accumulating 3 security strikes will automatically submit your exam.
               </li>
               <li>
-                <span className="font-bold text-gray-800">Copy & Right-Click Disabled:</span> Copying, inspecting elements, or capturing shortcuts are strictly blocked.
-              </li>
-              <li>
-                <span className="font-bold text-gray-800">Continuous Timer:</span> The countdown timer runs server-synchronized and submits automatically at zero.
+                <strong className="text-slate-900 font-bold">Question Palette:</strong> Use the right-hand Question Matrix to flag, jump, or review items anytime.
               </li>
             </ul>
           </div>
 
-          {/* No Questions Warning */}
+          {/* Empty Warning */}
           {!loadingQuestions && questions.length === 0 && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-3">
-              <p className="text-sm font-bold text-amber-800">
-                ⚠️ No questions found in this exam yet.
-              </p>
-              <p className="text-xs text-amber-600">
-                If questions were recently added, click refresh to synchronize the bank.
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded text-center space-y-2">
+              <p className="text-xs font-bold text-amber-800">
+                ⚠️ No questions found in this exam module yet.
               </p>
               <button
                 onClick={() => fetchQuestionsFallback(enteredPasscode)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold transition cursor-pointer"
               >
-                <FaSync /> Refresh Questions
+                <FaSync className="text-xs" /> Refresh Question Bank
               </button>
             </div>
           )}
 
-          <div className="pt-4 border-t border-gray-100 flex gap-4">
-            <OutlineBtn onClick={() => router.back()} className="flex-1 !text-sm !py-3">
-              Back to Dashboard
+          {/* Actions */}
+          <div className="pt-2 border-t border-slate-100 flex gap-3">
+            <OutlineBtn
+              onClick={() => router.back()}
+              className="flex-1 !text-xs !py-2.5 !rounded"
+            >
+              Exit to Dashboard
             </OutlineBtn>
             <PrimaryBtn
               onClick={handleStartExam}
               disabled={loadingQuestions || questions.length === 0}
-              className="flex-1 !text-sm !py-3 shadow-lg shadow-orange-500/20 gap-2 disabled:opacity-50"
+              className="flex-1 !text-xs !py-2.5 !rounded shadow-xs gap-2 disabled:opacity-50"
             >
               <FaExpand className="text-xs" />
-              <span>{loadingQuestions ? "Loading..." : "Enter Proctored Exam"}</span>
+              <span>{loadingQuestions ? "Synchronizing..." : "Start Examination"}</span>
             </PrimaryBtn>
           </div>
         </div>
@@ -586,10 +741,10 @@ export default function TakeExamClientView({
     );
   }
 
-  // --- 3. SUBMITTED SCREEN ---
+  // --- 3. SUBMITTED RESULTS SCREEN ---
   if (examStatus === "submitted" && examResult) {
     return (
-      <PageContainer className="max-w-4xl mx-auto py-12">
+      <PageContainer className="max-w-4xl mx-auto py-10 px-4">
         <div className="hidden print:block">
           <CertificatePrintLayout
             candidateName={examResult.userName || "Student"}
@@ -612,18 +767,21 @@ export default function TakeExamClientView({
           />
         </div>
 
-        <div className="print:hidden space-y-8">
-          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl text-center space-y-6">
-            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mx-auto border-4 border-green-200">
+        <div className="print:hidden space-y-6">
+          <div className="bg-white rounded p-6 sm:p-8 border border-slate-200/80 shadow-xs text-center space-y-5">
+            <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center text-3xl mx-auto border-2 border-emerald-200">
               <FaCheckCircle />
             </div>
-            <h1 className="text-3xl font-black text-gray-900">Exam Successfully Submitted!</h1>
-
-            {examResult.securityMessage && (
-              <p className="text-xs font-bold text-gray-500">
-                Audit Record: <span className="text-[#dd6b01]">{examResult.securityMessage}</span>
-              </p>
-            )}
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                Exam Successfully Submitted!
+              </h1>
+              {examResult.securityMessage && (
+                <p className="text-xs font-semibold text-slate-500">
+                  Security Log: <span className="text-primary font-bold">{examResult.securityMessage}</span>
+                </p>
+              )}
+            </div>
 
             <Scorecard
               result={{
@@ -638,23 +796,23 @@ export default function TakeExamClientView({
               passingPercent={examMeta.passMarks}
             />
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               {examResult.id && (
                 <PrimaryBtn
                   link={`/dashboard/reporting/${examResult.id}`}
-                  className="flex-1 !text-sm !py-3.5 shadow-lg shadow-orange-500/20 gap-2"
+                  className="flex-1 !text-xs !py-2.5 !rounded shadow-xs gap-2"
                 >
-                  <FaEye className="text-sm" />
-                  <span>View Detailed Report & Solutions</span>
+                  <FaEye className="text-xs" />
+                  <span>Review Solutions & Report</span>
                 </PrimaryBtn>
               )}
               <PrimaryBtn
                 onClick={() => window.print()}
-                className="flex-1 !text-sm !py-3.5 !from-purple-600 !to-indigo-600 shadow-lg shadow-purple-500/20"
+                className="flex-1 !text-xs !py-2.5 !rounded !bg-purple-600 hover:!bg-purple-500 !text-white shadow-xs"
               >
                 Print Official Certificate
               </PrimaryBtn>
-              <OutlineBtn link="/dashboard" className="flex-1 !text-sm !py-3.5">
+              <OutlineBtn link="/dashboard" className="flex-1 !text-xs !py-2.5 !rounded">
                 Back to Dashboard
               </OutlineBtn>
             </div>
@@ -664,42 +822,42 @@ export default function TakeExamClientView({
     );
   }
 
-  // --- 4. RUNNING PROCTORED EXAM SCREEN ---
+  // --- 4. RUNNING PROCTORED CONSOLE ---
   return (
-    <div className="select-none min-h-screen bg-slate-50/50 pb-20">
-      {/* SECURITY VIOLATION MODAL (POPUP ON TAB SWITCH / BLUR) */}
+    <div className="select-none min-h-screen bg-slate-100/60 flex flex-col">
+      {/* SECURITY VIOLATION MODAL */}
       <AnimatePresence>
         {showWarningModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.92, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white max-w-md w-full rounded-3xl p-6 md:p-8 border-2 border-rose-500 shadow-2xl text-center space-y-4"
+              exit={{ scale: 0.92, opacity: 0 }}
+              className="bg-white max-w-md w-full rounded p-6 sm:p-7 border-2 border-rose-500 shadow-2xl text-center space-y-4"
             >
-              <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center text-3xl mx-auto border-2 border-rose-200 animate-bounce">
+              <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded flex items-center justify-center text-xl mx-auto border border-rose-200 animate-bounce">
                 <FaExclamationTriangle />
               </div>
 
               <div className="space-y-1">
-                <span className="px-3 py-1 bg-rose-100 text-rose-700 font-black text-xs rounded-full uppercase tracking-wider">
-                  Security Warning #{warnings} of 3
+                <span className="px-2 py-0.5 bg-rose-100 text-rose-700 font-mono font-bold text-[10px] rounded uppercase tracking-wider">
+                  Security Strike #{warnings} of 3
                 </span>
-                <h3 className="text-xl font-black text-gray-900 pt-1">
-                  Proctor Violation Detected!
+                <h3 className="text-lg font-bold text-slate-900 pt-1">
+                  Proctor Alert: Focus Lost!
                 </h3>
                 <p className="text-xs text-rose-600 font-bold">{currentWarningMsg}</p>
               </div>
 
-              <p className="text-xs text-gray-600 leading-relaxed font-semibold">
-                Leaving the exam window, switching tabs, or exiting fullscreen is prohibited.
+              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                Leaving the exam window, switching applications, or exiting fullscreen violates testing integrity.
                 {warnings >= 3 ? (
-                  <span className="block font-bold text-rose-600 mt-2">
-                    Maximum limit exceeded! Your exam is being automatically submitted.
+                  <span className="block font-bold text-rose-600 mt-1">
+                    Maximum limit reached! Auto-submitting exam now.
                   </span>
                 ) : (
-                  <span className="block font-bold text-gray-800 mt-2">
-                    You have {3 - warnings} warning(s) remaining before automatic disqualification.
+                  <span className="block font-bold text-slate-900 mt-1">
+                    You have {3 - warnings} warning(s) remaining before immediate disqualification.
                   </span>
                 )}
               </p>
@@ -710,14 +868,14 @@ export default function TakeExamClientView({
                     await enterFullscreen();
                     setShowWarningModal(false);
                   }}
-                  className="w-full !py-3 !text-sm !from-rose-600 !to-orange-600"
+                  className="w-full !py-2 !text-xs !rounded !from-rose-600 !to-primary"
                 >
                   I Understand & Resume Fullscreen
                 </PrimaryBtn>
               ) : (
                 <button
                   disabled
-                  className="w-full py-3 bg-rose-600 text-white font-bold text-sm rounded-xl opacity-75"
+                  className="w-full py-2 bg-rose-600 text-white font-bold text-xs rounded opacity-80"
                 >
                   Submitting Exam Now...
                 </button>
@@ -727,44 +885,47 @@ export default function TakeExamClientView({
         )}
       </AnimatePresence>
 
-      {/* SUBMIT CONFIRMATION MODAL */}
+      {/* SUBMISSION CONFIRMATION MODAL */}
       <AnimatePresence>
         {showSubmitConfirm && (
-          <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.94, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white max-w-md w-full rounded-3xl p-6 md:p-8 border border-gray-100 shadow-2xl text-center space-y-5"
+              exit={{ scale: 0.94, opacity: 0 }}
+              className="bg-white max-w-md w-full rounded p-6 border border-slate-200/80 shadow-2xl text-center space-y-4"
             >
-              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto border-2 border-emerald-200">
+              <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center text-xl mx-auto border border-emerald-200">
                 <FaCheckCircle />
               </div>
 
               <div className="space-y-1">
-                <h3 className="text-xl font-black text-gray-900">Submit your exam?</h3>
-                <p className="text-xs text-gray-600 font-semibold leading-relaxed">
-                  You have answered{" "}
-                  <span className="font-black text-[#dd6b01]">{Object.keys(userAnswers).length}</span> of{" "}
-                  <span className="font-black">{questions.length}</span> questions. Once submitted, your answers
-                  are final and cannot be changed.
+                <h3 className="text-lg font-bold text-slate-900">Confirm Exam Submission?</h3>
+                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                  You have answered <strong className="text-primary font-bold">{answeredCount}</strong> of{" "}
+                  <strong className="text-slate-900 font-bold">{questions.length}</strong> questions.
+                  {reviewCount > 0 && (
+                    <span className="block text-review font-bold mt-1">
+                      ⚠️ You still have {reviewCount} question(s) marked for review.
+                    </span>
+                  )}
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2.5 pt-2">
                 <OutlineBtn
                   type="button"
                   onClick={() => setShowSubmitConfirm(false)}
-                  className="flex-1 !text-sm !py-3"
+                  className="flex-1 !text-xs !py-2 !rounded"
                 >
                   Keep Reviewing
                 </OutlineBtn>
                 <PrimaryBtn
                   onClick={() => handleFinish()}
                   disabled={isSubmitting}
-                  className="flex-1 !text-sm !py-3 gap-2"
+                  className="flex-1 !text-xs !py-2 !rounded gap-1.5"
                 >
-                  {isSubmitting ? "Submitting..." : "Confirm Submit"}
+                  {isSubmitting ? "Submitting..." : "Confirm & Submit"}
                 </PrimaryBtn>
               </div>
             </motion.div>
@@ -772,156 +933,495 @@ export default function TakeExamClientView({
         )}
       </AnimatePresence>
 
-      {/* Floating Proctored Security Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm px-4 sm:px-8 py-3.5">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black rounded-full border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span>PROCTORED ACTIVE</span>
+      {/* PROCTORED TOP CONSOLE BAR */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs px-3 sm:px-6 py-2.5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          {/* Left: Exam title & Proctor status */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[10px] font-bold rounded border border-emerald-200 shrink-0">
+              <span className="w-1.5 h-1.5 rounded bg-emerald-500 animate-ping" />
+              <span className="hidden sm:inline">PROCTORED ACTIVE</span>
+              <span className="sm:hidden">LIVE</span>
             </span>
 
             <span
-              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold border ${
+              className={cn(
+                "inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono text-[10px] font-bold border shrink-0",
                 warnings === 0
-                  ? "bg-slate-50 text-slate-700 border-slate-200"
+                  ? "bg-slate-50 text-slate-600 border-slate-200"
                   : warnings === 1
                   ? "bg-amber-50 text-amber-700 border-amber-300"
                   : "bg-rose-50 text-rose-700 border-rose-300 animate-pulse"
-              }`}
+              )}
             >
-              <span>Warnings: {warnings}/3</span>
+              Strikes: {warnings}/3
             </span>
+
+            <div className="hidden md:block min-w-0">
+              <h2 className="text-xs font-bold text-slate-800 truncate">{examMeta.title}</h2>
+              <p className="text-[10px] text-slate-400 font-semibold truncate">{examMeta.subject}</p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Center: Countdown Timer */}
+          <div className="shrink-0">
             <Timer
               duration={examMeta.durationMinutes * 60}
               onTimeUp={() => handleFinish("Time expired")}
               isRunning={examStatus === "running"}
             />
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Matrix Drawer Button */}
+            <button
+              onClick={() => setMobileDrawerOpen(true)}
+              className="lg:hidden px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded flex items-center gap-1.5 transition cursor-pointer"
+              title="Open Question Palette"
+            >
+              <FaThLarge className="text-xs text-primary" />
+              <span className="font-mono">{currentQuestionIdx + 1}/{questions.length}</span>
+            </button>
+
+            {/* Fullscreen Toggle */}
+            <button
+              onClick={toggleFullscreen}
+              className="hidden sm:flex p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded transition cursor-pointer"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? <FaCompress className="text-sm" /> : <FaExpand className="text-sm" />}
+            </button>
+
+            {/* Submit Button */}
             <button
               onClick={() => setShowSubmitConfirm(true)}
               disabled={isSubmitting}
-              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition cursor-pointer disabled:opacity-50"
+              className="px-3 sm:px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs transition cursor-pointer disabled:opacity-50 shrink-0"
             >
-              {isSubmitting ? "Submitting..." : "Submit Exam"}
+              {isSubmitting ? "..." : "Submit"}
             </button>
           </div>
         </div>
       </header>
 
-      {/* Main Examination Questions Container */}
-      <PageContainer className="space-y-6 max-w-4xl mx-auto pt-6">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-black text-gray-900">{examMeta.title}</h1>
-            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-              {examMeta.subject} • {questions.length} Questions Total
-            </p>
-          </div>
-          <div className="text-right">
-            <span className="text-xs font-extrabold text-gray-400 block">Answered</span>
-            <span className="text-lg font-black text-[#dd6b01]">
-              {Object.keys(userAnswers).length} / {questions.length}
-            </span>
-          </div>
+      {/* MOBILE HORIZONTAL QUICK-NAV STRIP (< lg only) */}
+      <div className="lg:hidden bg-white border-b border-slate-200/80 px-3 py-2 overflow-x-auto custom-scrollbar">
+        <div className="flex items-center gap-1 min-w-max">
+          {questions.map((q, idx) => {
+            const status = getQuestionStatus(q.id);
+            const isActive = idx === currentQuestionIdx;
+            return (
+              <button
+                key={q.id || idx}
+                onClick={() => setCurrentQuestionIdx(idx)}
+                className={cn(
+                  "w-7 h-7 rounded font-mono text-xs font-bold transition-all flex items-center justify-center cursor-pointer shrink-0",
+                  isActive
+                    ? "bg-primary text-white ring-2 ring-primary/40 font-black scale-105"
+                    : status === "answered"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-300"
+                    : status === "review"
+                    ? "bg-indigo-50 text-indigo-700 border border-indigo-300"
+                    : status === "unanswered"
+                    ? "bg-amber-50 text-amber-700 border border-amber-300"
+                    : "bg-slate-100 text-slate-500 border border-slate-200"
+                )}
+              >
+                {idx + 1}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Questions list */}
-        <div className="space-y-6">
-          {questions.map((q, idx) => (
-            <div
-              key={q.id || idx}
-              className="bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-sm space-y-4 hover:border-orange-200/60 transition"
-            >
-              <div className="flex items-start gap-3">
-                <span className="w-8 h-8 rounded-xl bg-orange-100 text-[#dd6b01] font-black text-sm flex items-center justify-center flex-shrink-0">
-                  {idx + 1}
-                </span>
-                <h3 className="text-base sm:text-lg font-bold text-gray-900 pt-0.5 leading-snug">
-                  {q.questionText}
-                </h3>
-              </div>
+      {/* MAIN EXAM STAGE: DUAL PANE LAYOUT */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 py-4 flex flex-col justify-between">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          {/* ========================================================
+              LEFT COLUMN: MAIN QUESTION CONSOLE (Col 1-8 / 1-9)
+              ======================================================== */}
+          <div className="lg:col-span-8 xl:col-span-9 space-y-3">
+            {currentQ ? (
+              <div className="bg-white rounded border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
+                {/* QUESTION META RIBBON */}
+                <div className="px-4 sm:px-5 py-2.5 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded bg-primary text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs">
+                      {currentQuestionIdx + 1}
+                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 tracking-tight block">
+                        Question {currentQuestionIdx + 1} of {questions.length}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] text-primary font-bold">
+                        {getTypeIcon(currentQ.type)}
+                        <span>{getTypeLabel(currentQ.type)}</span>
+                      </span>
+                    </div>
+                  </div>
 
-              {q.passage && (
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 text-xs text-gray-700 leading-relaxed font-medium">
-                  {q.passage}
+                  {/* Indicators & Psychological Flag / Clear Actions */}
+                  <div className="flex items-center gap-2">
+                    <span className="hidden sm:inline-flex px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                      +1.0 Mark {examMeta.negativeMarks > 0 && `• -${examMeta.negativeMarks} Neg`}
+                    </span>
+
+                    <button
+                      onClick={() => toggleMarkForReview(currentQ.id)}
+                      className={cn(
+                        "px-2 py-1 rounded text-xs font-bold transition flex items-center gap-1.5 border cursor-pointer",
+                        markedForReview.has(currentQ.id)
+                          ? "bg-indigo-50 text-indigo-700 border-indigo-300"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+                      )}
+                    >
+                      <FaFlag className="text-[10px]" />
+                      <span>{markedForReview.has(currentQ.id) ? "Marked" : "Flag for Review"}</span>
+                    </button>
+
+                    {userAnswers[currentQ.id] !== undefined && (
+                      <button
+                        onClick={() => handleClearAnswer(currentQ.id)}
+                        className="px-2 py-1 text-slate-400 hover:text-rose-600 text-xs font-bold transition cursor-pointer flex items-center gap-1"
+                        title="Clear chosen option"
+                      >
+                        <FaEraser className="text-[10px]" />
+                        <span className="hidden sm:inline">Clear</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              {q.pictureUrl && (
-                <div className="overflow-hidden rounded-2xl border border-gray-200">
-                  <Image
-                    src={q.pictureUrl}
-                    alt="Question visual context"
-                    width={500}
-                    height={300}
-                    className="object-cover max-h-72 w-full"
+                {/* QUESTION BODY (ZERO WASTED GAP) */}
+                <div className="p-4 sm:p-5 space-y-3.5">
+                  {/* Passage Text (if applicable) */}
+                  {currentQ.passage && (
+                    <div className="p-3 bg-slate-50 rounded border border-slate-200 text-xs text-slate-700 leading-relaxed max-h-48 overflow-y-auto custom-scrollbar font-medium">
+                      <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase text-slate-400 mb-1">
+                        <FaBookOpen /> Reference Passage
+                      </div>
+                      {currentQ.passage}
+                    </div>
+                  )}
+
+                  {/* Context Image (if applicable) */}
+                  {currentQ.pictureUrl && (
+                    <div className="overflow-hidden rounded border border-slate-200 bg-slate-50 flex items-center justify-center max-h-64">
+                      <Image
+                        src={currentQ.pictureUrl}
+                        alt="Question context"
+                        width={500}
+                        height={260}
+                        className="object-contain max-h-60 w-auto"
+                      />
+                    </div>
+                  )}
+
+                  {/* Question Stem */}
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+                    {currentQ.questionText}
+                  </h3>
+
+                  {/* Options Matrix */}
+                  <div className="space-y-2 pt-1">
+                    {currentQ.options.map((opt, optIdx) => {
+                      const isSelected = userAnswers[currentQ.id] === opt;
+                      const optLetter = String.fromCharCode(65 + optIdx);
+
+                      return (
+                        <button
+                          key={optIdx}
+                          type="button"
+                          onClick={() => handleSelectOption(currentQ.id, opt)}
+                          className={cn(
+                            "w-full p-2.5 sm:p-3 rounded text-xs font-medium text-left border transition-all flex items-center justify-between cursor-pointer group",
+                            isSelected
+                              ? "bg-primary/10 border-primary text-primary shadow-2xs font-bold"
+                              : "bg-white border-slate-200/90 hover:border-primary/40 hover:bg-slate-50/70 text-slate-700"
+                          )}
+                        >
+                          <span className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <span
+                              className={cn(
+                                "w-5 h-5 rounded font-mono text-[11px] font-bold flex items-center justify-center shrink-0 transition-colors",
+                                isSelected
+                                  ? "bg-primary text-white"
+                                  : "bg-slate-100 text-slate-500 group-hover:bg-primary/10 group-hover:text-primary"
+                              )}
+                            >
+                              {optLetter}
+                            </span>
+                            <span className="break-words leading-relaxed">{opt}</span>
+                          </span>
+                          {isSelected && (
+                            <span className="w-4 h-4 rounded bg-primary text-white flex items-center justify-center text-[9px] shrink-0 font-bold">
+                              <FaCheck />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* BOTTOM STICKY CONSOLE ACTION STRIP */}
+                <div className="px-4 sm:px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => {
+                      if (currentQuestionIdx > 0) setCurrentQuestionIdx((i) => i - 1);
+                    }}
+                    disabled={currentQuestionIdx === 0}
+                    className="px-3 py-1.5 text-xs font-bold rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-35 transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <FaArrowLeft className="text-[10px]" />
+                    <span className="hidden sm:inline">Previous</span>
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleMarkAndNext(currentQ.id)}
+                      className="px-3 py-1.5 text-xs font-bold rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <FaFlag className="text-[10px]" />
+                      <span className="hidden sm:inline">Mark & Next</span>
+                      <span className="sm:hidden">Flag</span>
+                    </button>
+
+                    {currentQuestionIdx < questions.length - 1 ? (
+                      <button
+                        onClick={() => setCurrentQuestionIdx((i) => i + 1)}
+                        className="px-3.5 sm:px-4 py-1.5 text-xs font-bold rounded bg-primary hover:bg-primary-dark text-white shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Save & Next</span>
+                        <FaArrowRight className="text-[10px]" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowSubmitConfirm(true)}
+                        className="px-3.5 sm:px-4 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                      >
+                        <FaCheckCircle className="text-[10px]" />
+                        <span>Finish Exam</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white p-8 rounded border border-slate-200/80 text-center">
+                <p className="text-xs text-slate-500 font-bold">Question not found.</p>
+              </div>
+            )}
+          </div>
+
+          {/* ========================================================
+              RIGHT COLUMN: DESKTOP QUESTION MATRIX SIDEBAR
+              ======================================================== */}
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 space-y-3 sticky top-16">
+            <div className="bg-white rounded border border-slate-200/80 shadow-xs p-3.5 space-y-3">
+              {/* Palette Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
+                    Question Matrix
+                  </h4>
+                  <p className="text-[10px] font-mono text-slate-400">
+                    {answeredCount} / {questions.length} answered ({answeredPercentage}%)
+                  </p>
+                </div>
+                <div className="w-10 h-1.5 rounded bg-slate-100 overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded transition-all duration-300"
+                    style={{ width: `${answeredPercentage}%` }}
                   />
                 </div>
-              )}
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                {q.options.map((opt, optIdx) => {
-                  const isSelected = userAnswers[q.id] === opt;
-                  const optLetter = String.fromCharCode(65 + optIdx);
+              {/* NEXT EXAM TYPE INDICATOR */}
+              <div className="p-2 rounded bg-primary/5 border border-primary/20 flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] font-mono font-bold uppercase text-primary tracking-wider block">
+                    Next In Sequence
+                  </span>
+                  <p className="text-xs font-bold text-slate-800">
+                    {nextQ
+                      ? `Q${currentQuestionIdx + 2}: ${getTypeLabel(nextQ.type)}`
+                      : "Final Question (Ready)"}
+                  </p>
+                </div>
+                <div className="w-5 h-5 rounded bg-primary/10 text-primary flex items-center justify-center text-xs">
+                  {nextQ ? getTypeIcon(nextQ.type) : <FaCheck />}
+                </div>
+              </div>
+
+              {/* PSYCHOLOGICAL STATUS LEGEND */}
+              <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono text-slate-600">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded bg-emerald-500 text-white flex items-center justify-center text-[7px]">✓</span>
+                  <span>Answered ({answeredCount})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded bg-indigo-500 text-white flex items-center justify-center text-[7px]">⚑</span>
+                  <span>Review ({reviewCount})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded bg-amber-400 text-white flex items-center justify-center text-[7px]">•</span>
+                  <span>Skipped ({visitedQuestions.size - answeredCount > 0 ? visitedQuestions.size - answeredCount : 0})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded bg-slate-200 border border-slate-300" />
+                  <span>Unvisited ({questions.length - visitedQuestions.size})</span>
+                </div>
+              </div>
+
+              {/* FILTER TABS */}
+              <div className="flex items-center p-0.5 bg-slate-100 rounded text-[10px] font-mono font-bold">
+                {(["all", "answered", "unanswered", "review"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setFilterStatus(tab)}
+                    className={cn(
+                      "flex-1 py-1 rounded capitalize transition cursor-pointer",
+                      filterStatus === tab
+                        ? "bg-white text-slate-900 shadow-2xs font-extrabold"
+                        : "text-slate-500 hover:text-slate-800"
+                    )}
+                  >
+                    {tab === "all" ? "All" : tab === "unanswered" ? "Skip" : tab}
+                  </button>
+                ))}
+              </div>
+
+              {/* 5-COLUMN QUESTION NUMBER BUTTON MATRIX */}
+              <div className="grid grid-cols-5 gap-1 max-h-52 overflow-y-auto custom-scrollbar p-0.5">
+                {filteredQuestions.map(({ q, idx }) => {
+                  const status = getQuestionStatus(q.id);
+                  const isCurrent = idx === currentQuestionIdx;
 
                   return (
                     <button
-                      key={optIdx}
-                      type="button"
-                      onClick={() => handleSelectOption(q.id, opt)}
-                      className={`p-4 rounded-2xl text-xs font-bold text-left border-2 transition flex items-center justify-between cursor-pointer ${
-                        isSelected
-                          ? "bg-orange-50/70 border-[#dd6b01] text-[#dd6b01] shadow-sm"
-                          : "bg-white border-gray-200 hover:border-orange-300 text-gray-700"
-                      }`}
+                      key={q.id || idx}
+                      onClick={() => setCurrentQuestionIdx(idx)}
+                      className={cn(
+                        "h-7 rounded font-mono text-xs font-bold transition-all relative flex items-center justify-center cursor-pointer",
+                        isCurrent
+                          ? "bg-primary text-white ring-2 ring-primary/40 shadow-xs font-black scale-105 z-10"
+                          : status === "answered"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100"
+                          : status === "review"
+                          ? "bg-indigo-50 text-indigo-700 border border-indigo-300 hover:bg-indigo-100"
+                          : status === "unanswered"
+                          ? "bg-amber-50 text-amber-700 border border-amber-300 hover:bg-amber-100"
+                          : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
+                      )}
+                      title={`Q${idx + 1} • ${getTypeLabel(q.type)} • ${status}`}
                     >
-                      <span className="flex items-center gap-2.5">
-                        <span
-                          className={`w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center ${
-                            isSelected
-                              ? "bg-[#dd6b01] text-white"
-                              : "bg-gray-100 text-gray-500"
-                          }`}
-                        >
-                          {optLetter}
+                      {idx + 1}
+                      {markedForReview.has(q.id) && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded bg-indigo-600 text-[6px] text-white flex items-center justify-center">
+                          ⚑
                         </span>
-                        <span>{opt}</span>
-                      </span>
-                      {isSelected && <span className="text-sm font-black text-[#dd6b01]">✓</span>}
+                      )}
                     </button>
                   );
                 })}
               </div>
-            </div>
-          ))}
 
-          {questions.length === 0 && (
-            <div className="bg-white p-12 rounded-3xl border border-gray-100 text-center space-y-3">
-              <p className="text-gray-500 font-bold text-sm">No questions available in this exam.</p>
-              <PrimaryBtn onClick={() => fetchQuestionsFallback(enteredPasscode)} className="!text-xs">
-                Refresh Questions
-              </PrimaryBtn>
+              {/* Submit Quick CTA */}
+              <button
+                onClick={() => setShowSubmitConfirm(true)}
+                className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs transition cursor-pointer font-mono"
+              >
+                Submit Exam Now
+              </button>
             </div>
-          )}
+          </aside>
         </div>
+      </main>
 
-        {/* Bottom Submission Strip */}
-        <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
-          <span className="text-xs text-gray-500 font-semibold">
-            Make sure to review all answers before submitting.
-          </span>
-          <button
-            onClick={() => setShowSubmitConfirm(true)}
-            disabled={isSubmitting}
-            className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-md transition cursor-pointer disabled:opacity-50"
-          >
-            {isSubmitting ? "Submitting..." : "Submit Final Answers"}
-          </button>
-        </div>
-      </PageContainer>
+      {/* MOBILE QUESTION MATRIX SLIDE-UP DRAWER */}
+      <AnimatePresence>
+        {mobileDrawerOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileDrawerOpen(false)}
+              className="lg:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 26, stiffness: 240 }}
+              className="lg:hidden fixed bottom-0 left-0 right-0 max-h-[80vh] bg-white rounded-t z-[60] shadow-2xl p-4 flex flex-col space-y-3"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <FaThLarge className="text-primary text-sm" />
+                  <h4 className="text-xs font-bold text-slate-900 uppercase font-mono">Question Palette</h4>
+                </div>
+                <button
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 rounded cursor-pointer"
+                >
+                  <FaTimes className="text-sm" />
+                </button>
+              </div>
+
+              {/* Legend */}
+              <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono font-bold text-slate-600">
+                <span className="flex items-center gap-1">🟢 Answered ({answeredCount})</span>
+                <span className="flex items-center gap-1">🟣 Review ({reviewCount})</span>
+                <span className="flex items-center gap-1">⚪ Total ({questions.length})</span>
+              </div>
+
+              {/* Mobile Grid */}
+              <div className="grid grid-cols-5 gap-1.5 overflow-y-auto custom-scrollbar max-h-60 p-1">
+                {questions.map((q, idx) => {
+                  const status = getQuestionStatus(q.id);
+                  const isCurrent = idx === currentQuestionIdx;
+                  return (
+                    <button
+                      key={q.id || idx}
+                      onClick={() => {
+                        setCurrentQuestionIdx(idx);
+                        setMobileDrawerOpen(false);
+                      }}
+                      className={cn(
+                        "h-8 rounded font-mono text-xs font-bold transition flex items-center justify-center cursor-pointer",
+                        isCurrent
+                          ? "bg-primary text-white font-black scale-105 ring-2 ring-primary/30"
+                          : status === "answered"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-300"
+                          : status === "review"
+                          ? "bg-indigo-50 text-indigo-700 border border-indigo-300"
+                          : "bg-slate-100 text-slate-600"
+                      )}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    setShowSubmitConfirm(true);
+                  }}
+                  className="w-full py-2 bg-emerald-600 text-white font-bold text-xs rounded shadow-xs"
+                >
+                  Submit Final Answers
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -7,14 +7,14 @@ export default function DashboardSkeleton() {
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            className="rounded-2xl bg-white border border-slate-200/80 p-5 space-y-3"
+            className="rounded bg-white border border-slate-200/80 p-4 space-y-2.5"
           >
             <div className="h-3 w-20 rounded bg-slate-200/70 animate-pulse" />
-            <div className="h-7 w-16 rounded bg-slate-200/70 animate-pulse" />
+            <div className="h-6 w-16 rounded bg-slate-200/70 animate-pulse" />
           </div>
         ))}
       </div>
-      <div className="h-56 rounded-3xl bg-slate-200/70 animate-pulse" />
+      <div className="h-56 rounded bg-slate-200/70 animate-pulse" />
     </div>
   );
 }

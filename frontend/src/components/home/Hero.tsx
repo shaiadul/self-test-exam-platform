@@ -24,11 +24,11 @@ export const Hero = () => {
             initial={{ opacity: 0, y: -15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100/80 border border-orange-200/80 text-primary font-bold text-xs uppercase tracking-wider shadow-xs"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded bg-orange-100/80 border border-orange-200/80 text-primary font-mono font-bold text-xs uppercase tracking-wider shadow-xs"
           >
             <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded bg-primary opacity-75"></span>
+              <span className="relative inline-flex rounded h-2 w-2 bg-primary"></span>
             </span>
             <span className="flex items-center gap-1.5">
               <FaBolt className="text-amber-500" /> Next-Gen Online Assessment Platform
@@ -63,12 +63,12 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-3.5 pt-2"
+            className="flex flex-col sm:flex-row gap-3 pt-2"
           >
-            <PrimaryBtn link="/auth" className="w-full sm:w-auto px-7 shadow-lg shadow-primary/20 hover-lift py-3 text-sm sm:text-base font-bold whitespace-nowrap">
+            <PrimaryBtn link="/auth" className="w-full sm:w-auto px-6 !py-2.5 text-sm font-bold whitespace-nowrap !rounded shadow-xs">
               Start Practice Free
             </PrimaryBtn>
-            <OutlineBtn link="/auth/register" className="w-full sm:w-auto px-7 hover-lift py-3 text-sm sm:text-base font-bold whitespace-nowrap">
+            <OutlineBtn link="/auth/register" className="w-full sm:w-auto px-6 !py-2.5 text-sm font-bold whitespace-nowrap !rounded">
               Create Free Account
             </OutlineBtn>
           </motion.div>
@@ -81,16 +81,16 @@ export const Hero = () => {
             className="grid grid-cols-3 gap-3 sm:gap-6 pt-6 sm:pt-8 border-t border-gray-200/70"
           >
             <div className="flex flex-col">
-              <span className="text-xl sm:text-3xl font-black text-gray-900">1,200+</span>
-              <span className="text-[11px] sm:text-xs text-gray-500 font-bold mt-0.5">Active Learners</span>
+              <span className="text-xl sm:text-3xl font-mono font-black text-gray-900">1,200+</span>
+              <span className="text-[10px] font-mono text-gray-500 font-bold mt-0.5">Active Learners</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl sm:text-3xl font-black text-gray-900">10,000+</span>
-              <span className="text-[11px] sm:text-xs text-gray-500 font-bold mt-0.5">Mock Tests Taken</span>
+              <span className="text-xl sm:text-3xl font-mono font-black text-gray-900">10,000+</span>
+              <span className="text-[10px] font-mono text-gray-500 font-bold mt-0.5">Mock Tests Taken</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xl sm:text-3xl font-black text-gray-900">94.2%</span>
-              <span className="text-[11px] sm:text-xs text-gray-500 font-bold mt-0.5">Success Rate</span>
+              <span className="text-xl sm:text-3xl font-mono font-black text-gray-900">94.2%</span>
+              <span className="text-[10px] font-mono text-gray-500 font-bold mt-0.5">Success Rate</span>
             </div>
           </motion.div>
         </div>
@@ -103,43 +103,43 @@ export const Hero = () => {
           className="relative flex items-center justify-center mt-4 lg:mt-0"
         >
           {/* Glass background frame */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/50 to-amber-50/50 border border-white/80 rounded-3xl backdrop-blur-sm -rotate-1 sm:-rotate-2 transform scale-102 sm:scale-105 pointer-events-none shadow-xl"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/50 to-amber-50/50 border border-slate-200/80 rounded backdrop-blur-sm -rotate-1 sm:-rotate-2 transform scale-102 sm:scale-105 pointer-events-none shadow-xs"></div>
           
-          <div className="relative bg-white/90 border border-white/80 rounded-3xl p-4 sm:p-8 backdrop-blur-md shadow-2xl flex flex-col items-center w-full z-10">
+          <div className="relative bg-white/95 border border-slate-200/80 rounded p-4 sm:p-6 backdrop-blur-md shadow-xs flex flex-col items-center w-full z-10">
             <div className="w-full max-w-xs sm:max-w-md aspect-square flex items-center justify-center">
               <Lottie animationData={landingAnimation} loop={true} className="w-full h-full" />
             </div>
 
             {/* Responsive floating achievements */}
-            <div className="hidden sm:flex absolute top-6 -left-4 bg-white/95 border border-gray-100 rounded-2xl p-3 shadow-xl items-center gap-3 animate-bounce" style={{ animationDuration: "5s" }}>
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base font-bold shadow-xs">
+            <div className="hidden sm:flex absolute top-6 -left-4 bg-white/95 border border-slate-200/80 rounded p-2.5 shadow-xs items-center gap-2.5 animate-bounce" style={{ animationDuration: "5s" }}>
+              <div className="w-8 h-8 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold shadow-2xs">
                 <FaCheckCircle />
               </div>
               <div className="text-left">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Instant Review</p>
-                <p className="text-xs font-black text-gray-800">100% Detailed Scoring</p>
+                <p className="text-[9px] font-mono text-gray-400 font-bold uppercase tracking-wider">Instant Review</p>
+                <p className="text-xs font-bold text-gray-800">100% Detailed Scoring</p>
               </div>
             </div>
 
-            <div className="hidden sm:flex absolute bottom-6 -right-4 bg-white/95 border border-gray-100 rounded-2xl p-3 shadow-xl items-center gap-3 animate-bounce" style={{ animationDuration: "7s" }}>
-              <div className="w-9 h-9 rounded-xl bg-orange-50 text-primary flex items-center justify-center text-base font-bold shadow-xs">
+            <div className="hidden sm:flex absolute bottom-6 -right-4 bg-white/95 border border-slate-200/80 rounded p-2.5 shadow-xs items-center gap-2.5 animate-bounce" style={{ animationDuration: "7s" }}>
+              <div className="w-8 h-8 rounded bg-orange-50 text-primary flex items-center justify-center text-sm font-bold shadow-2xs">
                 <FaChartLine />
               </div>
               <div className="text-left">
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">LMS Tracks</p>
-                <p className="text-xs font-black text-gray-800">Real-time Analytics</p>
+                <p className="text-[9px] font-mono text-gray-400 font-bold uppercase tracking-wider">LMS Tracks</p>
+                <p className="text-xs font-bold text-gray-800">Real-time Analytics</p>
               </div>
             </div>
 
             {/* Mobile bottom badges */}
             <div className="flex sm:hidden items-center justify-between w-full pt-4 gap-2 border-t border-gray-100 mt-2">
-              <div className="flex items-center gap-2 bg-emerald-50/80 px-2.5 py-1.5 rounded-xl border border-emerald-100">
+              <div className="flex items-center gap-2 bg-emerald-50/80 px-2.5 py-1.5 rounded border border-emerald-100">
                 <FaCheckCircle className="text-emerald-500 text-xs" />
                 <span className="text-[11px] font-bold text-emerald-800">Instant Evaluation</span>
               </div>
-              <div className="flex items-center gap-2 bg-orange-50/80 px-2.5 py-1.5 rounded-xl border border-orange-100">
+              <div className="flex items-center gap-2 bg-orange-50/80 px-2.5 py-1.5 rounded border border-orange-100">
                 <FaShieldAlt className="text-primary text-xs" />
-                <span className="text-[11px] font-bold text-orange-800">Secure Testing</span>
+                <span className="text-[11px] font-bold text-primary">Proctored Security</span>
               </div>
             </div>
           </div>

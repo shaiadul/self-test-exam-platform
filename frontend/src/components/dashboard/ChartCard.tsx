@@ -50,44 +50,75 @@ export default function ChartCard({
 
   const gradientId = `areaGradient-${color.replace("#", "")}`;
 
+  const lastItem = chartData[chartData.length - 1];
+  const lastScore = lastItem ? lastItem.value : 0;
+  const deltaVsAvg = lastScore - avg;
+
   return (
     <div className="w-full flex flex-col justify-between h-full">
+      {/* Vibe Coding HUD Telemetry Bar */}
+      <div className="grid grid-cols-3 gap-2 pb-3 mb-2 border-b border-slate-100">
+        <div className="px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/60">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase font-mono font-bold text-slate-400">Latest</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          </div>
+          <p className="text-base sm:text-lg font-mono font-black text-slate-900 mt-0.5">
+            {lastScore.toFixed(1)}%
+          </p>
+        </div>
+
+        <div className="px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/60">
+          <span className="text-[10px] uppercase font-mono font-bold text-slate-400">Average</span>
+          <p className="text-base sm:text-lg font-mono font-black text-slate-700 mt-0.5">
+            {avg.toFixed(1)}%
+          </p>
+        </div>
+
+        <div className="px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/60">
+          <span className="text-[10px] uppercase font-mono font-bold text-slate-400">Peak Mark</span>
+          <p className="text-base sm:text-lg font-mono font-black text-emerald-600 mt-0.5">
+            {maxItem?.value?.toFixed(1) || "0.0"}%
+          </p>
+        </div>
+      </div>
+
       {/* Chart Canvas */}
-      <div className="w-full h-[280px] sm:h-[300px]">
+      <div className="w-full h-[220px] sm:h-[240px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={chartData}
-            margin={{ top: 20, right: 15, left: -20, bottom: 5 }}
+            margin={{ top: 12, right: 10, left: -25, bottom: 0 }}
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity={0.35} />
-                <stop offset="60%" stopColor={strokeColor} stopOpacity={0.08} />
+                <stop offset="0%" stopColor={color} stopOpacity={0.30} />
+                <stop offset="60%" stopColor={strokeColor} stopOpacity={0.05} />
                 <stop offset="100%" stopColor="#ffffff" stopOpacity={0.0} />
               </linearGradient>
             </defs>
 
             <CartesianGrid
-              strokeDasharray="4 4"
+              strokeDasharray="2 2"
               stroke="#e2e8f0"
               vertical={false}
-              opacity={0.7}
+              opacity={0.8}
             />
 
             <XAxis
               dataKey="name"
               stroke="#64748b"
-              fontSize={12}
+              fontSize={11}
               fontWeight={600}
               tickLine={false}
               axisLine={false}
-              dy={10}
+              dy={8}
             />
             <YAxis
               domain={[0, 100]}
               ticks={[0, 25, 50, 75, 100]}
               stroke="#94a3b8"
-              fontSize={11}
+              fontSize={10}
               fontWeight={500}
               tickLine={false}
               axisLine={false}
@@ -98,15 +129,22 @@ export default function ChartCard({
             <Tooltip
               content={({ active, payload, label }) => {
                 if (active && payload && payload.length) {
+                  const val = Number(payload[0].value);
+                  const diff = val - avg;
                   return (
-                    <div className="bg-slate-900/95 backdrop-blur-md text-white shadow-xl rounded-2xl p-3.5 border border-slate-800 text-xs min-w-[140px] animate-fadeIn">
-                      <p className="font-bold text-slate-300 mb-1.5 text-[11px] uppercase tracking-wider">
-                        {label}
-                      </p>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-slate-400">Score:</span>
-                        <span className="text-amber-400 font-black text-base">
-                          {Number(payload[0].value).toFixed(1)}%
+                    <div className="bg-slate-950/95 backdrop-blur-md text-white shadow-2xl rounded p-2.5 border border-slate-800 text-xs min-w-[140px] font-mono animate-fadeIn">
+                      <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-1 mb-1.5">
+                        <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">{label}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      </div>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-slate-400 text-[11px]">Score:</span>
+                        <span className="text-white font-black text-sm">{val.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+                        <span>vs Avg:</span>
+                        <span className={diff >= 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                          {diff >= 0 ? `+${diff.toFixed(1)}%` : `${diff.toFixed(1)}%`}
                         </span>
                       </div>
                     </div>
@@ -121,15 +159,15 @@ export default function ChartCard({
               <ReferenceLine
                 y={avg}
                 stroke="#10b981"
-                strokeDasharray="4 4"
+                strokeDasharray="3 3"
                 strokeWidth={1.5}
                 label={{
                   value: `${avgLabel}: ${avg.toFixed(0)}%`,
                   position: "insideTopRight",
                   fill: "#059669",
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: 700,
-                  offset: 8,
+                  offset: 6,
                 }}
               />
             )}
@@ -139,20 +177,20 @@ export default function ChartCard({
               <ReferenceDot
                 x={maxItem.name}
                 y={maxItem.value}
-                r={5.5}
+                r={4.5}
                 fill="#10b981"
                 stroke="#ffffff"
-                strokeWidth={2.5}
+                strokeWidth={2}
               />
             )}
             {minItem && chartData.length > 1 && minItem !== maxItem && (
               <ReferenceDot
                 x={minItem.name}
                 y={minItem.value}
-                r={5.5}
+                r={4.5}
                 fill="#ef4444"
                 stroke="#ffffff"
-                strokeWidth={2.5}
+                strokeWidth={2}
               />
             )}
 
@@ -160,19 +198,19 @@ export default function ChartCard({
               type="monotone"
               dataKey="value"
               stroke={color}
-              strokeWidth={3}
+              strokeWidth={2.5}
               fill={`url(#${gradientId})`}
               dot={{
-                r: 4.5,
+                r: 3.5,
                 fill: "#ffffff",
                 stroke: color,
-                strokeWidth: 2.5,
+                strokeWidth: 2,
               }}
               activeDot={{
-                r: 7,
+                r: 5.5,
                 fill: color,
                 stroke: "#ffffff",
-                strokeWidth: 3,
+                strokeWidth: 2.5,
               }}
             />
           </AreaChart>
@@ -180,28 +218,28 @@ export default function ChartCard({
       </div>
 
       {/* Footer Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-slate-100 text-xs font-semibold text-slate-500">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-100 text-xs font-semibold text-slate-500 font-mono">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span
-              className="w-3 h-3 rounded-full"
+              className="w-2.5 h-2.5 rounded-sm"
               style={{ backgroundColor: color }}
             />
-            <span>Score %</span>
+            <span className="text-[11px]">Score Trajectory</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 border-t-2 border-dashed border-emerald-500" />
-            <span>Benchmark Avg ({avg.toFixed(0)}%)</span>
+            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-emerald-500" />
+            <span className="text-[11px]">Avg Target ({avg.toFixed(0)}%)</span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 text-[11px]">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Peak</span>
+        <div className="flex items-center gap-2.5 text-[10px]">
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span>Peak ({maxItem?.value || 0}%)</span>
           </div>
-          <div className="flex items-center gap-1 text-[11px]">
-            <span className="w-2 h-2 rounded-full bg-rose-500" />
-            <span>Trough</span>
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+            <span>Trough ({minItem?.value || 0}%)</span>
           </div>
         </div>
       </div>

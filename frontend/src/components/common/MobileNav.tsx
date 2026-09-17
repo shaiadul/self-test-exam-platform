@@ -5,24 +5,25 @@ import Link from "next/link";
 import { HiMenuAlt3, HiX } from "react-icons/hi";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { FaHome, FaBoxOpen, FaChartBar, FaUserCog, FaClipboardList, FaPoll } from "react-icons/fa";
+import { FaHome, FaBoxOpen, FaChartBar, FaUserCog, FaClipboardList, FaPoll, FaBars } from "react-icons/fa";
 import { IoMdLogOut, IoMdSettings } from "react-icons/io";
 import { SiGoogletagmanager } from "react-icons/si";
 import { MdQuestionAnswer } from "react-icons/md";
 import { TbMessageReportFilled } from "react-icons/tb";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "../../lib/utils";
 
 const menuItems = [
-  { name: "Dashboard", href: "/dashboard", icon: <FaHome /> },
-  { name: "Exam Pack", href: "/dashboard/exam-pack", icon: <FaBoxOpen /> },
-  { name: "Manage Exam Pack", href: "/dashboard/manage-exam-pack", icon: <SiGoogletagmanager /> },
-  { name: "My Reports", href: "/dashboard/reporting", icon: <FaChartBar /> },
-  { name: "Exam Reports", href: "/dashboard/teacher-reports", icon: <FaPoll /> },
-  { name: "Question Bank", href: "/dashboard/question/add", icon: <MdQuestionAnswer /> },
-  { name: "Requests", href: "/dashboard/requests", icon: <FaClipboardList /> },
-  { name: "Class Evaluations", href: "/dashboard/report", icon: <TbMessageReportFilled /> },
-  { name: "Edit Profile", href: "/dashboard/edit-profile", icon: <FaUserCog /> },
-  { name: "Settings", href: "/dashboard/settings", icon: <IoMdSettings /> },
+  { name: "Dashboard", href: "/dashboard", icon: <FaHome className="text-lg" /> },
+  { name: "Exam Pack", href: "/dashboard/exam-pack", icon: <FaBoxOpen className="text-lg" /> },
+  { name: "Manage Exam Pack", href: "/dashboard/manage-exam-pack", icon: <SiGoogletagmanager className="text-lg" /> },
+  { name: "My Reports", href: "/dashboard/reporting", icon: <FaChartBar className="text-lg" /> },
+  { name: "Exam Reports", href: "/dashboard/teacher-reports", icon: <FaPoll className="text-lg" /> },
+  { name: "Question Bank", href: "/dashboard/question/add", icon: <MdQuestionAnswer className="text-lg" /> },
+  { name: "Requests", href: "/dashboard/requests", icon: <FaClipboardList className="text-lg" /> },
+  { name: "Class Evaluations", href: "/dashboard/report", icon: <TbMessageReportFilled className="text-lg" /> },
+  { name: "Edit Profile", href: "/dashboard/edit-profile", icon: <FaUserCog className="text-lg" /> },
+  { name: "Settings", href: "/dashboard/settings", icon: <IoMdSettings className="text-lg" /> },
 ];
 
 const roleAccess: Record<string, string[]> = {
@@ -35,14 +36,24 @@ const roleAccess: Record<string, string[]> = {
   Settings: ["admin"],
 };
 
+const isItemActive = (currentPath: string, itemHref: string) => {
+  if (currentPath === itemHref) return true;
+  if (itemHref === "/dashboard") return false;
+  if (itemHref.startsWith("/dashboard/question") && currentPath.startsWith("/dashboard/question")) return true;
+  return currentPath.startsWith(itemHref + "/");
+};
+
 export const MobileNav = ({ role = "student" }: { role?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [userRole, setUserRole] = useState<string>(role);
+  const [userName, setUserName] = useState<string>("Candidate");
   const pathname = usePathname();
 
   useEffect(() => {
-    const stored = localStorage.getItem("userRole") || role;
-    setUserRole(stored);
+    const storedRole = localStorage.getItem("userRole") || role;
+    const storedName = localStorage.getItem("userName") || "Candidate";
+    setUserRole(storedRole);
+    setUserName(storedName);
   }, [role]);
 
   const visibleMenuItems = menuItems.filter((item) => {
@@ -51,20 +62,30 @@ export const MobileNav = ({ role = "student" }: { role?: string }) => {
     return allowed.includes(userRole);
   });
 
+  const reportsLink = userRole === "student" ? "/dashboard/reporting" : "/dashboard/teacher-reports";
+
   return (
-    <div className="lg:hidden">
-      <div className="flex items-center justify-between px-6 h-16 bg-white border-b border-gray-100 sticky top-0 z-40">
+    <div className="lg:hidden select-none">
+      {/* Top Mobile Bar */}
+      <div className="flex items-center justify-between px-4 h-16 bg-white border-b border-slate-200/80 sticky top-0 z-40">
         <Link href="/">
-          <Image src="/global/logo2.png" alt="logo" width={120} height={30} className="w-auto h-8" />
+          <Image src="/global/logo2.png" alt="logo" width={110} height={28} className="w-auto h-7" />
         </Link>
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-        >
-          <HiMenuAlt3 className="text-2xl" />
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[10px] font-extrabold uppercase tracking-wider">
+            {userRole}
+          </span>
+          <button 
+            onClick={() => setIsOpen(true)}
+            className="p-2 text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            aria-label="Open mobile navigation"
+          >
+            <HiMenuAlt3 className="text-2xl" />
+          </button>
+        </div>
       </div>
 
+      {/* Slide-over Menu Drawer */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -73,55 +94,118 @@ export const MobileNav = ({ role = "student" }: { role?: string }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50"
             />
             <motion.aside 
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 bottom-0 w-80 bg-white z-[60] shadow-2xl flex flex-col"
+              transition={{ type: "spring", damping: 26, stiffness: 240 }}
+              className="fixed right-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white z-[60] shadow-2xl flex flex-col"
             >
-              <div className="flex items-center justify-between p-6 border-b border-gray-50">
-                <span className="font-bold text-xl text-primary">Menu</span>
+              <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-amber-500 text-white flex items-center justify-center font-bold text-xs">
+                    {userName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <span className="font-bold text-sm text-slate-900 block leading-tight">{userName}</span>
+                    <span className="text-[10px] text-slate-400 capitalize font-medium">{userRole} Portal</span>
+                  </div>
+                </div>
                 <button 
                   onClick={() => setIsOpen(false)}
-                  className="p-2 text-gray-500 hover:bg-gray-50 rounded-full transition-colors"
+                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                  aria-label="Close menu"
                 >
-                  <HiX className="text-2xl" />
+                  <HiX className="text-xl" />
                 </button>
               </div>
 
-              <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+              <nav className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 py-1 block">
+                  Platform Navigation
+                </span>
                 {visibleMenuItems.map((item) => {
-                  const active = pathname === item.href;
+                  const active = isItemActive(pathname, item.href);
                   return (
                     <Link
                       key={item.name}
                       href={item.href}
                       onClick={() => setIsOpen(false)}
-                      className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all ${
+                      className={cn(
+                        "flex items-center gap-3.5 px-3.5 py-2.5 rounded text-xs font-semibold transition-all",
                         active
-                          ? "bg-primary text-white shadow-md shadow-primary/20"
-                          : "text-gray-600 hover:bg-primary/5 hover:text-primary"
-                      }`}
+                          ? "bg-primary text-white shadow-2xs font-bold"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-primary"
+                      )}
                     >
-                      <span className={active ? "text-white" : "text-gray-400"}>{item.icon}</span>
-                      <span className="font-medium">{item.name}</span>
+                      <span className={active ? "text-white" : "text-slate-400"}>{item.icon}</span>
+                      <span className="flex-1">{item.name}</span>
+                      {active && <span className="w-1.5 h-1.5 rounded-full bg-white ml-auto" />}
                     </Link>
                   );
                 })}
               </nav>
 
-              <div className="p-6 border-t border-gray-50">
-                <button className="flex items-center justify-center w-full gap-3 px-4 py-3 text-red-600 bg-red-50 rounded-xl font-bold transition-all hover:bg-red-100">
-                  <IoMdLogOut className="text-xl" /> Sign Out
-                </button>
+              <div className="p-4 border-t border-slate-100 bg-slate-50">
+                <Link
+                  href="/auth/login"
+                  onClick={() => {
+                    localStorage.clear();
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl font-bold transition-all hover:bg-rose-100"
+                >
+                  <IoMdLogOut className="text-base" /> Sign Out
+                </Link>
               </div>
             </motion.aside>
           </>
         )}
       </AnimatePresence>
+
+      {/* Mobile Bottom Navigation Bar (1-Thumb Access) */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1.5 flex items-center justify-around shadow-lg">
+        <Link
+          href="/dashboard"
+          className={cn(
+            "flex flex-col items-center gap-0.5 px-3 py-1 rounded text-[10px] font-bold transition-colors",
+            isItemActive(pathname, "/dashboard") ? "text-primary" : "text-slate-500 hover:text-slate-800"
+          )}
+        >
+          <FaHome className="text-base" />
+          <span>Home</span>
+        </Link>
+        <Link
+          href="/dashboard/exam-pack"
+          className={cn(
+            "flex flex-col items-center gap-0.5 px-3 py-1 rounded text-[10px] font-bold transition-colors",
+            isItemActive(pathname, "/dashboard/exam-pack") ? "text-primary" : "text-slate-500 hover:text-slate-800"
+          )}
+        >
+          <FaBoxOpen className="text-base" />
+          <span>Exams</span>
+        </Link>
+        <Link
+          href={reportsLink}
+          className={cn(
+            "flex flex-col items-center gap-0.5 px-3 py-1 rounded text-[10px] font-bold transition-colors",
+            isItemActive(pathname, reportsLink) ? "text-primary" : "text-slate-500 hover:text-slate-800"
+          )}
+        >
+          <FaChartBar className="text-base" />
+          <span>Reports</span>
+        </Link>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex flex-col items-center gap-0.5 px-3 py-1 rounded text-[10px] font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
+        >
+          <FaBars className="text-base" />
+          <span>Menu</span>
+        </button>
+      </nav>
     </div>
   );
 };
+

@@ -37,22 +37,22 @@ export default function Scorecard({ result, totalMarks, passingPercent }: Scorec
   return (
     <div className="w-full flex flex-col md:flex-row gap-6 items-stretch">
       {/* Left Column: Radial Gauge & Result Badge */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-gray-50/50 to-white border border-gray-100 rounded-3xl shadow-sm">
+      <div className="flex-1 flex flex-col items-center justify-center p-5 bg-white border border-slate-200/80 rounded shadow-xs">
         {/* Radial Progress SVG */}
-        <div className="relative w-36 h-36 flex items-center justify-center mb-4">
+        <div className="relative w-32 h-32 flex items-center justify-center mb-3">
           <svg className="w-full h-full transform -rotate-90">
             {/* Background Track */}
             <circle
-              cx="72"
-              cy="72"
+              cx="64"
+              cy="64"
               r={radius}
-              className="stroke-gray-100 fill-none"
+              className="stroke-slate-100 fill-none"
               strokeWidth={strokeWidth}
             />
             {/* Progress Stroke */}
             <circle
-              cx="72"
-              cy="72"
+              cx="64"
+              cy="64"
               r={radius}
               className="fill-none transition-all duration-1000 ease-out"
               strokeWidth={strokeWidth}
@@ -64,80 +64,77 @@ export default function Scorecard({ result, totalMarks, passingPercent }: Scorec
           </svg>
           {/* Inner Text label */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-3xl font-black text-gray-900 leading-none">{percentage}%</span>
-            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">SCORE</span>
+            <span className="text-2xl font-mono font-black text-slate-900 leading-none">{percentage}%</span>
+            <span className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider mt-1">SCORE</span>
           </div>
         </div>
 
         {/* Pass/Fail Status Pill */}
-        <div className={`flex items-center gap-2 px-6 py-2 rounded-full border text-sm font-bold shadow-sm ${accentBgClass}`}>
+        <div className={`flex items-center gap-1.5 px-3 py-1 rounded border text-xs font-mono font-bold shadow-xs ${accentBgClass}`}>
           {passed ? (
             <>
-              <FaTrophy className="animate-bounce" />
-              <span>Congratulation! Passed</span>
+              <FaTrophy className="text-xs" />
+              <span>Passed Assessment</span>
             </>
           ) : (
             <>
-              <FaTimesCircle className="animate-pulse" />
-              <span>Failed - Try Again</span>
+              <FaTimesCircle className="text-xs" />
+              <span>Result: Failed</span>
             </>
           )}
         </div>
       </div>
 
       {/* Right Column: Stats Details Grid & Final Score Summary */}
-      <div className="flex-1 flex flex-col justify-between gap-4">
+      <div className="flex-1 flex flex-col justify-between gap-3">
         {/* Stats Details Grid */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           {/* Total Questions */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
-            <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#dd6b01] flex items-center justify-center text-sm mb-1.5">
+          <div className="bg-white border border-slate-200/80 rounded p-2.5 flex flex-col items-center justify-center text-center">
+            <div className="w-6 h-6 rounded bg-orange-50 text-[#dd6b01] flex items-center justify-center text-xs mb-1">
               <FaListUl />
             </div>
-            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Total Questions</span>
-            <span className="text-lg font-black text-gray-800 mt-0.5">{total}</span>
+            <span className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider">Total Questions</span>
+            <span className="text-base font-mono font-bold text-slate-800 mt-0.5">{total}</span>
           </div>
 
           {/* Accuracy */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
-            <div className="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center text-sm mb-1.5">
+          <div className="bg-white border border-slate-200/80 rounded p-2.5 flex flex-col items-center justify-center text-center">
+            <div className="w-6 h-6 rounded bg-green-50 text-green-600 flex items-center justify-center text-xs mb-1">
               <FaBullseye />
             </div>
-            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Correct</span>
-            <span className="text-lg font-black text-green-600 mt-0.5">{correct}</span>
+            <span className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider">Correct</span>
+            <span className="text-base font-mono font-bold text-green-600 mt-0.5">{correct}</span>
           </div>
 
           {/* Wrong */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
-            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-sm mb-1.5">
+          <div className="bg-white border border-slate-200/80 rounded p-2.5 flex flex-col items-center justify-center text-center">
+            <div className="w-6 h-6 rounded bg-red-50 text-red-600 flex items-center justify-center text-xs mb-1">
               <FaTimesCircle />
             </div>
-            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Wrong</span>
-            <span className="text-lg font-black text-red-600 mt-0.5">{wrong}</span>
+            <span className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider">Wrong</span>
+            <span className="text-base font-mono font-bold text-red-600 mt-0.5">{wrong}</span>
           </div>
 
           {/* Negative Marks */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-3 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow">
-            <div className="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-600 flex items-center justify-center text-sm mb-1.5">
+          <div className="bg-white border border-slate-200/80 rounded p-2.5 flex flex-col items-center justify-center text-center">
+            <div className="w-6 h-6 rounded bg-yellow-50 text-yellow-600 flex items-center justify-center text-xs mb-1">
               <FaMinusCircle />
             </div>
-            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Negative Marks</span>
-            <span className="text-lg font-black text-yellow-600 mt-0.5">-{Math.abs(negative).toFixed(2)}</span>
+            <span className="text-[9px] font-mono text-slate-400 font-bold uppercase tracking-wider">Negative</span>
+            <span className="text-base font-mono font-bold text-yellow-600 mt-0.5">-{Math.abs(negative).toFixed(2)}</span>
           </div>
         </div>
 
         {/* Summary Score Bar */}
-        <div className="bg-orange-50/50 border border-orange-100 rounded-2xl p-3.5 flex items-center justify-between">
-          <div>
-            <span className="text-[10px] text-gray-500 font-medium">Final Score</span>
-            <p className="text-xl font-black text-gray-900 leading-tight">
-              {finalScore.toFixed(2)} <span className="text-xs font-semibold text-gray-500">/ {maxMarks}</span>
-            </p>
+        <div className="bg-orange-50/50 border border-orange-200 rounded p-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded bg-primary" />
+            <span className="text-xs font-bold text-slate-700">Final Evaluated Mark</span>
           </div>
-          <div className="flex items-center gap-1 text-[10px] font-semibold text-[#dd6b01] bg-orange-100/50 px-2 py-1 rounded-lg border border-orange-200">
-            <FaCheckCircle />
-            <span>Pass: {passThreshold.toFixed(1)}</span>
-          </div>
+          <span className="text-base font-mono font-bold text-primary">
+            {finalScore.toFixed(2)} / {maxMarks}
+          </span>
         </div>
       </div>
     </div>

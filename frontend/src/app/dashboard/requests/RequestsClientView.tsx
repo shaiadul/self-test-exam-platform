@@ -15,6 +15,7 @@ import CustomSelect from "../../../components/ui/CustomSelect";
 import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../components/ui/OutlineBtn";
 import { PageContainer } from "../../../components/common/PageContainer";
+import EmptyState from "../../../components/common/EmptyState";
 import {
   createRequestAction,
   reviewRequestAction,
@@ -109,32 +110,37 @@ export default function RequestsClientView({
   };
 
   return (
-    <PageContainer>
-    <div className="space-y-8 animate-fadeIn">
-      <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">
-          <FaClipboardList />
+    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded bg-blue-50 text-blue-600 flex items-center justify-center text-base border border-blue-200/60 shadow-2xs">
+            <FaClipboardList />
+          </div>
+          <div>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+              ALLOCATION // {isAdmin ? "ADMIN_APPROVAL_MATRIX" : "TEACHER_QUOTA_REQUESTS"}
+            </span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              {isAdmin ? "Request Approvals & Quotas" : "Exam Pack & Quota Requests"}
+            </h1>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            {isAdmin ? "Request Approvals" : "Exam Pack Requests"}
-          </h1>
-          <p className="text-sm text-slate-500 font-medium">
-            {isAdmin
-              ? "Review and approve teacher requests for more packs or exam limits."
-              : "Request more exam packs or a higher exam limit for a pack."}
-          </p>
-        </div>
+
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 text-slate-600 border border-slate-200 text-xs font-mono font-bold">
+          {requests.filter((r) => r.status === "pending").length} PENDING REVIEW
+        </span>
       </div>
 
       {message && (
         <div
-          className={`rounded-2xl px-4 py-3 text-sm font-semibold border ${
+          className={`rounded px-4 py-2.5 text-xs font-mono font-bold border ${
             message.type === "ok"
               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
               : "bg-rose-50 text-rose-700 border-rose-200"
           }`}
         >
+          {message.type === "ok" ? "[SUCCESS] " : "[ERROR] "}
           {message.text}
         </div>
       )}
@@ -142,40 +148,52 @@ export default function RequestsClientView({
       {isTeacher && (
         <form
           onSubmit={submit}
-          className="rounded-3xl bg-white border border-slate-200/80 p-6 shadow-sm space-y-5"
+          className="rounded bg-white border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-4"
         >
-          <div className="flex items-center gap-2">
-            <FaPlus className="text-blue-600" />
-            <h2 className="text-base font-black text-slate-900 tracking-tight">
-              New Request
-            </h2>
+          <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                [REQ-01] DISPATCH NEW QUOTA REQUEST
+              </span>
+            </div>
+            <span className="text-[10px] font-mono text-slate-400">
+              ROUTED TO ADMIN
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <CustomSelect
-              label="Request Type"
-              options={TYPE_OPTIONS}
-              value={typeLabel}
-              onChange={(val) => {
-                setTypeLabel(val);
-                setRequestedLimit(val === TYPE_OPTIONS[0] ? 3 : 6);
-              }}
-            />
+            <div>
+              <label className="text-xs font-bold text-slate-700 ml-0.5 block mb-1">
+                Request Type
+              </label>
+              <CustomSelect
+                options={TYPE_OPTIONS}
+                value={typeLabel}
+                onChange={(val) => {
+                  setTypeLabel(val);
+                  setRequestedLimit(val === TYPE_OPTIONS[0] ? 3 : 6);
+                }}
+              />
+            </div>
 
             {type === "limit" && (
-              <CustomSelect
-                label="Exam Pack"
-                placeholder="Select a pack"
-                options={packOptions}
-                value={packLabel}
-                onChange={setPackLabel}
-              />
+              <div>
+                <label className="text-xs font-bold text-slate-700 ml-0.5 block mb-1">
+                  Target Exam Pack
+                </label>
+                <CustomSelect
+                  placeholder="Select a pack"
+                  options={packOptions}
+                  value={packLabel}
+                  onChange={setPackLabel}
+                />
+              </div>
             )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="Title"
+              label="Request Title / Identifier"
               placeholder={
                 type === "pack"
                   ? "Need 2 more exam packs for HSC batch"
@@ -183,86 +201,107 @@ export default function RequestsClientView({
               }
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              required
             />
             <Input
-              label="Requested Limit"
+              label="Requested Quota / Limit"
               type="number"
               min={1}
               value={requestedLimit}
               onChange={(e) => setRequestedLimit(Number(e.target.value))}
+              required
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 ml-1 block">
-              Reason / Details
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 ml-0.5 block">
+              Reason / Justification Details
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder:text-gray-400 outline-none bg-white font-medium transition-all duration-200 focus:border-primary focus:ring-4 focus:ring-primary/10"
+              placeholder="State the academic requirements or batch expansion reasons..."
+              className="w-full border border-slate-200 rounded px-3.5 py-2.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none bg-white font-medium transition-all duration-150 focus:border-primary focus:ring-1 focus:ring-primary/20"
             />
           </div>
 
-          <PrimaryBtn
-            type="submit"
-            disabled={busy}
-            className="!text-sm !py-2.5 !px-6 disabled:opacity-60"
-          >
-            <FaPlus className="mr-2 text-xs" />
-            Submit Request
-          </PrimaryBtn>
+          <div className="flex justify-end pt-2">
+            <PrimaryBtn
+              type="submit"
+              disabled={busy}
+              className="!text-xs !py-2 !px-5 !rounded disabled:opacity-60 gap-1.5"
+            >
+              <FaPlus className="text-[10px]" />
+              <span>Submit Quota Request</span>
+            </PrimaryBtn>
+          </div>
         </form>
       )}
 
-      <div className="rounded-3xl bg-white border border-slate-200/80 p-6 shadow-sm">
-        <h2 className="text-base font-black text-slate-900 tracking-tight mb-4">
-          {isAdmin ? "All Requests" : "My Requests"}
-        </h2>
+      {/* Requests Ledger */}
+      <div className="rounded bg-white border border-slate-200/80 shadow-2xs overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600">
+              {isAdmin ? "SUBMITTED TEACHER REQUESTS" : "MY DISPATCHED REQUESTS"}
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-200/70 text-slate-700 font-bold">
+              {requests.length} TOTAL
+            </span>
+          </div>
+        </div>
 
         {requests.length === 0 ? (
-          <div className="py-10 text-center text-slate-400">
-            <FaClipboardList className="mx-auto text-2xl mb-2 opacity-50" />
-            <p className="text-sm font-bold text-slate-600">No requests yet</p>
+          <div className="py-6">
+            <EmptyState
+              compact
+              type="tasks"
+              title="No Requests in Queue"
+              description={
+                isAdmin
+                  ? "There are currently no pending or historical quota requests from teachers."
+                  : "You haven't submitted any quota or exam pack expansion requests yet."
+              }
+            />
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="p-4 space-y-3">
             {requests.map((r) => (
               <div
                 key={r.id}
-                className="rounded-2xl border border-slate-200/80 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between hover:bg-slate-50/50 transition-colors"
+                className="rounded border border-slate-200/80 p-3.5 flex flex-col sm:flex-row sm:items-center gap-3 justify-between hover:bg-slate-50/50 transition-colors shadow-2xs"
               >
                 <div className="flex items-start gap-3 min-w-0">
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm shrink-0 ${
+                    className={`w-8 h-8 rounded flex items-center justify-center text-xs shrink-0 border ${
                       r.type === "pack"
-                        ? "bg-blue-50 text-blue-600"
-                        : "bg-emerald-50 text-emerald-600"
+                        ? "bg-blue-50 text-blue-600 border-blue-200/60"
+                        : "bg-emerald-50 text-emerald-600 border-emerald-200/60"
                     }`}
                   >
                     {r.type === "pack" ? <FaLayerGroup /> : <FaBoxOpen />}
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-bold text-slate-900 text-sm truncate">
+                      <p className="font-bold text-slate-900 text-xs truncate">
                         {r.title}
                       </p>
                       <span
-                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase ${
+                        className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase border ${
                           statusStyles[r.status] || statusStyles.pending
                         }`}
                       >
                         {r.status}
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 uppercase">
-                        {r.type === "pack" ? "Pack limit" : "Exam limit"}
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 uppercase">
+                        {r.type === "pack" ? "PACK_LIMIT" : "EXAM_LIMIT"}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-[11px] text-slate-500 mt-1">
                       {isAdmin && r.teacherName ? `${r.teacherName} · ` : ""}
                       {r.type === "limit" && r.packTitle ? `${r.packTitle} · ` : ""}
-                      Requested: <span className="font-bold">{r.requestedLimit}</span>
+                      Requested: <span className="font-bold font-mono text-slate-700">{r.requestedLimit}</span>
                       {r.description ? ` · ${r.description}` : ""}
                     </p>
                   </div>
@@ -270,24 +309,24 @@ export default function RequestsClientView({
 
                 {isAdmin && r.status === "pending" && (
                   <div className="flex items-center gap-2 shrink-0">
-                    <PrimaryBtn
+                    <button
                       type="button"
                       disabled={busy}
                       onClick={() => review(r.id, "approved")}
-                      className="!text-xs !py-2 !px-4 !from-emerald-500 !to-emerald-400 disabled:opacity-60"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition cursor-pointer disabled:opacity-60 font-mono"
                     >
-                      <FaCheck className="mr-1.5 text-[10px]" />
-                      Approve
-                    </PrimaryBtn>
-                    <OutlineBtn
+                      <FaCheck className="text-[9px]" />
+                      APPROVE
+                    </button>
+                    <button
                       type="button"
                       disabled={busy}
                       onClick={() => review(r.id, "rejected")}
-                      className="!text-xs !py-2 !px-4 !border-rose-300 !text-rose-600 disabled:opacity-60"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded border border-rose-200 bg-rose-50/50 hover:bg-rose-100 text-rose-700 shadow-2xs transition cursor-pointer disabled:opacity-60 font-mono"
                     >
-                      <FaTimes className="mr-1.5 text-[10px]" />
-                      Reject
-                    </OutlineBtn>
+                      <FaTimes className="text-[9px]" />
+                      REJECT
+                    </button>
                   </div>
                 )}
               </div>
@@ -295,7 +334,6 @@ export default function RequestsClientView({
           </div>
         )}
       </div>
-    </div>
     </PageContainer>
   );
 }

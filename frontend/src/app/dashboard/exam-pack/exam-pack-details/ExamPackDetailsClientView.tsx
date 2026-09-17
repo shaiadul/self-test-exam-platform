@@ -4,6 +4,7 @@ import React, { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FaEye, FaPlay, FaCalendarAlt, FaCheckCircle, FaSpinner } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
+import EmptyState from "../../../../components/common/EmptyState";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 
@@ -96,77 +97,77 @@ export default function ExamPackDetailsClientView({
 
   return (
     <PageContainer className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
-          <span className="text-xs font-extrabold text-[#dd6b01] uppercase tracking-wider block mb-1">
+          <span className="text-[10px] font-extrabold text-primary uppercase tracking-wider block mb-1">
             Exam Pack Modules
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             {packTitle}
           </h1>
         </div>
         <OutlineBtn
           link="/dashboard/exam-pack"
-          className="!text-xs !py-1.5 !px-3.5 gap-1 shadow-xs"
+          className="!text-xs !py-1.5 !px-3.5 gap-1 shadow-xs !rounded-xl"
         >
           ← Back to All Packs
         </OutlineBtn>
       </div>
 
-      <div className="overflow-x-auto bg-white border border-slate-200/80 rounded-3xl shadow-sm">
+      <div className="overflow-x-auto bg-white border border-slate-200/80 rounded-none shadow-xs">
         <table className="min-w-full border-collapse">
           <thead>
             <tr className="bg-slate-50/90 border-b border-slate-200/80 text-slate-500 font-extrabold text-[11px] uppercase tracking-wider">
-              <th className="px-6 py-4 text-left">Exam Name</th>
-              <th className="px-6 py-4 text-left">Exam Code</th>
-              <th className="px-6 py-4 text-left">Start Date</th>
-              <th className="px-6 py-4 text-left">End Date</th>
-              <th className="px-6 py-4 text-center">Status / Evaluation Report</th>
+              <th className="px-5 py-3.5 text-left">Exam Name</th>
+              <th className="px-5 py-3.5 text-left">Exam Code</th>
+              <th className="px-5 py-3.5 text-left">Start Date</th>
+              <th className="px-5 py-3.5 text-left">End Date</th>
+              <th className="px-5 py-3.5 text-center">Status / Evaluation Report</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm font-medium">
             {exams.map((exam) => (
               <tr key={exam.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-6 py-4 font-bold text-slate-900">{exam.name}</td>
-                <td className="px-6 py-4 font-mono text-xs text-slate-500">#{exam.id}</td>
-                <td className="px-6 py-4 text-xs text-slate-600 font-semibold">{exam.startDate}</td>
-                <td className="px-6 py-4 text-xs text-slate-600 font-semibold">{exam.endDate}</td>
-                <td className="px-6 py-4 text-center">
+                <td className="px-5 py-3.5 font-bold text-slate-900 text-xs sm:text-sm">{exam.name}</td>
+                <td className="px-5 py-3.5 font-mono text-xs text-slate-500">#{exam.id}</td>
+                <td className="px-5 py-3.5 text-xs text-slate-600 font-semibold">{exam.startDate}</td>
+                <td className="px-5 py-3.5 text-xs text-slate-600 font-semibold">{exam.endDate}</td>
+                <td className="px-5 py-3.5 text-center">
                   {exam.status === "Start Exam" && (
                     <PrimaryBtn
                       link={exam.link}
-                      className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs"
+                      className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded-xl"
                     >
-                      <FaPlay className="text-[10px]" />
+                      <FaPlay className="text-[9px]" />
                       <span>Start Exam</span>
                     </PrimaryBtn>
                   )}
                   {exam.status === "Complete" && (
                     <div className="flex items-center justify-center gap-2">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-200">
-                        <FaCheckCircle className="text-[11px]" />
+                        <FaCheckCircle className="text-[10px]" />
                         <span>Completed</span>
                       </span>
                       {exam.attemptId ? (
                         <OutlineBtn
                           link={`/dashboard/reporting/${exam.attemptId}`}
-                          className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs"
+                          className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded-xl"
                         >
                           <span className="text-slate-700 font-bold">View Report</span>
                         </OutlineBtn>
                       ) : (
                         <OutlineBtn
                           link="/dashboard/reporting"
-                          className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs"
+                          className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded-xl"
                         >
-                          <FaEye className="text-xs text-[#dd6b01]" />
+                          <FaEye className="text-xs text-primary" />
                           <span className="text-slate-700 font-bold">Reports</span>
                         </OutlineBtn>
                       )}
                     </div>
                   )}
                   {exam.status === "Expire" && (
-                    <span className="inline-block px-4 py-1.5 bg-slate-100 text-slate-500 font-bold text-xs rounded-full border border-slate-200">
+                    <span className="inline-block px-3.5 py-1 bg-slate-100 text-slate-500 font-bold text-xs rounded-full border border-slate-200">
                       Expired
                     </span>
                   )}
@@ -187,8 +188,13 @@ export default function ExamPackDetailsClientView({
 
             {!isPending && exams.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-10 text-center text-slate-400 font-medium text-xs">
-                  No active exams available in this pack.
+                <td colSpan={5} className="py-6 text-center">
+                  <EmptyState
+                    compact
+                    type="exam"
+                    title="No Active Exams"
+                    description="No active exams are available in this pack at this time."
+                  />
                 </td>
               </tr>
             )}

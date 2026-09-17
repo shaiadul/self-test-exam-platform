@@ -99,24 +99,24 @@ export default function SignIn() {
         </motion.div>
       </section>
 
-      <section className="flex-1 flex items-center justify-center p-6 pb-20">
+      <section className="flex-1 flex items-center justify-center p-4 pb-16">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-white p-10 rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100"
+          className="w-full max-w-md bg-white p-6 sm:p-8 rounded border border-slate-200/80 shadow-xs"
         >
-          <div className="text-center mb-10">
-            <h2 className="text-4xl font-black gradient-text mb-3">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1.5">
               Welcome Back
             </h2>
-            <p className="text-gray-500 font-medium">
-              Please enter your details to sign in
+            <p className="text-slate-500 text-xs font-medium">
+              Please enter your credentials to authenticate session
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm font-semibold rounded-xl text-center">
+              <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-xs font-mono font-semibold rounded text-center">
                 {error}
               </div>
             )}
@@ -144,7 +144,7 @@ export default function SignIn() {
             <div className="flex items-center justify-end">
               <Link
                 href="/auth/forgot-password"
-                className="text-sm font-bold text-primary hover:underline"
+                className="text-xs font-bold text-primary hover:underline"
               >
                 Forgot password?
               </Link>
@@ -153,15 +153,15 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-lg px-6 py-4 rounded-2xl hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full bg-primary hover:bg-primary-dark text-white font-bold text-sm px-4 py-2.5 rounded shadow-xs transition-all active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Authenticating..." : "Sign In"}
             </button>
 
             {/* Quick Demo Preset Credentials */}
-            <div className="border-t border-gray-100 pt-6 mt-6">
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block text-center mb-3">
-                Quick Demo Logins
+            <div className="border-t border-slate-100 pt-4 mt-4">
+              <span className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider block text-center mb-2.5">
+                Quick Demo Accounts
               </span>
               <div className="grid grid-cols-3 gap-2">
                 <button
@@ -170,7 +170,7 @@ export default function SignIn() {
                     setEmail(studentEmail);
                     setPassword(studentPassword);
                   }}
-                  className="px-2 py-2.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl border border-emerald-100 hover:bg-emerald-100/50 transition cursor-pointer text-center"
+                  className="px-2 py-1.5 bg-emerald-50 text-emerald-700 font-mono text-[11px] font-bold rounded border border-emerald-200 hover:bg-emerald-100/60 transition cursor-pointer text-center"
                 >
                   Student
                 </button>
@@ -180,7 +180,7 @@ export default function SignIn() {
                     setEmail(teacherEmail);
                     setPassword(teacherPassword);
                   }}
-                  className="px-2 py-2.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-xl border border-blue-100 hover:bg-blue-100/50 transition cursor-pointer text-center"
+                  className="px-2 py-1.5 bg-blue-50 text-blue-700 font-mono text-[11px] font-bold rounded border border-blue-200 hover:bg-blue-100/60 transition cursor-pointer text-center"
                 >
                   Teacher
                 </button>
@@ -190,15 +190,15 @@ export default function SignIn() {
                     setEmail(adminEmail);
                     setPassword(adminPassword);
                   }}
-                  className="px-2 py-2.5 bg-purple-50 text-purple-700 text-xs font-bold rounded-xl border border-purple-100 hover:bg-purple-100/50 transition cursor-pointer text-center"
+                  className="px-2 py-1.5 bg-purple-50 text-purple-700 font-mono text-[11px] font-bold rounded border border-purple-200 hover:bg-purple-100/60 transition cursor-pointer text-center"
                 >
                   Admin
                 </button>
               </div>
             </div>
 
-            <div className="text-center pt-4">
-              <p className="text-gray-500 font-medium">
+            <div className="text-center pt-2">
+              <p className="text-slate-500 text-xs font-medium">
                 Don’t have an account?{" "}
                 <Link
                   href="/auth/register"

@@ -47,7 +47,7 @@ export default function PermissionManagementClientView({ initialPermissions }: P
         <p className="text-gray-500 font-medium">Manage access permissions for different system roles.</p>
       </div>
 
-      <div className="overflow-x-auto bg-white border border-gray-100 rounded-3xl shadow-lg">
+      <div className="overflow-x-auto bg-white border border-slate-200/80 rounded-none shadow-xs">
         <table className="min-w-full border-collapse">
           <thead className="bg-[#fff4ec] text-[#dd6b01] border-b border-orange-100/50">
             <tr>

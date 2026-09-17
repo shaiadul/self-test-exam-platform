@@ -10,6 +10,7 @@ import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { Badge } from "../../../../components/ui/Badge";
 import { PageContainer } from "../../../../components/common/PageContainer";
+import EmptyState from "../../../../components/common/EmptyState";
 import { useRouter } from "next/navigation";
 import {
   getExamsAction,
@@ -213,27 +214,47 @@ export default function AddQuestionClientView({
   };
 
   return (
-    <PageContainer className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <button
+    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+        <div className="flex items-center gap-3">
+          <OutlineBtn
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm text-[#dd6b01] font-bold mb-2 cursor-pointer hover:underline"
+            className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200 cursor-pointer"
+            title="Back"
           >
-            <FaArrowLeft /> Back
-          </button>
-          <h1 className="text-3xl font-extrabold text-gray-900">Question Bank Manager</h1>
-          <p className="text-xs text-gray-500 font-semibold mt-1">
-            {examName ? `Configuring questions for: ${examName} (${examPackTitle})` : "Select an exam pack and exam to manage questions."}
-          </p>
+            <FaArrowLeft className="text-xs" />
+          </OutlineBtn>
+          <div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                EVALUATION_ENGINE // QUESTION_BANK
+              </span>
+              {examId && (
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                  EXAM #{examId}
+                </span>
+              )}
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Question Bank Authoring Console
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              {examName ? `Configuring question items for: ${examName} (${examPackTitle})` : "Select an exam pack and exam to author question items."}
+            </p>
+          </div>
         </div>
+
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs font-mono font-bold">
+          {questions.length} QUESTIONS IN BANK
+        </span>
       </div>
 
       {/* Selector controls if exam not pre-selected */}
       {!examIdParam && (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-bold text-gray-700 block mb-1">Select Exam Pack</label>
+            <label className="text-xs font-mono font-bold text-slate-600 block mb-1">SELECT EXAM PACK CONTAINER</label>
             <CustomSelect
               options={examPacks.map((p) => `${p.id} - ${p.title}`)}
               value={selectedPackId ? `${selectedPackId}` : ""}
@@ -243,7 +264,7 @@ export default function AddQuestionClientView({
           </div>
 
           <div>
-            <label className="text-xs font-bold text-gray-700 block mb-1">Select Exam</label>
+            <label className="text-xs font-mono font-bold text-slate-600 block mb-1">SELECT TARGET EXAMINATION</label>
             <CustomSelect
               options={exams.map((e) => `${e.id} - ${e.name}`)}
               value={examId}
@@ -256,45 +277,62 @@ export default function AddQuestionClientView({
       )}
 
       {/* Main Content Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Question Creator Form */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
-          <div className="border-b border-gray-100 pb-3">
-            <h2 className="text-lg font-extrabold text-[#dd6b01]">
-              {editingId !== null ? "Edit Question" : "Create New Question"}
-            </h2>
-            <p className="text-xs text-gray-400 font-medium">Add questions, specify choices, and mark the correct answer key.</p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left 7 Cols: Question Creator Form */}
+        <div className="lg:col-span-7 bg-white p-5 rounded border border-slate-200/80 shadow-2xs space-y-5">
+          <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                [Q-AUTHOR] SPECIFICATION COMPOSER
+              </span>
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900">
+                {editingId !== null ? "Edit Question Specification" : "Compose New Question Item"}
+              </h2>
+            </div>
+            {editingId !== null && (
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                EDITING MODE
+              </span>
+            )}
           </div>
 
           {/* Question Type Selector */}
-          <div className="flex gap-2">
-            {[
-              { id: "mcq", label: "MCQ", icon: <FaListUl /> },
-              { id: "passage", label: "Passage Based", icon: <FaBookOpen /> },
-              { id: "picture", label: "Picture Based", icon: <FaImage /> },
-            ].map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setType(t.id as QuestionType)}
-                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition cursor-pointer ${
-                  type === t.id
-                    ? "bg-[#dd6b01] text-white border-[#dd6b01] shadow"
-                    : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-                }`}
-              >
-                {t.icon} {t.label}
-              </button>
-            ))}
+          <div>
+            <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
+              Question Classification
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: "mcq", label: "Multiple Choice", icon: <FaListUl /> },
+                { id: "passage", label: "Passage Context", icon: <FaBookOpen /> },
+                { id: "picture", label: "Picture / Diagram", icon: <FaImage /> },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setType(t.id as QuestionType)}
+                  className={`py-2 px-2.5 rounded text-xs font-mono font-bold flex items-center justify-center gap-1.5 border transition cursor-pointer ${
+                    type === t.id
+                      ? "bg-primary text-white border-primary shadow-2xs"
+                      : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  <span className="text-xs">{t.icon}</span>
+                  <span className="truncate">{t.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          <form onSubmit={handleCreateQuestion} className="space-y-5">
+          <form onSubmit={handleCreateQuestion} className="space-y-4">
             {type === "passage" && (
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Passage Context *</label>
+              <div className="space-y-1">
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600 block">
+                  Passage Comprehension Context *
+                </label>
                 <textarea
-                  className="w-full p-3.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-[#dd6b01] min-h-[100px] transition font-medium"
-                  placeholder="Paste or type the reading passage here..."
+                  className="w-full p-3 border border-slate-300 rounded text-xs font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 min-h-[90px] transition resize-none text-slate-800"
+                  placeholder="Type or paste the passage text here..."
                   value={passage}
                   onChange={(e) => setPassage(e.target.value)}
                   required
@@ -303,23 +341,25 @@ export default function AddQuestionClientView({
             )}
 
             {type === "picture" && (
-              <div>
+              <div className="space-y-1">
                 <ImageUploader
-                  label="Question Image *"
+                  label="Question Diagram / Image Asset *"
                   folder="questions"
-                  height="h-64"
+                  height="h-44"
                   value={pictureUrl}
                   onChange={(url) => setPictureUrl(url)}
-                  description="Upload diagram, formula, or illustration for this question."
+                  description="Upload diagram, formula sheet, or illustration."
                 />
               </div>
             )}
 
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Question Prompt *</label>
+            <div className="space-y-1">
+              <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600 block">
+                Question Statement / Prompt *
+              </label>
               <textarea
-                className="w-full p-3.5 border-2 border-gray-200 rounded-xl text-sm outline-none focus:border-[#dd6b01] min-h-[85px] transition font-medium"
-                placeholder="Type the question statement here..."
+                className="w-full p-3 border border-slate-300 rounded text-xs font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 min-h-[75px] transition resize-none text-slate-800"
+                placeholder="Formulate the prompt or problem statement..."
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
                 required
@@ -327,75 +367,74 @@ export default function AddQuestionClientView({
             </div>
 
             {/* Options */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-gray-700 block">
-                  Answer Choices (Click checkmark or select below to set correct key)
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600 block">
+                  Choice Options (Click checkmark to set answer key)
                 </label>
-                <span className="text-[11px] text-gray-400 font-semibold">{options.length} options</span>
+                <span className="text-[10px] font-mono font-bold text-slate-400">{options.length} CHOICES</span>
               </div>
 
-              {options.map((opt, idx) => {
-                const label = String.fromCharCode(65 + idx);
-                const isCorrect = correctIndex === idx;
+              <div className="space-y-2">
+                {options.map((opt, idx) => {
+                  const label = String.fromCharCode(65 + idx);
+                  const isCorrect = correctIndex === idx;
 
-                return (
-                  <div key={idx} className="flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200 text-[#dd6b01] font-bold text-xs flex items-center justify-center shrink-0">
-                      {label}
-                    </span>
-                    <input
-                      type="text"
-                      value={opt}
-                      onChange={(e) => handleOptionChange(idx, e.target.value)}
-                      placeholder={`Choice ${label} option text`}
-                      className={`w-full border-2 rounded-xl p-2.5 text-sm font-medium outline-none transition ${
+                  return (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className={`w-7 h-7 rounded text-xs font-mono font-bold flex items-center justify-center shrink-0 border ${
                         isCorrect
-                          ? "border-emerald-500 bg-emerald-50/20 text-emerald-900"
-                          : "border-gray-200 focus:border-[#dd6b01]"
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      title="Set as correct answer"
-                      onClick={() => opt.trim() && setCorrectIndex(idx)}
-                      disabled={!opt.trim()}
-                      className={`p-2 rounded-lg text-sm border transition cursor-pointer shrink-0 ${
-                        isCorrect
-                          ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                          : "bg-gray-50 text-gray-400 border-gray-200 hover:border-emerald-400 hover:text-emerald-600"
-                      }`}
-                    >
-                      <FaCheckCircle />
-                    </button>
-                    {options.length > 2 && (
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-300 font-black"
+                          : "bg-slate-100 text-slate-600 border-slate-200"
+                      }`}>
+                        [{label}]
+                      </span>
+                      <input
+                        type="text"
+                        value={opt}
+                        onChange={(e) => handleOptionChange(idx, e.target.value)}
+                        placeholder={`Option ${label} answer statement`}
+                        className={`w-full border rounded px-3 py-1.5 text-xs font-medium outline-none transition ${
+                          isCorrect
+                            ? "border-emerald-500 bg-emerald-50/20 text-emerald-900 font-semibold"
+                            : "border-slate-300 focus:border-primary text-slate-800"
+                        }`}
+                      />
                       <button
                         type="button"
-                        onClick={() => handleRemoveOption(idx)}
-                        className="text-gray-400 hover:text-red-600 text-sm font-bold p-2 shrink-0 cursor-pointer"
-                        title="Remove Option"
+                        title={isCorrect ? "Correct Key Assigned" : "Designate as Correct Answer Key"}
+                        onClick={() => opt.trim() && setCorrectIndex(idx)}
+                        disabled={!opt.trim()}
+                        className={`w-8 h-8 rounded text-xs border flex items-center justify-center transition cursor-pointer shrink-0 ${
+                          isCorrect
+                            ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs"
+                            : "bg-slate-50 text-slate-400 border-slate-200 hover:border-emerald-400 hover:text-emerald-600"
+                        }`}
                       >
-                        ✕
+                        <FaCheckCircle className="text-xs" />
                       </button>
-                    )}
-                  </div>
-                );
-              })}
+                    </div>
+                  );
+                })}
+              </div>
 
               {options.length < 6 && (
                 <button
                   type="button"
                   onClick={handleAddOption}
-                  className="text-xs font-bold text-[#dd6b01] hover:underline flex items-center gap-1 cursor-pointer pt-1"
+                  className="text-xs font-mono font-bold text-primary hover:underline flex items-center gap-1.5 cursor-pointer pt-1"
                 >
-                  <FaPlusCircle /> Add Choice Option
+                  <FaPlusCircle className="text-xs" />
+                  <span>+ ADD CHOICE OPTION</span>
                 </button>
               )}
             </div>
 
-            {/* Correct Answer Select */}
+            {/* Designated Correct Key Dropdown */}
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Designated Correct Answer Choice *</label>
+              <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600 block mb-1">
+                Designated Correct Answer Key *
+              </label>
               <CustomSelect
                 options={options.map(
                   (o, i) => `${String.fromCharCode(65 + i)}. ${o || "(empty option)"}`
@@ -413,84 +452,95 @@ export default function AddQuestionClientView({
               />
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 flex items-center gap-2">
               <PrimaryBtn
                 type="submit"
                 disabled={!examId || submitting}
-                className="w-full cursor-pointer disabled:opacity-50"
+                className="w-full !py-2 !rounded !text-xs shadow-2xs font-bold gap-1.5"
               >
                 {submitting
                   ? editingId !== null
                     ? "Updating Question..."
-                    : "Saving Question..."
+                    : "Writing to Bank..."
                   : editingId !== null
-                  ? "Update Question"
-                  : "Add Question to Bank"}
+                  ? "Update Question Specification"
+                  : "+ Commit Question to Bank"}
               </PrimaryBtn>
             </div>
+
             {editingId !== null && (
               <button
                 type="button"
                 onClick={resetForm}
-                className="w-full text-xs font-bold text-gray-500 hover:text-[#dd6b01] cursor-pointer"
+                className="w-full text-xs font-mono font-bold text-slate-500 hover:text-slate-800 cursor-pointer pt-1"
               >
-                Cancel editing
+                CANCEL EDITING
               </button>
             )}
           </form>
         </div>
 
-        {/* Right Col: Current Questions List */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-            <h3 className="text-base font-extrabold text-gray-900">Existing Questions ({questions.length})</h3>
+        {/* Right 5 Cols: Current Questions List */}
+        <div className="lg:col-span-5 bg-white p-4 rounded border border-slate-200/80 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                INVENTORY REPOSITORY
+              </span>
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                Authored Items ({questions.length})
+              </h3>
+            </div>
           </div>
 
-          <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1">
+          <div className="space-y-2.5 max-h-[650px] overflow-y-auto custom-scrollbar pr-1">
             {questions.map((q, idx) => (
               <motion.div
                 key={q.id || idx}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2 text-xs"
+                className="p-3 rounded border border-slate-200/80 bg-slate-50/50 space-y-2 text-xs hover:border-slate-300 transition-colors"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className="font-bold text-gray-900">
-                    Q{idx + 1}. {q.questionText}
-                  </span>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Badge variant="primary" size="sm">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono font-bold text-slate-500 text-[11px] bg-slate-200/80 px-1 py-0.2 rounded">
+                      Q-{String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <span className="font-bold text-slate-900 line-clamp-1">
+                      {q.questionText}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
                       {q.type}
-                    </Badge>
-                    <OutlineBtn
+                    </span>
+                    <button
                       type="button"
                       title="Edit question"
-                      variant="neutral"
-                      size="sm"
                       onClick={() => handleEdit(q)}
+                      className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition cursor-pointer"
                     >
                       Edit
-                    </OutlineBtn>
-                    <OutlineBtn
+                    </button>
+                    <button
                       type="button"
                       title="Delete question"
-                      variant="danger"
-                      size="sm"
                       onClick={() => handleDelete(q)}
+                      className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
                     >
-                      Delete
-                    </OutlineBtn>
+                      Del
+                    </button>
                   </div>
                 </div>
 
-                <div className="space-y-1 text-gray-600 pl-2">
+                <div className="space-y-0.5 text-[11px] text-slate-600 pl-1 font-mono">
                   {q.options &&
                     q.options.map((opt, oIdx) => (
                       <div
                         key={oIdx}
-                        className={opt === q.correctAnswer ? "font-bold text-emerald-700 flex items-center gap-1" : ""}
+                        className={opt === q.correctAnswer ? "font-bold text-emerald-700 flex items-center gap-1" : "text-slate-500"}
                       >
-                        • {String.fromCharCode(65 + oIdx)}. {opt} {opt === q.correctAnswer && "✓ (Correct)"}
+                        [{String.fromCharCode(65 + oIdx)}] {opt} {opt === q.correctAnswer && "✓"}
                       </div>
                     ))}
                 </div>
@@ -498,9 +548,12 @@ export default function AddQuestionClientView({
             ))}
 
             {questions.length === 0 && (
-              <div className="text-center py-12 text-gray-400 font-medium text-xs">
-                No questions added to this exam yet.
-              </div>
+              <EmptyState
+                compact
+                type="exam"
+                title="No Authored Questions"
+                description="This paper has no questions authored yet. Compose questions using the creator tool."
+              />
             )}
           </div>
         </div>

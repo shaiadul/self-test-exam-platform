@@ -73,36 +73,53 @@ export default function ExamPackClientView({ initialPacks }: ExamPackClientViewP
 
   return (
     <PageContainer className="space-y-6">
-      {/* ---- Controls ---- */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4 w-full">
+      {/* Page Header Ribbon */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+        <div>
+          <span className="text-[10px] font-extrabold text-primary uppercase tracking-wider block mb-0.5">
+            Test Repository
+          </span>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            Curriculum Exam Packs
+          </h1>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold">
+          <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700">
+            Total Available: <strong className="text-slate-900">{examPacks.length}</strong>
+          </span>
+        </div>
+      </div>
+
+      {/* ---- Controls Ribbon ---- */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="flex flex-col sm:flex-row gap-3 w-full">
           {/* Search */}
-          <div className="flex items-center w-full md:w-1/3 border border-[#dd6b01] rounded-lg px-3 py-2">
-            <FaSearch className="text-[#dd6b01] mr-2" />
+          <div className="flex items-center w-full sm:w-1/2 lg:w-1/3 border border-slate-200/80 rounded-xl px-3 py-2 bg-slate-50 hover:bg-slate-100/60 focus-within:bg-white focus-within:border-primary transition-all">
+            <FaSearch className="text-slate-400 mr-2 text-xs" />
             <input
               type="text"
-              placeholder="Search by Exam Name"
+              placeholder="Search by Exam Name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full outline-none text-sm"
+              className="w-full outline-none text-xs font-medium text-slate-800 placeholder:text-slate-400 bg-transparent"
             />
           </div>
 
           {/* Category Filter */}
-          <div className="relative w-full md:w-1/4">
+          <div className="relative w-full sm:w-1/3 lg:w-1/4">
             <button
               onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-              className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white hover:border-[#dd6b01] transition cursor-pointer"
+              className="w-full flex items-center justify-between border border-slate-200/80 rounded-xl px-3 py-2 text-xs bg-white hover:border-primary/50 transition cursor-pointer"
             >
-              <span className="flex items-center gap-2">
-                <FaTags className="text-gray-500" />
-                Category: <strong className="text-[#dd6b01]">{filterCategory}</strong>
+              <span className="flex items-center gap-1.5 truncate">
+                <FaTags className="text-slate-400 text-[10px]" />
+                <span className="text-slate-600">Category:</span> <strong className="text-primary font-bold truncate">{filterCategory}</strong>
               </span>
-              <span className="text-xs text-gray-400">▼</span>
+              <span className="text-[10px] text-slate-400">▼</span>
             </button>
 
             {showCategoryDropdown && (
-              <div className="absolute left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
+              <div className="absolute left-0 mt-1 w-full bg-white border border-slate-200/80 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto custom-scrollbar p-1">
                 {categories.map((cat) => (
                   <button
                     key={cat}
@@ -110,10 +127,10 @@ export default function ExamPackClientView({ initialPacks }: ExamPackClientViewP
                       setFilterCategory(cat);
                       setShowCategoryDropdown(false);
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-orange-50 cursor-pointer ${
+                    className={`w-full text-left px-3 py-1.5 text-xs rounded-lg hover:bg-primary/5 cursor-pointer ${
                       filterCategory === cat
-                        ? "font-bold text-[#dd6b01] bg-orange-50"
-                        : "text-gray-700"
+                        ? "font-bold text-primary bg-primary/10"
+                        : "text-slate-700"
                     }`}
                   >
                     {cat}
@@ -124,28 +141,28 @@ export default function ExamPackClientView({ initialPacks }: ExamPackClientViewP
           </div>
 
           {/* Sort By Dropdown */}
-          <div className="relative w-full md:w-1/4">
+          <div className="relative w-full sm:w-1/3 lg:w-1/4">
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white hover:border-[#dd6b01] transition cursor-pointer"
+              className="w-full flex items-center justify-between border border-slate-200/80 rounded-xl px-3 py-2 text-xs bg-white hover:border-primary/50 transition cursor-pointer"
             >
-              <span>
-                Sort by:{" "}
-                <strong className="text-[#dd6b01]">
-                  {sortBy === "name" ? "Exam Name" : "Total Exams"}
+              <span className="truncate">
+                <span className="text-slate-600">Sort:</span>{" "}
+                <strong className="text-primary font-bold">
+                  {sortBy === "name" ? "Name" : "Total Exams"}
                 </strong>
               </span>
-              <span className="text-xs text-gray-400">▼</span>
+              <span className="text-[10px] text-slate-400">▼</span>
             </button>
 
             {showDropdown && (
-              <div className="absolute left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-20">
+              <div className="absolute left-0 mt-1 w-full bg-white border border-slate-200/80 rounded-xl shadow-xl z-20 p-1">
                 <button
                   onClick={() => {
                     setSortBy("name");
                     setShowDropdown(false);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-orange-50 text-gray-700 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 text-xs rounded-lg hover:bg-primary/5 text-slate-700 cursor-pointer"
                 >
                   Exam Name
                 </button>
@@ -154,7 +171,7 @@ export default function ExamPackClientView({ initialPacks }: ExamPackClientViewP
                     setSortBy("totalExams");
                     setShowDropdown(false);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-orange-50 text-gray-700 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 text-xs rounded-lg hover:bg-primary/5 text-slate-700 cursor-pointer"
                 >
                   Total Exams
                 </button>
@@ -165,20 +182,20 @@ export default function ExamPackClientView({ initialPacks }: ExamPackClientViewP
           {/* Sort Order Toggle */}
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="flex items-center justify-center border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white hover:border-[#dd6b01] transition min-w-[40px] cursor-pointer"
+            className="flex items-center justify-center border border-slate-200/80 rounded-xl px-3 py-2 text-xs bg-white hover:border-primary/50 transition min-w-[38px] cursor-pointer text-slate-600"
             title={`Sort ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
           >
             {sortOrder === "asc" ? (
-              <FaSortAmountUp className="text-[#dd6b01]" />
+              <FaSortAmountUp className="text-primary" />
             ) : (
-              <FaSortAmountDown className="text-[#dd6b01]" />
+              <FaSortAmountDown className="text-primary" />
             )}
           </button>
         </div>
       </div>
 
-      {/* ---- Cards Grid ---- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* ---- Cards Grid (Tight, Professional Spacing) ---- */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredAndSorted.map((pack) => (
           <ExamPackCard
             key={pack.id}
@@ -187,12 +204,13 @@ export default function ExamPackClientView({ initialPacks }: ExamPackClientViewP
             totalExams={pack.totalExams || pack.examCount || 0}
             link={pack.link}
             image={pack.image || "/global/logo2.png"}
+            category={pack.category}
           />
         ))}
 
         {filteredAndSorted.length === 0 && (
-          <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <p className="text-gray-500 font-semibold text-sm">
+          <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+            <p className="text-slate-500 font-semibold text-xs">
               No exam packs match your search or filter.
             </p>
           </div>

@@ -420,7 +420,7 @@ export default function ReportingDetailClientView({
         )}
 
         {/* Peer Leaderboard Table */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-none border border-slate-200/80 shadow-xs overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h3 className="text-xl font-black text-slate-900 tracking-tight">

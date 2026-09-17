@@ -14,17 +14,17 @@ interface OutlineButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const sizeClasses: Record<OutlineBtnSize, string> = {
-  sm: "px-2 py-0.5 rounded text-[10px] font-bold",
-  md: "px-4 md:px-6 py-3 rounded-full text-sm md:text-lg font-semibold",
-  lg: "px-6 md:px-8 py-3.5 rounded-full text-base md:text-xl font-bold",
+  sm: "px-2.5 py-1 rounded text-[11px] font-semibold",
+  md: "px-3.5 py-1.5 sm:px-4 sm:py-2 rounded text-xs sm:text-sm font-semibold",
+  lg: "px-5 py-2.5 rounded text-sm font-semibold",
 };
 
 const variantClasses: Record<OutlineBtnVariant, string> = {
-  primary: "bg-white border border-solid border-[#f97a00]",
+  primary: "bg-white border border-solid border-primary text-primary hover:bg-primary/5",
   neutral:
-    "bg-white border border-solid border-gray-200 text-gray-600 hover:border-[#dd6b01] hover:text-[#dd6b01]",
+    "bg-white border border-solid border-slate-200 text-slate-700 hover:border-primary/40 hover:text-primary hover:bg-slate-50",
   danger:
-    "bg-white border border-solid border-gray-200 text-gray-600 hover:border-red-400 hover:text-red-600",
+    "bg-white border border-solid border-rose-200 text-rose-600 hover:border-rose-400 hover:bg-rose-50",
 };
 
 export function OutlineBtn({

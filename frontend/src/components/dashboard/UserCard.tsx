@@ -39,26 +39,41 @@ export default function UserCard({
     : "U";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200/80 shadow-sm hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-300 p-6 md:p-7 flex flex-col justify-between h-full group">
+    <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-primary/40 transition-all duration-150 p-4 sm:p-4.5 flex flex-col justify-between h-full group">
       {/* Ambient background decoration */}
-      <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-orange-500/10 via-amber-500/5 to-transparent rounded-full blur-3xl pointer-events-none -mr-16 -mt-16 group-hover:from-orange-500/15 transition-all duration-500" />
-      <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-orange-400/5 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-primary/10 via-amber-500/5 to-transparent rounded-full blur-3xl pointer-events-none -mr-10 -mt-10" />
 
-      <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-6">
-        {/* Avatar with luxury gradient ring & verification status */}
+      {/* Subtle Coordinate / Grid SVG Telemetry Watermark */}
+      <svg
+        className="absolute right-0 bottom-0 w-48 h-32 text-slate-700 opacity-[0.03] pointer-events-none"
+        viewBox="0 0 200 120"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <pattern id="user-telemetry-grid" width="16" height="16" patternUnits="userSpaceOnUse">
+          <circle cx="8" cy="8" r="0.8" fill="currentColor" />
+        </pattern>
+        <rect width="100%" height="100%" fill="url(#user-telemetry-grid)" />
+        <path d="M0 60 L60 60 L80 30 L100 90 L120 60 L200 60" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <circle cx="80" cy="30" r="3" fill="currentColor" />
+        <circle cx="100" cy="90" r="3" fill="currentColor" />
+      </svg>
+
+      <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-3.5">
+        {/* Avatar with subtle ring & verification status */}
         <div className="relative shrink-0">
-          <div className="relative p-1 rounded-2xl bg-gradient-to-tr from-[#dd6b01] via-[#f97a00] to-amber-300 shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/30 transition-shadow">
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[14px] overflow-hidden bg-slate-100 flex items-center justify-center border-2 border-white">
+          <div className="relative p-0.5 rounded bg-slate-200 shadow-2xs">
+            <div className="relative w-18 h-18 sm:w-20 sm:h-20 rounded overflow-hidden bg-slate-100 flex items-center justify-center border border-white">
               {image && (image.startsWith("/") || image.startsWith("http")) ? (
                 <Image
                   src={image}
                   alt={name || "User Avatar"}
                   fill
-                  sizes="(max-width: 640px) 96px, 112px"
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 640px) 72px, 80px"
+                  className="object-cover group-hover:scale-105 transition-transform duration-200"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50 text-[#dd6b01] text-3xl font-black">
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-amber-50 text-primary text-xl font-black font-mono">
                   {displayInitials}
                 </div>
               )}
@@ -66,58 +81,58 @@ export default function UserCard({
           </div>
           {/* Verified status pin */}
           <div
-            className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-md text-emerald-600"
+            className="absolute -bottom-1 -right-1 bg-white p-0.5 rounded shadow-2xs text-emerald-600"
             title="Verified Portal Account"
           >
-            <FaCheckCircle className="text-base" />
+            <FaCheckCircle className="text-xs" />
           </div>
         </div>
 
         {/* User Identity & Info Details */}
         <div className="flex-1 text-center sm:text-left min-w-0">
           {/* Top Status row */}
-          <div className="flex flex-wrap items-center justify-center sm:justify-between gap-2 mb-2">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-[11px] font-bold tracking-wide">
+          <div className="flex flex-wrap items-center justify-center sm:justify-between gap-2 mb-1">
+            <div className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-[10px] font-mono font-bold tracking-wide">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Active Profile
             </div>
             <Link
               href="/dashboard/edit-profile"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#dd6b01] transition-colors group/edit"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-primary transition-colors group/edit"
             >
-              <FaUserEdit className="text-sm group-hover/edit:scale-110 transition-transform" />
-              <span>Edit Profile</span>
+              <FaUserEdit className="text-xs group-hover/edit:scale-105 transition-transform" />
+              <span>Edit</span>
             </Link>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mb-1.5 truncate">
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight mb-0.5 truncate">
             {name || "Candidate"}
           </h2>
 
           {institution && (
-            <p className="text-slate-600 text-xs font-semibold flex items-center justify-center sm:justify-start gap-1.5 mb-4 truncate">
-              <FaUniversity className="text-[#dd6b01] shrink-0" />
+            <p className="text-slate-600 text-xs font-medium flex items-center justify-center sm:justify-start gap-1.5 mb-2 truncate">
+              <FaUniversity className="text-primary shrink-0 text-[11px]" />
               <span className="truncate">{institution}</span>
             </p>
           )}
 
-          {/* Metadata Badges Bento */}
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+          {/* Metadata Badges */}
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1 pt-0.5">
             {level && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/80 hover:border-orange-200 text-slate-700 hover:text-[#dd6b01] text-xs font-bold transition-colors">
-                <FaGraduationCap className="text-orange-500" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-50 hover:bg-primary/5 border border-slate-200/80 text-slate-700 hover:text-primary text-[10px] font-mono font-semibold transition-colors">
+                <FaGraduationCap className="text-primary text-[10px]" />
                 {level}
               </span>
             )}
             {board && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/80 hover:border-orange-200 text-slate-700 hover:text-[#dd6b01] text-xs font-bold transition-colors">
-                <FaLayerGroup className="text-amber-500" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-50 hover:bg-primary/5 border border-slate-200/80 text-slate-700 hover:text-primary text-[10px] font-mono font-semibold transition-colors">
+                <FaLayerGroup className="text-amber-500 text-[10px]" />
                 {board}
               </span>
             )}
             {batch && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 hover:bg-orange-50/70 border border-slate-200/80 hover:border-orange-200 text-slate-700 hover:text-[#dd6b01] text-xs font-bold transition-colors">
-                <FaCalendarAlt className="text-orange-400" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-50 hover:bg-primary/5 border border-slate-200/80 text-slate-700 hover:text-primary text-[10px] font-mono font-semibold transition-colors">
+                <FaCalendarAlt className="text-primary-light text-[10px]" />
                 Batch {batch}
               </span>
             )}

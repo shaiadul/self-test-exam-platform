@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { FaEdit, FaTrashAlt, FaPlus, FaSpinner } from "react-icons/fa";
 import { MdOutlineEditNote } from "react-icons/md";
 import { PageContainer } from "../../../../components/common/PageContainer";
+import EmptyState from "../../../../components/common/EmptyState";
 import { deleteExamAction, deleteExamPackAction } from "../../../../lib/actions";
 
 type Exam = {
@@ -122,44 +123,66 @@ export default function ManageExamPackDetailClientView({
   };
 
   return (
-    <PageContainer>
-      {/* --- Page Header --- */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-        <h1 className="text-3xl font-bold text-[#dd6b01]">
-          Exam Pack: {packTitle}
-        </h1>
-
+    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+      {/* --- Page Header Command Strip --- */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
           <Link
-            href={`/dashboard/manage-exam-pack/${packId}/add-exam`}
-            className="flex items-center gap-2 px-4 py-2 bg-[#dd6b01] hover:bg-orange-600 text-white rounded-lg font-bold text-sm shadow transition"
+            href="/dashboard/manage-exam-pack"
+            className="p-2 rounded border border-slate-200/80 bg-white text-slate-600 hover:text-primary hover:border-primary/40 shadow-2xs transition"
+            title="Return to Packs"
           >
-            <FaPlus /> Add Exam
+            <FaArrowLeft className="text-xs" />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                CURRICULUM CONTAINER
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
+                #{packId}
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              {packTitle}
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <Link
+            href={`/dashboard/manage-exam-pack/${packId}/add-exam`}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary hover:bg-primary-hover text-white rounded text-xs font-bold shadow-2xs transition"
+          >
+            <FaPlus className="text-[10px]" /> Add Exam
           </Link>
           <Link
             href={`/dashboard/manage-exam-pack/edit?packId=${packId}`}
-            className="flex items-center gap-2 px-4 py-2 border border-[#dd6b01] text-[#dd6b01] hover:bg-orange-50 rounded-lg font-bold text-sm transition"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200/80 bg-white text-slate-700 hover:text-primary hover:border-primary/40 rounded text-xs font-bold shadow-2xs transition"
           >
-            <FaEdit /> Edit Pack
+            <FaEdit className="text-[10px]" /> Edit Pack
           </Link>
           <button
             onClick={handleDeleteExamPack}
-            className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-sm shadow transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 border border-rose-200 bg-rose-50/50 hover:bg-rose-100/60 text-rose-700 rounded text-xs font-bold shadow-2xs transition cursor-pointer"
           >
-            <FaTrashAlt /> Delete Pack
+            <FaTrashAlt className="text-[10px]" /> Delete
           </button>
         </div>
       </div>
 
-      {/* --- Exams Table --- */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+      {/* --- Exams Table Data Grid --- */}
+      <div className="bg-white rounded-none border border-slate-200/80 shadow-2xs overflow-hidden">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-gray-800">
-              Exams List ({exams.length})
-            </h2>
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">
+              EXAMS REPOSITORY
+            </span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 font-bold">
+              {exams.length} ACTIVE
+            </span>
             {isPending && (
-              <FaSpinner className="animate-spin text-xs text-[#dd6b01]" />
+              <FaSpinner className="animate-spin text-xs text-primary ml-1" />
             )}
           </div>
         </div>
@@ -168,54 +191,54 @@ export default function ManageExamPackDetailClientView({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100 text-gray-400 font-bold text-xs uppercase tracking-wider">
-                  <th className="py-3 px-6">Exam Name</th>
-                  <th className="py-3 px-6">Code / ID</th>
-                  <th className="py-3 px-6">Start Date</th>
-                  <th className="py-3 px-6">End Date</th>
-                  <th className="py-3 px-6 text-center">Questions</th>
-                  <th className="py-3 px-6 text-right">Actions</th>
+                <tr className="bg-slate-50/70 border-b border-slate-200/80 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider">
+                  <th className="py-3 px-4">Exam Name</th>
+                  <th className="py-3 px-4">Code / ID</th>
+                  <th className="py-3 px-4">Start Window</th>
+                  <th className="py-3 px-4">End Window</th>
+                  <th className="py-3 px-4 text-center">Questions</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
+              <tbody className="divide-y divide-slate-100 text-xs">
                 {exams.map((exam) => (
-                  <tr key={exam.id} className="hover:bg-gray-50/50 transition">
-                    <td className="py-4 px-6 font-bold text-gray-900">
+                  <tr key={exam.id} className="hover:bg-slate-50/50 transition">
+                    <td className="py-3.5 px-4 font-bold text-slate-900">
                       <Link
                         href={exam.link}
-                        className="hover:text-[#dd6b01] transition"
+                        className="hover:text-primary transition"
                       >
                         {exam.name}
                       </Link>
                     </td>
-                    <td className="py-4 px-6 font-mono text-xs text-gray-500">
-                      {exam.id}
+                    <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">
+                      #{exam.id}
                     </td>
-                    <td className="py-4 px-6 text-gray-600 font-medium">
+                    <td className="py-3.5 px-4 text-slate-600 font-medium font-mono text-[11px]">
                       {formatDate(exam.startDate)}
                     </td>
-                    <td className="py-4 px-6 text-gray-600 font-medium">
+                    <td className="py-3.5 px-4 text-slate-600 font-medium font-mono text-[11px]">
                       {formatDate(exam.endDate)}
                     </td>
-                    <td className="py-4 px-6 text-center">
+                    <td className="py-3.5 px-4 text-center">
                       <Link
                         href={`/dashboard/question/add?examId=${exam.id}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-xs font-bold transition border border-blue-200"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200/80 text-[11px] font-bold transition font-mono"
                       >
-                        <MdOutlineEditNote className="text-base" /> Add / Manage
+                        <MdOutlineEditNote className="text-sm" /> MANAGE_QUESTIONS
                       </Link>
                     </td>
-                    <td className="py-4 px-6 text-right space-x-2">
+                    <td className="py-3.5 px-4 text-right space-x-1">
                       <button
                         onClick={() => handleEditExam(exam.id)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition cursor-pointer"
                         title="Edit Exam"
                       >
                         <FaEdit />
                       </button>
                       <button
                         onClick={() => handleDeleteExam(exam.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                        className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
                         title="Delete Exam"
                       >
                         <FaTrashAlt />
@@ -227,13 +250,18 @@ export default function ManageExamPackDetailClientView({
             </table>
           </div>
         ) : isPending ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-2 text-gray-500 font-medium">
-            <FaSpinner className="animate-spin text-2xl text-[#dd6b01]" />
-            <span className="text-sm font-semibold">Loading exams...</span>
+          <div className="py-16 flex flex-col items-center justify-center gap-2 text-slate-400 font-medium">
+            <FaSpinner className="animate-spin text-2xl text-primary" />
+            <span className="text-xs font-mono font-bold">SYNCHRONIZING REPOSITORY...</span>
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500 font-medium">
-            No exams configured in this pack yet.
+          <div className="py-6">
+            <EmptyState
+              compact
+              type="exam"
+              title="No Exams Configured"
+              description="No exams have been configured in this curriculum container yet. Click '+ Add Exam' to initialize."
+            />
           </div>
         )}
       </div>

@@ -77,24 +77,24 @@ export default function Register() {
         </motion.div>
       </section>
 
-      <section className="flex-1 flex items-center justify-center p-6 pb-20">
+      <section className="flex-1 flex items-center justify-center p-4 pb-16">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-white p-10 rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100"
+          className="w-full max-w-md bg-white p-6 sm:p-8 rounded border border-slate-200/80 shadow-xs"
         >
-          <div className="text-center mb-10">
-            <h2 className="text-4xl font-black gradient-text mb-3">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1.5">
               Create Account
             </h2>
-            <p className="text-gray-500 font-medium">
-              Join 1200+ students on our platform
+            <p className="text-slate-500 text-xs font-medium">
+              Join candidates and educators on the testing portal
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm font-semibold rounded-xl text-center">
+              <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-xs font-mono font-semibold rounded text-center">
                 {error}
               </div>
             )}
@@ -132,13 +132,13 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-lg px-6 py-4 rounded-2xl hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full bg-primary hover:bg-primary-dark text-white font-bold text-sm px-4 py-2.5 rounded shadow-xs transition-all active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? "Creating account..." : "Register Now"}
             </button>
 
-            <div className="text-center pt-4">
-              <p className="text-gray-500 font-medium">
+            <div className="text-center pt-2">
+              <p className="text-slate-500 text-xs font-medium">
                 Already have an account?{" "}
                 <Link
                   href="/auth/login"

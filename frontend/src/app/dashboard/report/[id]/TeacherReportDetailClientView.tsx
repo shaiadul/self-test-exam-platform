@@ -206,7 +206,7 @@ export default function TeacherReportDetailClientView({
       </div>
 
       {/* Filter and Table */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-none border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h3 className="text-xl font-black text-slate-900 tracking-tight">

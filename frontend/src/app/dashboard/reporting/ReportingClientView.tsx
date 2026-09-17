@@ -16,6 +16,7 @@ import {
   FaFilter,
 } from "react-icons/fa";
 import { PageContainer } from "../../../components/common/PageContainer";
+import EmptyState from "../../../components/common/EmptyState";
 import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../components/ui/OutlineBtn";
 
@@ -240,7 +241,7 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
 
       {/* Unified Enterprise Evaluation Data Table (Clean, reduced card-type design) */}
       {filteredReports.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-xs">
+        <div className="overflow-x-auto rounded-none border border-slate-200/80 bg-white shadow-xs">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
@@ -371,23 +372,14 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
 
       {/* Empty State */}
       {filteredReports.length === 0 && (
-        <div className="text-center py-16 px-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs max-w-lg mx-auto">
-          <div className="w-16 h-16 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[#dd6b01] text-2xl mx-auto mb-4">
-            <FaFileAlt />
-          </div>
-          <h3 className="text-lg font-black text-slate-800 mb-1">
-            No Exam Reports Found
-          </h3>
-          <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto mb-6">
-            You haven&apos;t attended any exams matching your search criteria. Take a self-test or mock exam to generate detailed performance analytics and certificate!
-          </p>
-          <PrimaryBtn
-            link="/dashboard/exam-pack"
-            className="!text-xs !py-2.5 !px-5 gap-2 shadow-sm"
-          >
-            <span>Explore Exam Packs</span>
-            <FaArrowRight className="text-xs" />
-          </PrimaryBtn>
+        <div className="bg-white rounded-none border border-slate-200/80 shadow-xs max-w-2xl mx-auto">
+          <EmptyState
+            type="reports"
+            title="No Exam Reports Found"
+            description="You haven't attended any exams matching your search criteria. Take a self-test or mock exam to generate detailed performance analytics and certificate!"
+            actionLabel="Explore Exam Packs"
+            actionHref="/dashboard/exam-pack"
+          />
         </div>
       )}
     </PageContainer>

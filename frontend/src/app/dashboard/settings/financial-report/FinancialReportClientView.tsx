@@ -156,7 +156,7 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
         </div>
 
         {/* Ledger Table */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-md overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-none border border-slate-200/80 shadow-xs overflow-hidden">
           <div className="p-6 border-b border-gray-100">
             <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
               <FaListUl className="text-[#dd6b01]" /> Transaction History
