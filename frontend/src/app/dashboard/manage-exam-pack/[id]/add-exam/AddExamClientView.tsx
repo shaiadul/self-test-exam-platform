@@ -142,7 +142,7 @@ export default function AddExamClientView({
           </OutlineBtn>
           <div>
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-              PACK_ID #{packId} // CREATE_EXAM_MODULE
+              PACK_ID #{packId}
             </span>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Create New Exam Paper
