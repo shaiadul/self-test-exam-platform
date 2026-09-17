@@ -28,7 +28,7 @@ interface InfoItemProps {
 }
 
 const InfoItem: React.FC<InfoItemProps> = ({ label, value }) => (
-  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
+  <div className="bg-slate-50 border border-slate-200/80 rounded p-3.5">
     <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">
       {label}
     </span>
@@ -131,8 +131,8 @@ export default function ReportingDetailClientView({
   if (!attempt) {
     return (
       <PageContainer>
-        <div className="text-center py-20 px-4 bg-white rounded-3xl border border-slate-200/80 shadow-sm max-w-lg mx-auto">
-          <div className="w-16 h-16 rounded-3xl bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center text-2xl mx-auto mb-4">
+        <div className="text-center py-20 px-4 bg-white rounded border border-slate-200/80 shadow-sm max-w-lg mx-auto">
+          <div className="w-16 h-16 rounded bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center text-2xl mx-auto mb-4">
             <FaTimesCircle />
           </div>
           <h2 className="text-xl font-black text-slate-900 mb-2">
@@ -201,20 +201,20 @@ export default function ReportingDetailClientView({
       {/* Screen View (Hidden when printing) */}
       <div className="print:hidden space-y-8">
         {/* Navigation & Title Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
           <div className="flex items-center gap-3">
             <OutlineBtn
               link="/dashboard/reporting"
-              className="!p-2.5 !rounded-xl !text-slate-600 hover:!text-[#dd6b01] shadow-xs"
+              className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200"
               title="Back to Reports"
             >
               <FaArrowLeft className="text-xs" />
             </OutlineBtn>
             <div>
-              <span className="text-[10px] font-mono font-bold text-slate-400 block mb-0.5">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
                 Evaluation Ref #{attempt.id}
               </span>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 {attempt.examName || "Mock Exam Evaluation"}
               </h1>
             </div>
@@ -232,7 +232,7 @@ export default function ReportingDetailClientView({
         </div>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-5 rounded border border-slate-200/80 shadow-2xs">
           <InfoItem label="Exam Title" value={attempt.examName || "N/A"} />
           <InfoItem label="Exam Pack" value={attempt.packName || "General Pack"} />
           <InfoItem label="Exam Code" value={`#${attempt.examId || "N/A"}`} />
@@ -251,7 +251,7 @@ export default function ReportingDetailClientView({
         </div>
 
         {/* Scorecard Component */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+        <div className="bg-white rounded border border-slate-200/80 p-6 shadow-2xs">
           <Scorecard
             result={{
               total: (attempt.correct || 0) + (attempt.wrong || 0),
@@ -268,7 +268,7 @@ export default function ReportingDetailClientView({
 
         {/* Detailed Question Solution Analysis */}
         {questions.length > 0 && (
-          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-6">
+          <div className="bg-white p-6 rounded border border-slate-200/80 shadow-2xs space-y-6">
             <div className="border-b border-slate-100 pb-4">
               <h3 className="text-xl font-black text-slate-900 tracking-tight">
                 Question Analysis & Detailed Solutions
@@ -313,7 +313,7 @@ export default function ReportingDetailClientView({
                 return (
                   <div
                     key={q.id || idx}
-                    className={`p-5 rounded-2xl border transition-all ${
+                    className={`p-5 rounded border transition-all ${
                       isCorrect
                         ? "bg-emerald-50/30 border-emerald-200"
                         : isUnanswered
@@ -326,7 +326,7 @@ export default function ReportingDetailClientView({
                         Q{idx + 1}. {questionTitle}
                       </h4>
                       <span
-                        className={`shrink-0 px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                        className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
                           isCorrect
                             ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                             : isUnanswered
@@ -344,7 +344,7 @@ export default function ReportingDetailClientView({
 
                     {/* Passage text if any */}
                     {q.passage && (
-                      <div className="mb-4 p-3.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 leading-relaxed font-serif">
+                      <div className="mb-4 p-3.5 bg-white border border-slate-200 rounded text-xs text-slate-700 leading-relaxed font-serif">
                         <strong className="block text-slate-900 font-sans font-bold text-[11px] uppercase tracking-wider mb-1">
                           Reference Passage:
                         </strong>
@@ -354,7 +354,7 @@ export default function ReportingDetailClientView({
 
                     {/* Picture if any */}
                     {q.pictureUrl && (
-                      <div className="relative w-full max-w-sm h-48 rounded-xl overflow-hidden mb-4 border border-slate-200">
+                      <div className="relative w-full max-w-sm h-48 rounded overflow-hidden mb-4 border border-slate-200">
                         <Image
                           src={q.pictureUrl}
                           alt="Question Illustration"
@@ -374,7 +374,7 @@ export default function ReportingDetailClientView({
                           return (
                             <div
                               key={optIdx}
-                              className={`p-3 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 border transition ${
+                              className={`p-3 rounded text-xs font-semibold flex items-center justify-between gap-2 border transition ${
                                 optionIsCorrect
                                   ? "bg-emerald-100 border-emerald-300 text-emerald-900 font-bold"
                                   : optionIsChosen
@@ -386,12 +386,12 @@ export default function ReportingDetailClientView({
                                 {String.fromCharCode(65 + optIdx)}. {opt}
                               </span>
                               {optionIsCorrect && (
-                                <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold shrink-0">
+                                <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-bold shrink-0">
                                   Correct Answer
                                 </span>
                               )}
                               {optionIsChosen && !optionIsCorrect && (
-                                <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-full font-bold shrink-0">
+                                <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded font-bold shrink-0">
                                   Your Choice
                                 </span>
                               )}
@@ -402,7 +402,7 @@ export default function ReportingDetailClientView({
 
                     {/* Solution Explanation */}
                     {q.explanation && (
-                      <div className="mt-3 p-3.5 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs text-amber-950 flex items-start gap-2">
+                      <div className="mt-3 p-3.5 bg-amber-50/70 border border-amber-200/80 rounded text-xs text-amber-950 flex items-start gap-2">
                         <FaLightbulb className="text-amber-500 shrink-0 text-sm mt-0.5" />
                         <div>
                           <strong className="block font-bold text-amber-900 mb-0.5">
@@ -432,8 +432,8 @@ export default function ReportingDetailClientView({
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="flex items-center w-full sm:w-64 border border-[#dd6b01] rounded-lg px-3 py-2 bg-white">
-                <FaSearch className="text-[#dd6b01] mr-2 text-xs" />
+              <div className="flex items-center w-full sm:w-64 border border-slate-300 hover:border-slate-400 rounded px-3 py-2 bg-white transition">
+                <FaSearch className="text-primary mr-2 text-xs" />
                 <input
                   type="text"
                   placeholder="Filter candidate..."
@@ -447,7 +447,7 @@ export default function ReportingDetailClientView({
               <div className="relative w-full sm:w-44">
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-xs bg-white hover:border-[#dd6b01] transition text-gray-700 cursor-pointer"
+                  className="w-full flex items-center justify-between border border-slate-300 rounded px-3 py-2 text-xs bg-white hover:border-slate-400 transition text-slate-700 cursor-pointer"
                 >
                   <span className="flex items-center gap-1">
                     <FaFilter className="text-[10px] text-gray-400 mr-1" />
@@ -457,7 +457,7 @@ export default function ReportingDetailClientView({
                 </button>
 
                 {showDropdown && (
-                  <div className="absolute right-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                  <div className="absolute right-0 mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-20 overflow-hidden">
                     {sortOptions.map((option) => (
                       <button
                         key={option.value}
@@ -465,10 +465,10 @@ export default function ReportingDetailClientView({
                           setSortBy(option.value as "score" | "name");
                           setShowDropdown(false);
                         }}
-                        className={`w-full text-left px-3 py-2 text-xs hover:bg-orange-50 transition cursor-pointer ${
+                        className={`w-full text-left px-3 py-2 text-xs hover:bg-primary/5 transition cursor-pointer ${
                           sortBy === option.value
-                            ? "font-bold text-[#dd6b01] bg-orange-50/50"
-                            : "text-gray-700"
+                            ? "font-bold text-primary bg-primary/5"
+                            : "text-slate-700"
                         }`}
                       >
                         {option.label}
@@ -481,10 +481,10 @@ export default function ReportingDetailClientView({
               {/* Order Toggle */}
               <button
                 onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                className="flex items-center justify-center border border-gray-300 rounded-lg p-2.5 bg-white hover:border-[#dd6b01] transition text-gray-700 cursor-pointer"
+                className="flex items-center justify-center border border-slate-300 rounded p-2.5 bg-white hover:border-slate-400 transition text-slate-700 cursor-pointer"
                 title={`Sort Order: ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
               >
-                {sortOrder === "asc" ? <FaSortAmountUp className="text-[#dd6b01] text-xs" /> : <FaSortAmountDown className="text-[#dd6b01] text-xs" />}
+                {sortOrder === "asc" ? <FaSortAmountUp className="text-primary text-xs" /> : <FaSortAmountDown className="text-primary text-xs" />}
               </button>
             </div>
           </div>
@@ -515,12 +515,12 @@ export default function ReportingDetailClientView({
                     <td className="py-4 px-6 font-bold text-slate-900">
                       {p.name}{" "}
                       {p.id === attempt.id && (
-                        <span className="text-[#dd6b01] text-xs font-extrabold ml-1 bg-orange-100 px-2 py-0.5 rounded-full">
+                        <span className="text-primary text-[10px] font-mono font-bold ml-1 bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
                           You
                         </span>
                       )}
                     </td>
-                    <td className="py-4 px-6 font-black text-[#dd6b01]">
+                    <td className="py-4 px-6 font-black text-primary">
                       {p.score}
                     </td>
                     <td className="py-4 px-6 text-xs text-slate-500 font-semibold">

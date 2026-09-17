@@ -93,7 +93,7 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <span className="text-xs font-extrabold text-[#dd6b01] uppercase tracking-wider block mb-1">
+          <span className="text-[10px] font-mono font-bold text-primary uppercase tracking-wider block mb-1">
             Candidate Analytics
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -281,11 +281,11 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
                     {/* Name & Pack */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#dd6b01] border border-orange-100/80 flex items-center justify-center shrink-0 group-hover:bg-[#dd6b01] group-hover:text-white transition-colors duration-200">
+                        <div className="w-9 h-9 rounded bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors duration-200">
                           <FaFileAlt className="text-xs" />
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-slate-900 group-hover:text-[#dd6b01] transition-colors truncate max-w-xs sm:max-w-md">
+                          <p className="font-bold text-slate-900 group-hover:text-primary transition-colors truncate max-w-xs sm:max-w-md">
                             {report.examName || "Mock Examination"}
                           </p>
                           {report.packName && (
@@ -330,7 +330,7 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
                     {/* Score & Status */}
                     <td className="px-5 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2.5">
-                        <span className="text-base font-black text-[#dd6b01]">
+                        <span className="text-base font-black text-primary">
                           {Number(report.finalScore).toFixed(1)}
                         </span>
                         <span

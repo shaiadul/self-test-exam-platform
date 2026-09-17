@@ -84,24 +84,24 @@ export default function DashboardLayoutClient({
               children
             ) : (
               <div className="min-h-[70vh] flex items-center justify-center p-4">
-                <div className="bg-white border border-gray-100 rounded-xl p-8 shadow-xl max-w-lg w-full text-center relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-500 to-orange-500"></div>
+                <div className="bg-white border border-slate-200/80 rounded p-8 shadow-xl max-w-lg w-full text-center relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-amber-500"></div>
 
-                  <div className="w-20 h-20 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-3xl mx-auto mb-6 border border-red-100 shadow-inner relative">
+                  <div className="w-20 h-20 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-3xl mx-auto mb-6 border border-rose-100 shadow-inner relative">
                     <FaLock />
                     <FaExclamationTriangle className="absolute bottom-4 right-4 text-xs text-amber-500" />
                   </div>
 
-                  <h2 className="text-2xl font-black text-gray-900 mb-3 uppercase tracking-wider">
+                  <h2 className="text-2xl font-black text-slate-900 mb-3 uppercase tracking-wider">
                     Access Restricted
                   </h2>
-                  <p className="text-gray-500 text-sm leading-relaxed mb-8">
+                  <p className="text-slate-500 text-sm leading-relaxed mb-8">
                     Your account role{" "}
-                    <span className="font-bold text-[#dd6b01] uppercase">
+                    <span className="font-bold text-primary uppercase">
                       ({userRole})
                     </span>{" "}
                     is not authorized to access{" "}
-                    <span className="font-semibold text-gray-700 bg-gray-50 px-2 py-1 rounded border border-gray-100 text-xs break-all">
+                    <span className="font-semibold text-slate-700 bg-slate-50 px-2 py-1 rounded border border-slate-100 text-xs break-all">
                       {pathname}
                     </span>
                     . Please verify your credentials or contact the portal
@@ -111,14 +111,14 @@ export default function DashboardLayoutClient({
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Link
                       href="/dashboard"
-                      className="px-6 py-3 bg-[#dd6b01] text-white font-bold rounded-xl shadow-md shadow-orange-500/10 hover:bg-[#c35f00] hover:shadow-lg transition cursor-pointer text-sm"
+                      className="px-6 py-3 bg-primary text-white font-bold rounded shadow-md hover:bg-primary-hover hover:shadow-lg transition cursor-pointer text-sm"
                     >
                       Return to Dashboard
                     </Link>
                     <Link
                       href="/auth/login"
                       onClick={() => localStorage.clear()}
-                      className="px-6 py-3 border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-gray-800 transition cursor-pointer text-sm"
+                      className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded hover:bg-slate-50 hover:text-slate-800 transition cursor-pointer text-sm"
                     >
                       Log in to Another Account
                     </Link>

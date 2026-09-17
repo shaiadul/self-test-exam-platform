@@ -121,7 +121,7 @@ export default function DashboardClientView({
             </div>
 
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-              {greeting}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-[#f97a00]">{firstName}</span>!
+              {greeting}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-primary">{firstName}</span>!
             </h1>
 
             <p className="text-slate-300 text-xs font-normal leading-relaxed">
@@ -284,7 +284,7 @@ export default function DashboardClientView({
 
               <ChartCard
                 data={stats?.accuracyData || []}
-                color="#dd6b01"
+                color="var(--color-primary)"
                 strokeColor="#f59e0b"
                 avgLabel="Average Score"
               />

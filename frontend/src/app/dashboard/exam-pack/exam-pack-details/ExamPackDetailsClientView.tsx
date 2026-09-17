@@ -2,7 +2,7 @@
 
 import React, { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FaEye, FaPlay, FaCalendarAlt, FaCheckCircle, FaSpinner } from "react-icons/fa";
+import { FaEye, FaPlay, FaCalendarAlt, FaCheckCircle, FaSpinner, FaArrowLeft } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
@@ -97,21 +97,24 @@ export default function ExamPackDetailsClientView({
 
   return (
     <PageContainer className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
-        <div>
-          <span className="text-[10px] font-extrabold text-primary uppercase tracking-wider block mb-1">
-            Exam Pack Modules
-          </span>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            {packTitle}
-          </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+        <div className="flex items-center gap-3">
+          <OutlineBtn
+            link="/dashboard/exam-pack"
+            className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200"
+            title="Back to All Packs"
+          >
+            <FaArrowLeft className="text-xs" />
+          </OutlineBtn>
+          <div>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+              EXAM_PACK // MODULES
+            </span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              {packTitle}
+            </h1>
+          </div>
         </div>
-        <OutlineBtn
-          link="/dashboard/exam-pack"
-          className="!text-xs !py-1.5 !px-3.5 gap-1 shadow-xs !rounded-xl"
-        >
-          ← Back to All Packs
-        </OutlineBtn>
       </div>
 
       <div className="overflow-x-auto bg-white border border-slate-200/80 rounded-none shadow-xs">
@@ -136,7 +139,7 @@ export default function ExamPackDetailsClientView({
                   {exam.status === "Start Exam" && (
                     <PrimaryBtn
                       link={exam.link}
-                      className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded-xl"
+                      className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded"
                     >
                       <FaPlay className="text-[9px]" />
                       <span>Start Exam</span>
@@ -151,14 +154,14 @@ export default function ExamPackDetailsClientView({
                       {exam.attemptId ? (
                         <OutlineBtn
                           link={`/dashboard/reporting/${exam.attemptId}`}
-                          className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded-xl"
+                          className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded"
                         >
                           <span className="text-slate-700 font-bold">View Report</span>
                         </OutlineBtn>
                       ) : (
                         <OutlineBtn
                           link="/dashboard/reporting"
-                          className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded-xl"
+                          className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded"
                         >
                           <FaEye className="text-xs text-primary" />
                           <span className="text-slate-700 font-bold">Reports</span>
@@ -179,7 +182,7 @@ export default function ExamPackDetailsClientView({
               <tr>
                 <td colSpan={5} className="py-12 text-center text-slate-500 font-medium text-xs">
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <FaSpinner className="animate-spin text-xl text-[#dd6b01]" />
+                    <FaSpinner className="animate-spin text-xl text-primary" />
                     <span>Loading exams...</span>
                   </div>
                 </td>

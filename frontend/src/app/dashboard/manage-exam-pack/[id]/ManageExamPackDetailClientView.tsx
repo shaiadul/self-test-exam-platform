@@ -8,6 +8,7 @@ import { FaEdit, FaTrashAlt, FaPlus, FaSpinner, FaArrowLeft } from "react-icons/
 import { MdOutlineEditNote } from "react-icons/md";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
+import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { deleteExamAction, deleteExamPackAction } from "../../../../lib/actions";
 
 type Exam = {
@@ -127,13 +128,13 @@ export default function ManageExamPackDetailClientView({
       {/* --- Page Header Command Strip --- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/manage-exam-pack"
-            className="p-2 rounded border border-slate-200/80 bg-white text-slate-600 hover:text-primary hover:border-primary/40 shadow-2xs transition"
+          <OutlineBtn
+            link="/dashboard/manage-exam-pack"
+            className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200"
             title="Return to Packs"
           >
             <FaArrowLeft className="text-xs" />
-          </Link>
+          </OutlineBtn>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">

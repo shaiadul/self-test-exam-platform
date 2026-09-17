@@ -1,9 +1,9 @@
 "use client";
 
 import { FaTools, FaArrowLeft } from "react-icons/fa";
-import Link from "next/link";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
+import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 
 export default function ToolsPage() {
   return (
@@ -11,13 +11,13 @@ export default function ToolsPage() {
       {/* Top Header Command Strip */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/settings"
-            className="p-2 rounded border border-slate-200/80 bg-white text-slate-600 hover:text-primary shadow-2xs transition"
+          <OutlineBtn
+            link="/dashboard/settings"
+            className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200"
             title="Back to Settings"
           >
             <FaArrowLeft className="text-xs" />
-          </Link>
+          </OutlineBtn>
           <div>
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
               UTILITIES &amp; DIAGNOSTICS // [MOD-TLS]
