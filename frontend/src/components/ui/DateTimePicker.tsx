@@ -1,32 +1,6 @@
-// // components/ui/DateTimePicker.tsx
-// "use client";
-
-// import React from "react";
-
-// interface DateTimePickerProps {
-//   label: string;
-//   value: string;
-//   onChange: (value: string) => void;
-// }
-
-// export default function DateTimePicker({ label, value, onChange }: DateTimePickerProps) {
-//   return (
-//     <div className="flex flex-col gap-1 w-full">
-//       <label className="text-sm font-medium text-gray-700">{label}</label>
-//       <input
-//         type="datetime-local"
-//         value={value}
-//         onChange={(e) => onChange(e.target.value)}
-//         className="w-full px-4 py-3 text-base outline-none border border-[#f97a00] rounded-lg focus:ring-2 focus:ring-[#f97a00] bg-orange-50/20 text-gray-700 transition-all duration-300 hover:bg-orange-50"
-//       />
-//     </div>
-//   );
-// }
-// components/ui/DateTimePicker.tsx
-
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaCalendarAlt,
@@ -35,10 +9,11 @@ import {
   FaMinus,
   FaChevronLeft,
   FaChevronRight,
+  FaCheck,
 } from "react-icons/fa";
 
 interface DateTimePickerProps {
-  label: string;
+  label?: string;
   value: string;
   onChange: (value: string) => void;
 }
@@ -71,6 +46,8 @@ export default function DateTimePicker({
   const [hour, setHour] = useState<number>(initialDate?.getHours() ?? 12);
   const [minute, setMinute] = useState<number>(initialDate?.getMinutes() ?? 0);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
   // Month & year state
   const [currentMonth, setCurrentMonth] = useState(
     initialDate?.getMonth() ?? today.getMonth()
@@ -79,7 +56,17 @@ export default function DateTimePicker({
     initialDate?.getFullYear() ?? today.getFullYear()
   );
 
-  // Change month
+  // Close when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const changeMonth = (delta: number) => {
     let newMonth = currentMonth + delta;
     let newYear = currentYear;
@@ -90,7 +77,6 @@ export default function DateTimePicker({
       newMonth = 11;
       newYear -= 1;
     }
-    // Prevent selecting past months
     if (
       newYear < today.getFullYear() ||
       (newYear === today.getFullYear() && newMonth < today.getMonth())
@@ -100,7 +86,6 @@ export default function DateTimePicker({
     setCurrentYear(newYear);
   };
 
-  // Generate days for current month
   const getDaysInMonth = (month: number, year: number) => {
     const date = new Date(year, month, 1);
     const days: number[] = [];
@@ -111,7 +96,6 @@ export default function DateTimePicker({
     return days;
   };
 
-  // Update selectedDate with time
   const updateDateTime = (date: Date, newHour = hour, newMinute = minute) => {
     const updated = new Date(date);
     updated.setHours(newHour);
@@ -120,7 +104,6 @@ export default function DateTimePicker({
     onChange(updated.toISOString());
   };
 
-  // Time change
   const handleTimeChange = (type: "hour" | "minute", delta: number) => {
     const newHour =
       type === "hour" ? Math.max(0, Math.min(23, hour + delta)) : hour;
@@ -130,85 +113,82 @@ export default function DateTimePicker({
     setHour(newHour);
     setMinute(newMinute);
 
-    // Immediately update date with latest time
     if (selectedDate) {
       updateDateTime(selectedDate, newHour, newMinute);
     }
   };
 
-  // When user clicks a day, always use *latest* hour/minute
-  const handleDateClick = (day: number) => {
-    const newDate = new Date(currentYear, currentMonth, day);
-    updateDateTime(newDate, hour, minute);
-  };
-
   return (
-    <div className="relative w-full">
-      <label className="text-sm font-semibold text-gray-800 block mb-1">
-        {label}
-      </label>
+    <div className="relative w-full space-y-1.5" ref={containerRef}>
+      {label && (
+        <label className="text-xs font-bold text-slate-700 ml-0.5 block">
+          {label}
+        </label>
+      )}
 
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-orange-50 to-white border-2 border-[#f97a00]/70 rounded-xl text-gray-700 hover:shadow-md hover:border-[#f97a00] transition-all duration-300 focus:ring-2 focus:ring-[#f97a00]"
+        className="w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-300 hover:border-slate-400 rounded text-xs sm:text-sm text-slate-800 transition-all duration-150 focus:border-primary focus:ring-2 focus:ring-primary/15 cursor-pointer shadow-2xs group"
       >
-        <span className="flex items-center gap-2">
-          <FaCalendarAlt className="text-[#f97a00]" />
-          {selectedDate
-            ? selectedDate.toLocaleString([], {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })
-            : "Select Date & Time"}
+        <span className="flex items-center gap-2 font-medium">
+          <FaCalendarAlt className="text-slate-400 group-hover:text-primary transition-colors text-xs" />
+          <span className={selectedDate ? "text-slate-900 font-mono text-xs" : "text-slate-400"}>
+            {selectedDate
+              ? selectedDate.toLocaleString([], {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })
+              : "Select Date & Time"}
+          </span>
         </span>
-        <FaClock className="text-[#f97a00]" />
+        <FaClock className="text-slate-400 group-hover:text-primary transition-colors text-xs" />
       </button>
 
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 25, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.98 }}
-            transition={{ duration: 0.3 }}
-            className="absolute z-50 mt-2 w-full bg-white/90 backdrop-blur-md border border-orange-200 rounded-2xl shadow-xl p-5"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-50 mt-1 w-full sm:w-80 bg-white border border-slate-200/80 rounded shadow-xl p-3.5 font-sans"
           >
-            <div className="flex flex-col gap-5">
+            <div className="space-y-3">
               {/* Month & Year Header */}
-              <div className="flex justify-between items-center mb-2">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-100">
                 <button
                   type="button"
                   onClick={() => changeMonth(-1)}
-                  className="p-2 rounded-full hover:bg-orange-100 text-[#f97a00] disabled:text-gray-400"
+                  className="p-1.5 rounded hover:bg-slate-100 text-slate-600 disabled:text-slate-300 transition cursor-pointer"
                   disabled={
                     currentYear === today.getFullYear() &&
                     currentMonth === today.getMonth()
                   }
                 >
-                  <FaChevronLeft />
+                  <FaChevronLeft className="text-[10px]" />
                 </button>
-                <span className="font-semibold">
+                <span className="font-mono text-xs font-bold text-slate-900">
                   {MONTHS[currentMonth]} {currentYear}
                 </span>
                 <button
                   type="button"
                   onClick={() => changeMonth(1)}
-                  className="p-2 rounded-full hover:bg-orange-100 text-[#f97a00]"
+                  className="p-1.5 rounded hover:bg-slate-100 text-slate-600 transition cursor-pointer"
                 >
-                  <FaChevronRight />
+                  <FaChevronRight className="text-[10px]" />
                 </button>
               </div>
 
               {/* Weekdays */}
-              <div className="grid grid-cols-7 text-center text-xs text-gray-500 mb-2">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+              <div className="grid grid-cols-7 text-center text-[10px] font-mono font-bold text-slate-400 uppercase">
+                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
                   <div key={d}>{d}</div>
                 ))}
               </div>
 
-              {/* Days */}
-              <div className="grid grid-cols-7 gap-2 text-center text-sm">
+              {/* Days Grid */}
+              <div className="grid grid-cols-7 gap-1 text-center text-xs">
                 {getDaysInMonth(currentMonth, currentYear).map((day) => {
                   const dayDate = new Date(currentYear, currentMonth, day);
                   const isToday =
@@ -221,7 +201,6 @@ export default function DateTimePicker({
                     selectedDate?.getMonth() === currentMonth &&
                     selectedDate?.getFullYear() === currentYear;
 
-                  // Allow today but disable past days
                   const isPast =
                     dayDate <
                     new Date(
@@ -242,17 +221,17 @@ export default function DateTimePicker({
                           hour,
                           minute
                         );
-                        updateDateTime(newDate); // now immediately updates time too
+                        updateDateTime(newDate);
                       }}
                       disabled={isPast}
-                      className={`py-2 rounded-lg font-medium transition-all duration-200 ${
+                      className={`py-1.5 rounded text-xs font-mono font-medium transition-colors cursor-pointer ${
                         isSelected
-                          ? "bg-[#f97a00] text-white shadow-sm scale-105"
+                          ? "bg-primary text-white font-bold shadow-2xs"
                           : isToday
-                          ? "border border-[#f97a00]/50 text-[#f97a00]"
+                          ? "border border-primary/40 text-primary font-bold"
                           : isPast
-                          ? "text-gray-400 cursor-not-allowed"
-                          : "hover:bg-orange-100 text-gray-700"
+                          ? "text-slate-300 cursor-not-allowed"
+                          : "hover:bg-slate-100 text-slate-700"
                       }`}
                     >
                       {day}
@@ -262,69 +241,69 @@ export default function DateTimePicker({
               </div>
 
               {/* Time Selector */}
-              <div className="flex items-center justify-between gap-4 mt-2">
-                {/* Hour */}
-                <div className="flex flex-col items-center gap-2">
-                  <label className="text-xs text-gray-500 font-medium">
-                    Hour
-                  </label>
-                  <div className="flex items-center gap-2">
+              <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                    TIME (24H)
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Hour */}
+                  <div className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => handleTimeChange("hour", -1)}
-                      className="p-2 rounded-full bg-orange-50 hover:bg-orange-100 border border-orange-300 text-[#f97a00] transition-all"
+                      className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer"
                     >
-                      <FaMinus size={10} />
+                      <FaMinus size={8} />
                     </button>
-                    <span className="w-12 text-center font-semibold text-gray-800">
+                    <span className="w-6 text-center font-mono font-bold text-xs text-slate-900">
                       {hour.toString().padStart(2, "0")}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleTimeChange("hour", 1)}
-                      className="p-2 rounded-full bg-orange-50 hover:bg-orange-100 border border-orange-300 text-[#f97a00] transition-all"
+                      className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer"
                     >
-                      <FaPlus size={10} />
+                      <FaPlus size={8} />
                     </button>
                   </div>
-                </div>
 
-                {/* Minute */}
-                <div className="flex flex-col items-center gap-2">
-                  <label className="text-xs text-gray-500 font-medium">
-                    Minute
-                  </label>
-                  <div className="flex items-center gap-2">
+                  <span className="text-slate-400 font-bold font-mono">:</span>
+
+                  {/* Minute */}
+                  <div className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => handleTimeChange("minute", -1)}
-                      className="p-2 rounded-full bg-orange-50 hover:bg-orange-100 border border-orange-300 text-[#f97a00] transition-all"
+                      className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer"
                     >
-                      <FaMinus size={10} />
+                      <FaMinus size={8} />
                     </button>
-                    <span className="w-12 text-center font-semibold text-gray-800">
+                    <span className="w-6 text-center font-mono font-bold text-xs text-slate-900">
                       {minute.toString().padStart(2, "0")}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleTimeChange("minute", 1)}
-                      className="p-2 rounded-full bg-orange-50 hover:bg-orange-100 border border-orange-300 text-[#f97a00] transition-all"
+                      className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer"
                     >
-                      <FaPlus size={10} />
+                      <FaPlus size={8} />
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Confirm */}
-              <motion.button
+              {/* Confirm HUD Button */}
+              <button
                 type="button"
-                whileTap={{ scale: 0.97 }}
                 onClick={() => setIsOpen(false)}
-                className="w-full bg-gradient-to-r from-[#f97a00] to-[#ffb56b] text-white py-2 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
+                className="w-full bg-primary hover:bg-primary-hover text-white py-1.5 rounded text-xs font-bold font-mono shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                Confirm Selection
-              </motion.button>
+                <FaCheck className="text-[10px]" />
+                <span>CONFIRM_DATE_TIME</span>
+              </button>
             </div>
           </motion.div>
         )}

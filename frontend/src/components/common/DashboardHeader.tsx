@@ -187,7 +187,7 @@ export const DashboardHeader = () => {
                 setShowSearchDropdown(true);
               }}
               onFocus={() => setShowSearchDropdown(true)}
-              className="w-full pl-9 pr-14 py-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-xs font-medium text-slate-800 placeholder:text-slate-400"
+              className="w-full pl-9 pr-14 py-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-xs font-medium text-slate-800 placeholder:text-slate-400 shadow-2xs"
             />
             <kbd className="hidden sm:inline-flex absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 bg-white border border-slate-200 rounded shadow-2xs pointer-events-none">
               ⌘K
@@ -196,7 +196,7 @@ export const DashboardHeader = () => {
 
           {/* Search Dropdown Overlay */}
           {showSearchDropdown && searchQuery.trim() !== "" && (
-            <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200/80 rounded-2xl shadow-xl z-50 p-2 text-left font-sans max-h-80 overflow-y-auto custom-scrollbar">
+            <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200/80 rounded shadow-lg z-50 p-2 text-left font-sans max-h-80 overflow-y-auto custom-scrollbar">
               <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider px-3 py-1.5 block">Search Results</span>
               {matchingItems.length > 0 ? (
                 <div className="space-y-1 mt-1">
@@ -204,9 +204,9 @@ export const DashboardHeader = () => {
                     <button
                       key={item.id}
                       onClick={() => handleSearchSelect(item.href)}
-                      className="w-full flex items-start gap-3 p-2.5 rounded-xl hover:bg-primary/5 hover:text-primary text-left transition-all group cursor-pointer"
+                      className="w-full flex items-start gap-3 p-2.5 rounded hover:bg-primary/5 hover:text-primary text-left transition-all group cursor-pointer"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xs shrink-0">
+                      <div className="w-8 h-8 rounded bg-primary/10 text-primary flex items-center justify-center text-xs shrink-0">
                         <FaBookOpen />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -236,7 +236,7 @@ export const DashboardHeader = () => {
           <div ref={notifRef} className="relative">
             <button 
               onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-              className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded transition-colors cursor-pointer"
               aria-label="View notifications"
             >
               <FaBell className="text-lg" />
@@ -249,7 +249,7 @@ export const DashboardHeader = () => {
 
             {/* Notifications Dropdown Panel */}
             {showNotifDropdown && (
-              <div className="absolute top-full right-0 w-80 sm:w-88 mt-2 bg-white border border-slate-200/80 rounded-2xl shadow-xl z-50 p-4 text-left font-sans animate-in fade-in zoom-in-95">
+              <div className="absolute top-full right-0 w-80 sm:w-88 mt-2 bg-white border border-slate-200/80 rounded shadow-xl z-50 p-4 text-left font-sans animate-in fade-in zoom-in-95">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Notifications</h3>
@@ -270,11 +270,11 @@ export const DashboardHeader = () => {
                     {notifications.map((n) => (
                       <div 
                         key={n.id} 
-                        className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-all relative group ${
+                        className={`flex items-start gap-2.5 p-2.5 rounded border transition-all relative group ${
                           n.unread ? "bg-primary/5 border-primary/20" : "border-transparent hover:bg-slate-50"
                         }`}
                       >
-                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs shrink-0 mt-0.5 ${
+                        <div className={`w-6 h-6 rounded flex items-center justify-center text-xs shrink-0 mt-0.5 ${
                           n.type === "success" ? "bg-emerald-50 text-emerald-600" : "bg-sky-50 text-sky-600"
                         }`}>
                           {n.type === "success" ? <FaCheckCircle /> : <FaExclamationCircle />}
@@ -313,7 +313,7 @@ export const DashboardHeader = () => {
             </div>
             <div 
               onClick={() => router.push("/dashboard/edit-profile")}
-              className="w-9 h-9 rounded-xl border border-slate-200/80 overflow-hidden shadow-xs hover:border-primary transition-all cursor-pointer relative bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center font-bold text-white text-xs shrink-0 select-none"
+              className="w-9 h-9 rounded border border-slate-200/80 overflow-hidden shadow-2xs hover:border-primary transition-all cursor-pointer relative bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center font-bold text-white text-xs shrink-0 select-none"
               title="View & Edit Profile"
             >
               {userAvatar ? (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { FaCaretDown } from "react-icons/fa";
+import { FaChevronDown } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface CustomSelectProps {
@@ -36,35 +36,34 @@ export default function CustomSelect({
   }, []);
 
   return (
-    <div className="w-full space-y-2" ref={containerRef}>
+    <div className="w-full space-y-1.5" ref={containerRef}>
       {label && (
-        <label className="text-sm font-bold text-gray-700 ml-1 block">
+        <label className="text-xs font-bold text-slate-700 ml-0.5 block">
           {label}
         </label>
       )}
       <div className="relative group">
-        {/* Wrapper mirrors Input.tsx: handles border, hover, and focus-within styling */}
         <div
-          className={`flex items-center bg-white border-2 rounded-xl transition-all duration-200 overflow-hidden ${
+          className={`flex items-center bg-white border rounded transition-all duration-150 overflow-hidden ${
             disabled
-              ? "opacity-50 cursor-not-allowed bg-gray-100 border-gray-100"
+              ? "opacity-50 cursor-not-allowed bg-slate-100 border-slate-200"
               : open
-              ? "border-primary ring-4 ring-primary/10"
-              : "border-gray-200 group-hover:border-primary/50"
+              ? "border-primary ring-2 ring-primary/15"
+              : "border-slate-300 hover:border-slate-400 group-focus-within:border-primary"
           }`}
         >
           <button
             type="button"
             disabled={disabled}
             onClick={() => setOpen(!open)}
-            className="w-full px-4 py-3.5 text-left outline-none flex items-center justify-between bg-transparent"
+            className="w-full px-3 py-2 text-xs sm:text-sm text-left outline-none flex items-center justify-between bg-transparent cursor-pointer"
           >
-            <span className={`font-medium ${value ? "text-gray-900" : "text-gray-400"}`}>
+            <span className={`font-medium truncate ${value ? "text-slate-800" : "text-slate-400"}`}>
               {value || placeholder}
             </span>
-            <FaCaretDown
-              className={`text-primary transition-transform duration-300 ${
-                open ? "rotate-180" : "rotate-0"
+            <FaChevronDown
+              className={`text-slate-400 text-xs ml-2 shrink-0 transition-transform duration-200 group-hover:text-primary ${
+                open ? "rotate-180 text-primary" : "rotate-0"
               }`}
             />
           </button>
@@ -73,20 +72,20 @@ export default function CustomSelect({
         <AnimatePresence>
           {open && (
             <motion.ul
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="absolute mt-2 w-full bg-white border border-gray-150 rounded-xl shadow-xl z-[999] max-h-64 overflow-y-auto custom-scrollbar p-1.5"
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+              className="absolute mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-[999] max-h-60 overflow-y-auto custom-scrollbar p-1"
             >
               {options.length > 0 ? (
                 options.map((opt, idx) => (
                   <li
                     key={idx}
-                    className={`px-4 py-3 rounded-lg cursor-pointer transition-colors font-medium mb-0.5 last:mb-0 ${
+                    className={`px-3 py-2 rounded text-xs font-medium cursor-pointer transition-colors mb-0.5 last:mb-0 ${
                       value === opt 
-                        ? "bg-[#dd6b01] text-white" 
-                        : "text-gray-700 hover:bg-[#dd6b01]/10 hover:text-[#dd6b01]"
+                        ? "bg-primary text-white font-bold" 
+                        : "text-slate-700 hover:bg-slate-50 hover:text-primary"
                     }`}
                     onClick={() => {
                       onChange(opt);
@@ -97,7 +96,7 @@ export default function CustomSelect({
                   </li>
                 ))
               ) : (
-                <li className="px-4 py-3 text-gray-400 italic text-sm">No options available</li>
+                <li className="px-3 py-2 text-slate-400 italic text-xs">No options available</li>
               )}
             </motion.ul>
           )}
