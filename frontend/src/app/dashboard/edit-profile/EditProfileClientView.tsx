@@ -258,7 +258,7 @@ export default function EditProfileClientView({
                   <circle cx="260" cy="30" r="35" stroke="#f97a00" strokeWidth="0.8" strokeOpacity="0.25" strokeDasharray="3 3" fill="none" />
                   <circle cx="260" cy="30" r="2" fill="#f97a00" fillOpacity="0.6" />
                 </svg>
-                <span className="relative z-10 inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-mono font-black tracking-wider uppercase shadow-2xs">
+                <span className="relative z-10 inline-flex items-center ml-auto gap-1.5 px-2 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-mono font-black tracking-wider uppercase shadow-2xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                   ONLINE
                 </span>
@@ -400,13 +400,9 @@ export default function EditProfileClientView({
 
         
           <div className="lg:col-span-8 space-y-5">
-            {/* [SEC-01] Core Identity Parameters */}
             <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
               <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                    [SEC-01] CORE CREDENTIALS
-                  </span>
                   <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                     Primary Identity & Access Keys
                   </h3>
@@ -447,13 +443,9 @@ export default function EditProfileClientView({
               </div>
             </div>
 
-            {/* [SEC-02] Contact & Telemetry */}
             <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
               <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                    [SEC-02] CONTACT & TELEMETRY
-                  </span>
                   <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                     Communication & Geographic Node
                   </h3>
@@ -482,14 +474,10 @@ export default function EditProfileClientView({
               </div>
             </div>
 
-            {/* [SEC-03] Role-Specific Academic / Faculty / Governance */}
             {normRole === "student" && (
               <div className="relative rounded bg-white border border-slate-200/80 shadow-2xs">
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                      [SEC-03] CURRICULUM MAPPING
-                    </span>
                     <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                       Academic Level & Institution Allocation
                     </h3>
@@ -551,9 +539,6 @@ export default function EditProfileClientView({
               <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                      [SEC-03] FACULTY CREDENTIALS
-                    </span>
                     <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                       Department & Teaching Specialization
                     </h3>
@@ -597,9 +582,6 @@ export default function EditProfileClientView({
               <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                      [SEC-03] GOVERNANCE ROLES
-                    </span>
                     <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                       System Administration Parameters
                     </h3>
