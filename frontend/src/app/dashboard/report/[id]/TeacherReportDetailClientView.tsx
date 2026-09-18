@@ -1,22 +1,15 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  FaSearch,
-  FaSortAmountDown,
-  FaSortAmountUp,
-  FaTrophy,
-  FaChartLine,
-  FaArrowDown,
-  FaGraduationCap,
-  FaArrowLeft,
-  FaFilter,
-} from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
-import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
-import { formatDate, formatDateTime } from "@/lib/date";
+import { formatDate } from "@/lib/date";
+import { TeacherReportMetrics } from "./components/TeacherReportMetrics";
+import { TeacherReportFilterBar } from "./components/TeacherReportFilterBar";
+import { TeacherReportTable } from "./components/TeacherReportTable";
+import { TeacherReportMobileCards } from "./components/TeacherReportMobileCards";
 
 interface TeacherReportDetailClientViewProps {
   examId: string;
@@ -24,7 +17,6 @@ interface TeacherReportDetailClientViewProps {
 }
 
 export default function TeacherReportDetailClientView({
-  examId,
   initialReport,
 }: TeacherReportDetailClientViewProps) {
   const [report] = useState<any>(initialReport);
@@ -90,13 +82,6 @@ export default function TeacherReportDetailClientView({
     });
   }, [report, searchTerm, sortBy, sortOrder]);
 
-  const sortOptions = [
-    { label: "Merit Position", value: "merit" },
-    { label: "Marks Scored", value: "score" },
-    { label: "Student Name", value: "name" },
-    { label: "Institution", value: "institution" },
-  ];
-
   const totalAttempts = report?.attempts?.length || 0;
   const passedAttempts =
     report?.attempts?.filter((a: any) => a.passed).length || 0;
@@ -159,293 +144,30 @@ export default function TeacherReportDetailClientView({
       </div>
 
       {/* Unified Summary Strip */}
-      <div className="rounded border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-          <div className="p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center text-sm font-bold shrink-0">
-              <FaTrophy />
-            </div>
-            <div>
-              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                HIGHEST SCORE
-              </p>
-              <p className="text-lg font-black font-mono text-slate-900">
-                {report.highest ?? 0}
-              </p>
-            </div>
-          </div>
+      <TeacherReportMetrics
+        highest={report.highest ?? 0}
+        average={report.average ?? 0}
+        lowest={report.lowest ?? 0}
+        passRate={passRate}
+      />
 
-          <div className="p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-blue-50 text-blue-600 border border-blue-200/60 flex items-center justify-center text-sm font-bold shrink-0">
-              <FaChartLine />
-            </div>
-            <div>
-              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                AVERAGE SCORE
-              </p>
-              <p className="text-lg font-black font-mono text-blue-600">
-                {report.average ?? 0}
-              </p>
-            </div>
-          </div>
-
-          <div className="p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-rose-50 text-rose-500 border border-rose-200/60 flex items-center justify-center text-sm font-bold shrink-0">
-              <FaArrowDown />
-            </div>
-            <div>
-              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                LOWEST SCORE
-              </p>
-              <p className="text-lg font-black font-mono text-rose-500">
-                {report.lowest ?? 0}
-              </p>
-            </div>
-          </div>
-
-          <div className="p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-purple-50 text-purple-600 border border-purple-200/60 flex items-center justify-center text-sm font-bold shrink-0">
-              <FaGraduationCap />
-            </div>
-            <div>
-              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                PASS RATE
-              </p>
-              <p className="text-lg font-black font-mono text-purple-600">
-                {passRate}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter and Table */}
+      {/* Filter and Table Container */}
       <div className="bg-white rounded-none border border-slate-200/80 shadow-2xs overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/50">
-          <div>
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600">
-              MERIT LIST &amp; CANDIDATE SUBMISSIONS
-            </span>
-            <p className="text-[11px] text-slate-400 font-medium">
-              Ranked candidate scores and evaluated answer sheets.
-            </p>
-          </div>
+        <TeacherReportFilterBar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          sortOrder={sortOrder}
+          onOrderToggle={() =>
+            setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+          }
+          showDropdown={showDropdown}
+          setShowDropdown={setShowDropdown}
+        />
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-            {/* Standard Search Input */}
-            <div className="flex items-center w-full md:w-60 border border-slate-200/80 rounded px-2.5 py-1.5 bg-white shadow-2xs focus-within:border-primary transition">
-              <FaSearch className="text-slate-400 mr-2 text-xs" />
-              <input
-                type="text"
-                placeholder="Search student or institution..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="outline-none text-xs font-medium bg-transparent w-full text-slate-700 placeholder-slate-400"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              {/* Reusable Dropdown */}
-              <div className="relative flex-1 sm:w-44">
-                <button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="w-full flex items-center justify-between border border-slate-200/80 rounded px-2.5 py-1.5 text-xs bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shadow-2xs font-medium"
-                >
-                  <span className="flex items-center gap-1">
-                    <FaFilter className="text-[10px] text-slate-400 mr-1" />
-                    {sortOptions.find((o) => o.value === sortBy)?.label}
-                  </span>
-                  <span className="text-[10px] text-slate-400">▼</span>
-                </button>
-
-                {showDropdown && (
-                  <div className="absolute right-0 mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-20 overflow-hidden">
-                    {sortOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => {
-                          setSortBy(opt.value as any);
-                          setShowDropdown(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition cursor-pointer ${
-                          sortBy === opt.value
-                            ? "font-bold text-primary bg-primary/5 font-mono"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Toggle Order Button */}
-              <button
-                onClick={() =>
-                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                }
-                className="flex items-center justify-center border border-slate-200/80 rounded p-2 bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shrink-0 shadow-2xs"
-                title={`Sort Order: ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
-              >
-                {sortOrder === "asc" ? (
-                  <FaSortAmountUp className="text-primary text-xs" />
-                ) : (
-                  <FaSortAmountDown className="text-primary text-xs" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Table View */}
-        <div className="hidden sm:block overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/70 border-b border-slate-200/80 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider">
-                <th className="py-3 px-4">Rank</th>
-                <th className="py-3 px-4">Student Name</th>
-                <th className="py-3 px-4">Institution</th>
-                <th className="py-3 px-4">Completion Time</th>
-                <th className="py-3 px-4 text-center">Score Marks</th>
-                <th className="py-3 px-4 text-right">Result Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {sortedStudents.map((st) => (
-                <tr key={st.id} className="hover:bg-slate-50/50 transition">
-                  <td className="py-3 px-4 font-mono font-bold text-slate-900">
-                    <span
-                      className={`inline-flex items-center justify-center px-1.5 py-0.2 rounded text-[11px] font-mono font-bold border ${
-                        st.meritRank === 1
-                          ? "bg-amber-100 text-amber-800 border-amber-200"
-                          : st.meritRank === 2
-                            ? "bg-slate-200 text-slate-800 border-slate-300"
-                            : st.meritRank === 3
-                              ? "bg-orange-100 text-orange-800 border-orange-200"
-                              : "bg-slate-100 text-slate-600 border-slate-200"
-                      }`}
-                    >
-                      #{st.meritRank}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 font-bold text-slate-900">
-                    {st.name}
-                  </td>
-                  <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">
-                    {formatDateTime(
-                      st.time,
-                      "MMM dd, yyyy • hh:mm a",
-                      st.time || "Recent",
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-center font-mono font-black text-slate-900 text-sm">
-                    {typeof st.score === "number"
-                      ? Number(st.score).toFixed(1)
-                      : st.score}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-                        st.passed
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-rose-50 text-rose-700 border-rose-200"
-                      }`}
-                    >
-                      {st.passed ? "PASSED" : "FAILED"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-
-              {sortedStudents.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center">
-                    <EmptyState
-                      compact
-                      type="reports"
-                      title="No Submissions Found"
-                      description="No student attempts match your criteria."
-                    />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile Cards View */}
-        <div className="block sm:hidden divide-y divide-slate-100">
-          {sortedStudents.map((st) => (
-            <div
-              key={st.id}
-              className="p-3.5 space-y-2 hover:bg-slate-50/50 transition"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${
-                      st.meritRank === 1
-                        ? "bg-amber-100 text-amber-800 border-amber-200"
-                        : st.meritRank === 2
-                          ? "bg-slate-200 text-slate-800 border-slate-300"
-                          : st.meritRank === 3
-                            ? "bg-orange-100 text-orange-800 border-orange-200"
-                            : "bg-slate-100 text-slate-600 border-slate-200"
-                    }`}
-                  >
-                    #{st.meritRank}
-                  </span>
-                  <span className="font-bold text-xs text-slate-900">
-                    {st.name}
-                  </span>
-                </div>
-                <span
-                  className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${
-                    st.passed
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : "bg-rose-50 text-rose-700 border-rose-200"
-                  }`}
-                >
-                  {st.passed ? "PASSED" : "FAILED"}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                <span className="truncate max-w-[180px]">
-                  {st.institution || "—"}
-                </span>
-                <span className="font-mono text-[10px] text-slate-400">
-                  {formatDateTime(
-                    st.time,
-                    "MMM dd, yyyy • hh:mm a",
-                    st.time || "Recent",
-                  )}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between bg-slate-50 px-2.5 py-1.5 rounded border border-slate-100 text-xs">
-                <span className="font-mono text-[10px] font-bold text-slate-400 uppercase">
-                  Score Marks
-                </span>
-                <span className="font-mono font-black text-slate-900">
-                  {st.score}
-                </span>
-              </div>
-            </div>
-          ))}
-
-          {sortedStudents.length === 0 && (
-            <div className="py-8 px-4 text-center">
-              <EmptyState
-                compact
-                type="reports"
-                title="No Submissions Found"
-                description="No student attempts match your criteria."
-              />
-            </div>
-          )}
-        </div>
+        <TeacherReportTable students={sortedStudents} />
+        <TeacherReportMobileCards students={sortedStudents} />
       </div>
     </PageContainer>
   );

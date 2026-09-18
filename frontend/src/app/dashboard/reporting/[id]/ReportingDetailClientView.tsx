@@ -1,53 +1,17 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import {
-  FaSearch,
-  FaSortAmountDown,
-  FaSortAmountUp,
-  FaArrowLeft,
-  FaPrint,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaQuestionCircle,
-  FaLightbulb,
-  FaFilter,
-} from "react-icons/fa";
+import React, { useMemo } from "react";
+import { FaArrowLeft, FaPrint, FaTimesCircle } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import Scorecard from "../../../../components/dashboard/Scorecard";
 import CertificatePrintLayout from "../../../../components/dashboard/CertificatePrintLayout";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
-import { useRouter } from "next/navigation";
 import { formatDate, formatTime, DATE_FORMATS } from "@/lib/date";
-
-interface InfoItemProps {
-  label: string;
-  value: string;
-}
-
-const InfoItem: React.FC<InfoItemProps> = ({ label, value }) => (
-  <div className="bg-slate-50 border border-slate-200/80 rounded p-3.5">
-    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">
-      {label}
-    </span>
-    <p className="font-bold text-xs sm:text-sm text-slate-800 truncate">{value}</p>
-  </div>
-);
-
-interface PeerStudent {
-  id: string | number;
-  merit: number;
-  name: string;
-  board: string;
-  time: string;
-  score: number;
-  negative: number;
-  image?: string;
-  institution?: string;
-}
+import { PeerStudent } from "./types";
+import { ReportingDetailInfoGrid } from "./components/ReportingDetailInfoGrid";
+import { ReportingDetailQuestionsList } from "./components/ReportingDetailQuestionsList";
+import { ReportingDetailMeritSection } from "./components/ReportingDetailMeritSection";
 
 interface ReportingDetailClientViewProps {
   attemptId: number;
@@ -62,38 +26,23 @@ export default function ReportingDetailClientView({
   initialQuestions,
   initialReportDetails,
 }: ReportingDetailClientViewProps) {
-  const router = useRouter();
   const attempt = initialAttempt;
   const questions = initialQuestions || [];
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"score" | "name">("score");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  const sortOptions = [
-    { label: "Marks Scored", value: "score" },
-    { label: "Candidate Name", value: "name" },
-  ];
-
   // Compute peers and rank from initialReportDetails
-  const { peers, myRank } = useMemo(() => {
+  const { peers } = useMemo(() => {
     if (!initialReportDetails?.attempts || !attempt) {
-      return { peers: [], myRank: 1 };
+      return { peers: [] };
     }
 
     const sorted = [...initialReportDetails.attempts].sort(
       (a, b) => b.score - a.score
     );
     let rank = 1;
-    let foundMyRank = 1;
 
     const formattedPeers: PeerStudent[] = sorted.map((att, idx) => {
       if (idx > 0 && att.score < sorted[idx - 1].score) {
         rank = idx + 1;
-      }
-      if (att.id === attempt.id) {
-        foundMyRank = rank;
       }
       return {
         id: att.id,
@@ -107,22 +56,8 @@ export default function ReportingDetailClientView({
       };
     });
 
-    return { peers: formattedPeers, myRank: foundMyRank };
+    return { peers: formattedPeers };
   }, [initialReportDetails, attempt]);
-
-  const filteredPeers = useMemo(() => {
-    return peers
-      .filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      .sort((a, b) => {
-        if (sortBy === "score") {
-          return sortOrder === "asc" ? a.score - b.score : b.score - a.score;
-        } else {
-          return sortOrder === "asc"
-            ? a.name.localeCompare(b.name)
-            : b.name.localeCompare(a.name);
-        }
-      });
-  }, [peers, searchTerm, sortBy, sortOrder]);
 
   if (!attempt) {
     return (
@@ -216,15 +151,7 @@ export default function ReportingDetailClientView({
         </div>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-5 rounded border border-slate-200/80 shadow-2xs">
-          <InfoItem label="Exam Title" value={attempt.examName || "N/A"} />
-          <InfoItem label="Exam Pack" value={attempt.packName || "General Pack"} />
-          <InfoItem label="Exam Code" value={`#${attempt.examId || "N/A"}`} />
-          <InfoItem
-            label="Submitted At"
-            value={formatDate(attempt.createdAt, DATE_FORMATS.DATE_MEDIUM, "N/A")}
-          />
-        </div>
+        <ReportingDetailInfoGrid attempt={attempt} />
 
         {/* Scorecard Component */}
         <div className="bg-white rounded border border-slate-200/80 p-4 sm:p-6 shadow-2xs">
@@ -243,339 +170,16 @@ export default function ReportingDetailClientView({
         </div>
 
         {/* Detailed Question Solution Analysis */}
-        {questions.length > 0 && (
-          <div className="bg-white p-4 sm:p-6 rounded border border-slate-200/80 shadow-2xs space-y-6">
-            <div className="border-b border-slate-100 pb-4">
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">
-                Question Analysis & Detailed Solutions
-              </h3>
-              <p className="text-xs text-slate-500 font-medium mt-1">
-                Inspect your responses, correct answers, and solution breakdowns.
-              </p>
-            </div>
+        <ReportingDetailQuestionsList
+          questions={questions}
+          userAnswersMap={userAnswersMap}
+        />
 
-            <div className="space-y-6">
-              {questions.map((q, idx) => {
-                const userSelected = userAnswersMap[q.id.toString()];
-                const isUnanswered =
-                  userSelected === undefined || userSelected === null || userSelected === "";
-
-                // Determine if an option index/string matches the correct answer
-                const isOptionCorrect = (opt: string, optIdx: number) => {
-                  if (q.correctAnswer && opt === q.correctAnswer) return true;
-                  if (q.options && q.correctAnswer && optIdx === q.options.indexOf(q.correctAnswer))
-                    return true;
-                  if (q.correctIndex !== undefined && optIdx === q.correctIndex) return true;
-                  return false;
-                };
-
-                // Determine if user selected this option
-                const isOptionUserSelected = (opt: string, optIdx: number) => {
-                  if (isUnanswered) return false;
-                  if (userSelected === opt) return true;
-                  if (Number(userSelected) === optIdx) return true;
-                  return false;
-                };
-
-                // Check overall question correctness
-                const isCorrect = !isUnanswered && (
-                  userSelected === q.correctAnswer ||
-                  (q.options && Number(userSelected) === q.options.indexOf(q.correctAnswer)) ||
-                  (q.correctIndex !== undefined && Number(userSelected) === q.correctIndex)
-                );
-
-                const questionTitle = q.questionText || q.text || `Question ${idx + 1}`;
-
-                return (
-                  <div
-                    key={q.id || idx}
-                    className={`p-4 sm:p-5 rounded border transition-all ${
-                      isCorrect
-                        ? "bg-emerald-50/30 border-emerald-200"
-                        : isUnanswered
-                        ? "bg-slate-50/60 border-slate-200"
-                        : "bg-rose-50/30 border-rose-200"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <h4 className="font-bold text-slate-900 text-sm sm:text-base leading-snug">
-                        Q{idx + 1}. {questionTitle}
-                      </h4>
-                      <span
-                        className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-                          isCorrect
-                            ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                            : isUnanswered
-                            ? "bg-slate-100 text-slate-600 border border-slate-200"
-                            : "bg-rose-100 text-rose-800 border border-rose-200"
-                        }`}
-                      >
-                        {isCorrect
-                          ? "✓ Correct"
-                          : isUnanswered
-                          ? "Not Answered"
-                          : "✕ Incorrect"}
-                      </span>
-                    </div>
-
-                    {/* Passage text if any */}
-                    {q.passage && (
-                      <div className="mb-4 p-3.5 bg-white border border-slate-200 rounded text-xs text-slate-700 leading-relaxed font-serif">
-                        <strong className="block text-slate-900 font-sans font-bold text-[11px] uppercase tracking-wider mb-1">
-                          Reference Passage:
-                        </strong>
-                        {q.passage}
-                      </div>
-                    )}
-
-                    {/* Picture if any */}
-                    {q.pictureUrl && (
-                      <div className="relative w-full max-w-sm h-48 rounded overflow-hidden mb-4 border border-slate-200">
-                        <Image
-                          src={q.pictureUrl}
-                          alt="Question Illustration"
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-
-                    {/* Options list */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 my-3">
-                      {q.options &&
-                        q.options.map((opt: string, optIdx: number) => {
-                          const optionIsCorrect = isOptionCorrect(opt, optIdx);
-                          const optionIsChosen = isOptionUserSelected(opt, optIdx);
-
-                          return (
-                            <div
-                              key={optIdx}
-                              className={`p-3 rounded text-xs font-semibold flex items-center justify-between gap-2 border transition ${
-                                optionIsCorrect
-                                  ? "bg-emerald-100 border-emerald-300 text-emerald-900 font-bold"
-                                  : optionIsChosen
-                                  ? "bg-rose-100 border-rose-300 text-rose-900"
-                                  : "bg-slate-50/50 border-slate-200 text-slate-700"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-mono shrink-0 font-bold text-slate-600">
-                                  {String.fromCharCode(65 + optIdx)}
-                                </span>
-                                <span className="truncate">{opt}</span>
-                              </div>
-
-                              {optionIsCorrect && (
-                                <span className="text-[10px] text-emerald-700 font-bold shrink-0">
-                                  ✓ Correct
-                                </span>
-                              )}
-                              {!optionIsCorrect && optionIsChosen && (
-                                <span className="text-[10px] text-rose-600 font-bold shrink-0">
-                                  ✕ Your Pick
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                    </div>
-
-                    {/* Solution Explanation */}
-                    {q.explanation && (
-                      <div className="mt-3 p-3.5 bg-amber-50/70 border border-amber-200/80 rounded text-xs text-amber-950 flex items-start gap-2">
-                        <FaLightbulb className="text-amber-500 shrink-0 text-sm mt-0.5" />
-                        <div>
-                          <strong className="block font-bold text-amber-900 mb-0.5">
-                            Solution Explanation:
-                          </strong>
-                          <p className="leading-relaxed">{q.explanation}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Peer Leaderboard Table */}
-        <div className="bg-white rounded-none border border-slate-200/80 shadow-xs overflow-hidden">
-          <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">
-                Exam Merit Leaderboard
-              </h3>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Comparative standing among candidates who attended this mock exam.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-auto">
-              <div className="flex items-center w-full sm:w-64 border border-slate-300 hover:border-slate-400 rounded px-3 py-2 bg-white transition">
-                <FaSearch className="text-primary mr-2 text-xs" />
-                <input
-                  type="text"
-                  placeholder="Filter candidate..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="outline-none text-xs font-medium bg-transparent w-full text-gray-700 placeholder-gray-400"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                {/* Custom Sort Dropdown */}
-                <div className="relative w-full sm:w-44">
-                  <button
-                    onClick={() => setShowDropdown(!showDropdown)}
-                    className="w-full flex items-center justify-between border border-slate-300 rounded px-3 py-2 text-xs bg-white hover:border-slate-400 transition text-slate-700 cursor-pointer"
-                  >
-                    <span className="flex items-center gap-1">
-                      <FaFilter className="text-[10px] text-gray-400 mr-1" />
-                      {sortOptions.find((o) => o.value === sortBy)?.label}
-                    </span>
-                    <span className="text-[10px] text-gray-400">▼</span>
-                  </button>
-
-                  {showDropdown && (
-                    <div className="absolute right-0 mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-20 overflow-hidden">
-                      {sortOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          onClick={() => {
-                            setSortBy(option.value as "score" | "name");
-                            setShowDropdown(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 text-xs hover:bg-primary/5 transition cursor-pointer ${
-                            sortBy === option.value
-                              ? "font-bold text-primary bg-primary/5"
-                              : "text-slate-700"
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Order Toggle */}
-                <button
-                  onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                  className="flex items-center justify-center border border-slate-300 rounded p-2.5 bg-white hover:border-slate-400 transition text-slate-700 cursor-pointer shrink-0"
-                  title={`Sort Order: ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
-                >
-                  {sortOrder === "asc" ? <FaSortAmountUp className="text-primary text-xs" /> : <FaSortAmountDown className="text-primary text-xs" />}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Table View (100% untouched) */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/90 text-slate-500 font-extrabold text-[11px] uppercase tracking-wider border-b border-slate-200/80">
-                  <th className="py-3.5 px-6">Rank</th>
-                  <th className="py-3.5 px-6">Candidate</th>
-                  <th className="py-3.5 px-6">Score</th>
-                  <th className="py-3.5 px-6">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm font-medium">
-                {filteredPeers.map((p) => (
-                  <tr
-                    key={p.id}
-                    className={`transition ${
-                      p.id === attempt.id
-                        ? "bg-orange-50/70 font-bold"
-                        : "hover:bg-slate-50/50"
-                    }`}
-                  >
-                    <td className="py-4 px-6 font-black text-slate-900">
-                      #{p.merit}
-                    </td>
-                    <td className="py-4 px-6 font-bold text-slate-900">
-                      {p.name}{" "}
-                      {p.id === attempt.id && (
-                        <span className="text-primary text-[10px] font-mono font-bold ml-1 bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
-                          You
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-4 px-6 font-black text-primary">
-                      {p.score}
-                    </td>
-                    <td className="py-4 px-6 text-xs text-slate-500 font-semibold">
-                      {p.time}
-                    </td>
-                  </tr>
-                ))}
-
-                {filteredPeers.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="py-10 text-center text-slate-400 font-medium text-xs">
-                      No peer results match your search.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Phone Peer Cards View */}
-          <div className="block sm:hidden divide-y divide-slate-100">
-            {filteredPeers.map((p) => (
-              <div
-                key={p.id}
-                className={`p-3.5 flex items-center justify-between gap-3 ${
-                  p.id === attempt.id ? "bg-orange-50/60 font-bold" : "hover:bg-slate-50/50"
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span
-                    className={`w-7 h-7 rounded flex items-center justify-center font-mono font-black text-xs shrink-0 ${
-                      p.merit === 1
-                        ? "bg-amber-100 text-amber-800 border border-amber-300"
-                        : p.merit === 2
-                        ? "bg-slate-200 text-slate-800 border border-slate-300"
-                        : p.merit === 3
-                        ? "bg-orange-100 text-orange-800 border border-orange-300"
-                        : "bg-slate-100 text-slate-600 border border-slate-200"
-                    }`}
-                  >
-                    #{p.merit}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-bold text-slate-900 text-xs truncate">
-                      {p.name}
-                    </p>
-                    {p.id === attempt.id && (
-                      <span className="inline-block text-primary text-[9px] font-mono font-bold bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
-                        Your Result
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="text-right shrink-0">
-                  <span className="text-sm font-mono font-black text-primary block leading-none">
-                    {p.score}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">
-                    {p.time}
-                  </span>
-                </div>
-              </div>
-            ))}
-
-            {filteredPeers.length === 0 && (
-              <div className="py-8 text-center text-slate-400 font-medium text-xs">
-                No peer results match your search.
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Peer Leaderboard Table & Mobile Cards */}
+        <ReportingDetailMeritSection
+          peers={peers}
+          currentAttemptId={attempt.id}
+        />
       </div>
     </PageContainer>
   );
