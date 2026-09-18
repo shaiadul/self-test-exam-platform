@@ -64,18 +64,16 @@ export default function AddExamPackPage() {
             <FaArrowLeft className="text-xs" />
           </OutlineBtn>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-              CURRICULUM // INITIALIZE_CONTAINER
-            </span>
+           
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Create New Exam Pack
             </h1>
           </div>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs font-mono font-bold">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
           <FaBoxOpen className="text-xs" />
-          NEW_CONTAINER
+          Create Pack
         </span>
       </div>
 
@@ -84,8 +82,8 @@ export default function AddExamPackPage() {
           {/* Cover Media Column */}
           <div className="lg:col-span-4 space-y-4">
             <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 p-4 shadow-2xs">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                [CFG-01] PACK HERO BANNER
+              <span className="text-xs font-bold text-slate-700 block mb-2">
+                Pack Cover Image
               </span>
               <ImageUploader
                 folder="exam-packs"
@@ -111,10 +109,6 @@ export default function AddExamPackPage() {
 
           <div className="lg:col-span-8 space-y-4">
             <div className="relative rounded bg-white border border-slate-200/80 p-5 shadow-2xs space-y-4">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                [CFG-02] METADATA SPECIFICATIONS
-              </span>
-
               <Input
                 label="Exam Pack Title *"
                 placeholder="e.g. Higher Secondary Physics Board Prep"

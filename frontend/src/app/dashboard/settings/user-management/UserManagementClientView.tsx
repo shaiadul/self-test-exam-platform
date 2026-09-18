@@ -145,16 +145,13 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
   const roleOptions = ["student", "teacher", "admin"];
 
   return (
-    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+    <PageContainer className="space-y-6 animate-fadeIn pb-20 sm:pb-6">
       {/* Top Header Command Strip */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/80 pb-4">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-              SECURITY &amp; ACCESS CONTROL // [MOD-USR]
-            </span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
-              {users.length} REGISTERED
+              {users.length} Users Registered
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
@@ -451,9 +448,6 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
           <div className="bg-white rounded border border-slate-200/80 max-w-sm w-full p-5 shadow-2xl animate-fadeIn">
             <div className="flex justify-between items-center pb-3 mb-4 border-b border-slate-100">
               <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                  TEACHER // QUOTA_CONFIG
-                </span>
                 <h3 className="text-base font-black text-slate-900">Set Exam Creation Limit</h3>
               </div>
               <button
@@ -534,9 +528,6 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
           <div className="bg-white rounded border border-slate-200/80 max-w-md w-full p-5 sm:p-6 shadow-2xl animate-fadeIn">
             <div className="flex justify-between items-center pb-3 mb-4 border-b border-slate-100">
               <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                  IDENTITY // PROVISION_ACCOUNT
-                </span>
                 <h3 className="text-base font-black text-slate-900">Provision New User Account</h3>
               </div>
               <button

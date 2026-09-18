@@ -74,18 +74,15 @@ export default function EditExamPackClientView({
             <FaArrowLeft className="text-xs" />
           </OutlineBtn>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-              CURRICULUM // EDIT_CONTAINER #{packId}
-            </span>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Edit Exam Pack: {examPackData.name || `#${packId}`}
             </h1>
           </div>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200 text-xs font-mono font-bold">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
           <FaEdit className="text-xs" />
-          MODIFY_CONTAINER
+          Edit Mode
         </span>
       </div>
 
@@ -94,8 +91,8 @@ export default function EditExamPackClientView({
           {/* Cover Media Column */}
           <div className="lg:col-span-4 space-y-4">
             <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 p-4 shadow-2xs">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                [CFG-01] PACK HERO BANNER
+              <span className="text-xs font-bold text-slate-700 block mb-2">
+                Pack Cover Image
               </span>
               <ImageUploader
                 folder="exam-packs"
@@ -123,9 +120,6 @@ export default function EditExamPackClientView({
             <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-5">
               <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                    [CFG-02] METADATA SPECIFICATION
-                  </span>
                   <h2 className="text-base font-black text-slate-900 tracking-tight">
                     Pack Configuration
                   </h2>

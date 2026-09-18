@@ -166,7 +166,7 @@ export const MobileNav = ({ role = "student" }: { role?: string }) => {
       </AnimatePresence>
 
       {/* Mobile Bottom Navigation Bar (1-Thumb Access) */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1.5 flex items-center justify-around shadow-lg">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom,0px))] flex items-center justify-around shadow-lg">
         <Link
           href="/dashboard"
           className={cn(

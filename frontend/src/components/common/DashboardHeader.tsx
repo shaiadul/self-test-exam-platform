@@ -317,7 +317,7 @@ export const DashboardHeader = () => {
               title="View & Edit Profile"
             >
               {userAvatar ? (
-                <img 
+                <Image 
                   src={userAvatar} 
                   alt={userName} 
                   className="object-cover w-full h-full"

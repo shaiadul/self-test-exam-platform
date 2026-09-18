@@ -110,7 +110,7 @@ export default function RequestsClientView({
   };
 
   return (
-    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+    <PageContainer className="space-y-6 animate-fadeIn pb-20 sm:pb-6">
       {/* Top Header Command Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
@@ -118,17 +118,14 @@ export default function RequestsClientView({
             <FaClipboardList />
           </div>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-              ALLOCATION // {isAdmin ? "ADMIN_APPROVAL_MATRIX" : "TEACHER_QUOTA_REQUESTS"}
-            </span>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               {isAdmin ? "Request Approvals & Quotas" : "Exam Pack & Quota Requests"}
             </h1>
           </div>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 text-slate-600 border border-slate-200 text-xs font-mono font-bold">
-          {requests.filter((r) => r.status === "pending").length} PENDING REVIEW
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold">
+          {requests.filter((r) => r.status === "pending").length} Pending Review
         </span>
       </div>
 
@@ -140,7 +137,6 @@ export default function RequestsClientView({
               : "bg-rose-50 text-rose-700 border-rose-200"
           }`}
         >
-          {message.type === "ok" ? "[SUCCESS] " : "[ERROR] "}
           {message.text}
         </div>
       )}
@@ -152,9 +148,9 @@ export default function RequestsClientView({
         >
           <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                [REQ-01] DISPATCH NEW QUOTA REQUEST
-              </span>
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900">
+                Submit New Quota Request
+              </h2>
             </div>
             <span className="text-[10px] font-mono text-slate-400">
               ROUTED TO ADMIN

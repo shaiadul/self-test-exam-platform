@@ -194,9 +194,9 @@ export default function EditProfileClientView({
   };
 
   return (
-    <PageContainer className="space-y-6 animate-fadeIn pb-12">
-      {/* Top Header & Breadcrumb Command Strip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+    <PageContainer className="space-y-6 animate-fadeIn pb-20 sm:pb-6">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
           <OutlineBtn
             link="/dashboard"
@@ -206,16 +206,8 @@ export default function EditProfileClientView({
             <FaArrowLeft className="text-xs" />
           </OutlineBtn>
           <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                SYSTEM // USER_SETTINGS
-              </span>
-              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                {roleConfig.code}
-              </span>
-            </div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Candidate Identity & Profile
+              Candidate Identity &amp; Profile
             </h1>
           </div>
         </div>
@@ -381,8 +373,8 @@ export default function EditProfileClientView({
                     <div className="w-6 h-6 rounded bg-slate-900 border border-slate-800 flex items-center justify-center text-primary text-xs shadow-2xs">
                       <FaLock />
                     </div>
-                    <span className="font-mono text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
-                      ENCRYPTION_ACTIVE
+                    <span className="text-[11px] font-semibold text-emerald-400">
+                      Security Active
                     </span>
                   </div>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -435,9 +427,9 @@ export default function EditProfileClientView({
                     value={profileData.email}
                     disabled
                   />
-                  <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono text-slate-500">
-                    <FaLock className="text-[9px] text-slate-400" />
-                    <span>IMMUTABLE // System Login Handle</span>
+                  <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
+                    <FaLock className="text-[10px] text-slate-400" />
+                    <span>Primary account email (read-only)</span>
                   </div>
                 </div>
               </div>
@@ -620,9 +612,8 @@ export default function EditProfileClientView({
 
             {/* Commit & Save Action HUD */}
             <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="text-[11px] font-mono text-slate-500">
-                <span>COMMIT_STATUS: </span>
-                <span className="text-slate-800 font-bold">READY TO DEPLOY</span>
+              <div className="text-xs text-slate-500">
+                Ready to save your profile changes
               </div>
 
               <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">

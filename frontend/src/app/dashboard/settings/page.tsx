@@ -60,7 +60,7 @@ const settingsModules = [
 
 export default function SettingsPage() {
   return (
-    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+    <PageContainer className="space-y-6 animate-fadeIn pb-20 sm:pb-6">
       {/* Top Header Command Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
@@ -68,17 +68,14 @@ export default function SettingsPage() {
             <FaSlidersH />
           </div>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-              SYSTEM // CORE_CONFIGURATION_MATRIX
-            </span>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Administration &amp; System Settings
             </h1>
           </div>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 text-slate-600 border border-slate-200 text-xs font-mono font-bold">
-          {settingsModules.length} MODULES READY
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold">
+          {settingsModules.length} Modules
         </span>
       </div>
 
@@ -97,9 +94,6 @@ export default function SettingsPage() {
                   <div className="w-9 h-9 rounded flex items-center justify-center text-base border border-slate-200/60 bg-slate-50 text-slate-700 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/30 transition shadow-2xs">
                     <Icon />
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                    [{module.code}]
-                  </span>
                 </div>
 
                 <h3 className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">
@@ -110,8 +104,8 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-[11px] font-mono font-bold text-slate-400 group-hover:text-primary transition">
-                <span>MANAGE_MODULE</span>
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs font-semibold text-slate-500 group-hover:text-primary transition">
+                <span>Configure</span>
                 <FaArrowRight className="text-[10px] group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>

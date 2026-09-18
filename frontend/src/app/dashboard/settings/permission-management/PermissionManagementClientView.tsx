@@ -41,16 +41,13 @@ export default function PermissionManagementClientView({ initialPermissions }: P
   }
 
   return (
-    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+    <PageContainer className="space-y-6 animate-fadeIn pb-20 sm:pb-6">
       {/* Top Header Command Strip */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200/80 pb-4">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-              PRIVILEGE MATRIX // [MOD-PRM]
-            </span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
-              {permissions.length} RULES DEFINED
+              {permissions.length} Rules Defined
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">

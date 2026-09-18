@@ -79,9 +79,6 @@ export default function TeacherReportClientView({ initialReports }: TeacherRepor
             <FaChartLine />
           </div>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-              ANALYTICS // EVALUATION_REPOSITORIES
-            </span>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Teacher Exam Evaluation Reports
             </h1>

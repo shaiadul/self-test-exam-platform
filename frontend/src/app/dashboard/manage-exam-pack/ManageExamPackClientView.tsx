@@ -56,9 +56,6 @@ export default function ManageExamPackClientView({ initialPacks }: ManageExamPac
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-              CURRICULUM // PACK_CONTAINERS
-            </span>
             <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
               {examPacks.length} ACTIVE PACKS
             </span>

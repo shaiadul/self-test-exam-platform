@@ -54,18 +54,15 @@ export default function ExamAnalysisClientView({ initialStats }: ExamAnalysisCli
             <FaChartLine />
           </div>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-              TELEMETRY // [MOD-ANL] SYSTEM_METRICS
-            </span>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Exam &amp; Platform Analysis
             </h1>
           </div>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-mono font-bold">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          REALTIME_TELEMETRY
+          Live Analytics
         </span>
       </div>
 
@@ -101,10 +98,7 @@ export default function ExamAnalysisClientView({ initialStats }: ExamAnalysisCli
               </svg>
 
               <div className="relative">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                    [{s.code}]
-                  </span>
+                <div className="flex items-center justify-end mb-3">
                   <div className={`w-8 h-8 rounded flex items-center justify-center text-sm border shadow-2xs ${s.color}`}>
                     <Icon />
                   </div>

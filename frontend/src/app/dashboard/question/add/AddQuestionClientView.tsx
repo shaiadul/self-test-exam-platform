@@ -214,9 +214,9 @@ export default function AddQuestionClientView({
   };
 
   return (
-    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+    <PageContainer className="space-y-6 animate-fadeIn pb-20 sm:pb-6">
       {/* Top Header Command Strip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
           <OutlineBtn
             onClick={() => router.back()}
@@ -227,12 +227,9 @@ export default function AddQuestionClientView({
           </OutlineBtn>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                EVALUATION_ENGINE // QUESTION_BANK
-              </span>
               {examId && (
                 <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                  EXAM #{examId}
+                  Exam #{examId}
                 </span>
               )}
             </div>
@@ -245,8 +242,8 @@ export default function AddQuestionClientView({
           </div>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs font-mono font-bold">
-          {questions.length} QUESTIONS IN BANK
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+          {questions.length} Questions in Bank
         </span>
       </div>
 
@@ -254,7 +251,7 @@ export default function AddQuestionClientView({
       {!examIdParam && (
         <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-mono font-bold text-slate-600 block mb-1">SELECT EXAM PACK CONTAINER</label>
+            <label className="text-xs font-bold text-slate-700 block mb-1">Select Exam Pack</label>
             <CustomSelect
               options={examPacks.map((p) => `${p.id} - ${p.title}`)}
               value={selectedPackId ? `${selectedPackId}` : ""}
@@ -264,7 +261,7 @@ export default function AddQuestionClientView({
           </div>
 
           <div>
-            <label className="text-xs font-mono font-bold text-slate-600 block mb-1">SELECT TARGET EXAMINATION</label>
+            <label className="text-xs font-bold text-slate-700 block mb-1">Select Target Exam</label>
             <CustomSelect
               options={exams.map((e) => `${e.id} - ${e.name}`)}
               value={examId}
@@ -282,9 +279,6 @@ export default function AddQuestionClientView({
         <div className="lg:col-span-7 bg-white p-5 rounded border border-slate-200/80 shadow-2xs space-y-5">
           <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                [Q-AUTHOR] SPECIFICATION COMPOSER
-              </span>
               <h2 className="text-xs sm:text-sm font-bold text-slate-900">
                 {editingId !== null ? "Edit Question Specification" : "Compose New Question Item"}
               </h2>
@@ -484,9 +478,6 @@ export default function AddQuestionClientView({
         <div className="lg:col-span-5 bg-white p-4 rounded border border-slate-200/80 shadow-2xs space-y-3">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                INVENTORY REPOSITORY
-              </span>
               <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                 Authored Items ({questions.length})
               </h3>

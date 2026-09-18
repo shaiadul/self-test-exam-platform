@@ -141,17 +141,14 @@ export default function AddExamClientView({
             <FaArrowLeft className="text-xs" />
           </OutlineBtn>
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-              PACK_ID #{packId}
-            </span>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Create New Exam Paper
             </h1>
           </div>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs font-mono font-bold">
-          EXAM_SPEC_DRAFT
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+          New Exam
         </span>
       </div>
 
@@ -160,9 +157,6 @@ export default function AddExamClientView({
         <div className="bg-white p-5 rounded border border-slate-200/80 shadow-2xs space-y-4">
           <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                [CFG-01] EXAM IDENTITY & SYLLABUS
-              </span>
               <h2 className="text-xs sm:text-sm font-bold text-slate-900">
                 Exam Details & Classification
               </h2>
@@ -222,9 +216,6 @@ export default function AddExamClientView({
         <div className="bg-white p-5 rounded border border-slate-200/80 shadow-2xs space-y-4">
           <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                [CFG-02] MARKS & DURATION SPECIFICATIONS
-              </span>
               <h2 className="text-xs sm:text-sm font-bold text-slate-900">
                 Marks & Duration Settings
               </h2>
@@ -289,9 +280,6 @@ export default function AddExamClientView({
         <div className="bg-white p-5 rounded border border-slate-200/80 shadow-2xs space-y-4">
           <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                [CFG-03] EVALUATION PROTOCOL & ACCESS
-              </span>
               <h2 className="text-xs sm:text-sm font-bold text-slate-900">
                 Negative Marking & Behavioral Rules
               </h2>
