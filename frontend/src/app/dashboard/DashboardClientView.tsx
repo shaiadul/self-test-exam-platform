@@ -211,6 +211,7 @@ export default function DashboardClientView({
                 batch={profileData.batch}
                 institution={profileData.institution}
                 image={profileData.image}
+                role={normRole}
               />
             </div>
 
@@ -406,6 +407,7 @@ export default function DashboardClientView({
                 batch={profileData.batch}
                 institution={profileData.institution}
                 image={profileData.image}
+                role={normRole}
               />
             </div>
 
@@ -695,6 +697,7 @@ export default function DashboardClientView({
                 batch={profileData.batch}
                 institution={profileData.institution}
                 image={profileData.image}
+                role={normRole}
               />
             </div>
 

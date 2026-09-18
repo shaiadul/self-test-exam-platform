@@ -274,11 +274,11 @@ export default function UserCard({
           </div>
         </div>
 
-        {/* Right Side: High-Tech Telemetry Badge */}
+        {/* Right Side: Dynamic Portal Badge */}
         <div className="hidden sm:flex flex-col items-end justify-between self-stretch shrink-0 pointer-events-none pl-4 py-0.5">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary/10 border border-primary/25 text-primary text-[10px] font-mono font-bold tracking-wider uppercase backdrop-blur-xs shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            Candidate Portal
+            {resolvedPortalTitle}
           </div>
         </div>
       </div>
@@ -288,12 +288,33 @@ export default function UserCard({
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] font-mono">
           <div className="inline-flex items-center gap-1.5 text-slate-600 font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Portal Access: <strong className="text-emerald-700 font-bold">Active</strong></span>
+            <span>
+              {normRole === "admin"
+                ? "System Access: "
+                : normRole === "teacher"
+                ? "Faculty Access: "
+                : "Portal Access: "}
+              <strong className="text-emerald-700 font-bold">Active</strong>
+            </span>
           </div>
           <span className="hidden sm:inline text-slate-300">•</span>
           <div className="inline-flex items-center gap-1 text-slate-500">
-            <span className="text-slate-400">Track:</span>
-            <span className="font-semibold text-slate-700">{board ? `${board} Board` : "General Curriculum"}</span>
+            <span className="text-slate-400">
+              {normRole === "admin"
+                ? "Role:"
+                : normRole === "teacher"
+                ? "Discipline:"
+                : "Track:"}
+            </span>
+            <span className="font-semibold text-slate-700">
+              {normRole === "admin"
+                ? "Root Administration"
+                : board
+                ? `${board} ${normRole === "teacher" ? "Faculty" : "Board"}`
+                : normRole === "teacher"
+                ? "Academic Instructor"
+                : "General Curriculum"}
+            </span>
           </div>
         </div>
       </div>
