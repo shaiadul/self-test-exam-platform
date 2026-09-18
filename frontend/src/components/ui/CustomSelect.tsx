@@ -22,6 +22,7 @@ export default function CustomSelect({
   disabled = false,
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
+  const [openUp, setOpenUp] = useState(false);
   const [search, setSearch] = useState("");
   const [highlightIdx, setHighlightIdx] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -34,33 +35,49 @@ export default function CustomSelect({
 
   // Close when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
-  // Lock body scroll when dropdown is open
+  // Calculate if dropdown should open upward or downward based on viewport space
+  const updateDropdownDirection = useCallback(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // Estimate dropdown height: search bar (~44px) + options (up to ~208px) + padding (~12px)
+      const estimatedHeight = Math.min(filteredOptions.length * 36 + 56, 260);
+
+      // Open upward if not enough space below AND there is more space above
+      if (spaceBelow < estimatedHeight && spaceAbove > spaceBelow) {
+        setOpenUp(true);
+      } else {
+        setOpenUp(false);
+      }
+    }
+  }, [filteredOptions.length]);
+
+  // Update direction on open, window resize, or scroll
   useEffect(() => {
     if (open) {
-      const scrollY = window.scrollY;
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-
+      updateDropdownDirection();
+      window.addEventListener("resize", updateDropdownDirection);
+      window.addEventListener("scroll", updateDropdownDirection, { passive: true });
       return () => {
-        document.body.style.overflow = "";
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.width = "";
-        window.scrollTo(0, scrollY);
+        window.removeEventListener("resize", updateDropdownDirection);
+        window.removeEventListener("scroll", updateDropdownDirection);
       };
     }
-  }, [open]);
+  }, [open, updateDropdownDirection]);
 
   // Focus search input when opened
   useEffect(() => {
@@ -154,28 +171,17 @@ export default function CustomSelect({
           </button>
         </div>
 
-        {/* Backdrop overlay for scroll lock visual */}
+        {/* Dropdown Menu - Opens above or below based on available space */}
         <AnimatePresence>
           {open && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.1 }}
-              className="fixed inset-0 z-[998] bg-black/5"
-              onClick={() => setOpen(false)}
-            />
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
+              initial={{ opacity: 0, y: openUp ? 4 : -4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
+              exit={{ opacity: 0, y: openUp ? 4 : -4 }}
               transition={{ duration: 0.15 }}
-              className="absolute mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-[999] overflow-hidden"
+              className={`absolute left-0 w-full bg-white border border-slate-200 rounded shadow-lg z-[999] overflow-hidden ${
+                openUp ? "bottom-full mb-1" : "top-full mt-1"
+              }`}
             >
               {/* Search input */}
               <div className="p-1.5 border-b border-slate-100">
