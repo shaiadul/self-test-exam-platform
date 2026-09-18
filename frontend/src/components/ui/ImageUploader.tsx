@@ -14,10 +14,8 @@ import { uploadFileToStorage } from "@/lib/utils/uploadClient";
 import Image from "next/image";
 
 export interface ImageUploaderProps {
-  // New standard props
   value?: string | null;
   onChange?: (url: string | null) => void;
-  // Backward-compatibility props
   preview?: string | null;
   onUpload?: (url: string | null) => void;
 
@@ -52,7 +50,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgressText, setUploadProgressText] = useState("Uploading image...");
 
-  // Synchronize internal state with either `value` or `preview`
   const activeUrl = value !== undefined ? value : preview !== undefined ? preview : null;
   const [internalPreview, setInternalPreview] = useState<string | null>(activeUrl ?? null);
 
@@ -76,7 +73,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
 
-    // Client-side file size check before making any network calls
     if (file.size > maxSizeMB * 1024 * 1024) {
       toast.error(
         `Selected image (${fileSizeMB} MB) exceeds the ${maxSizeMB} MB limit. Please select a photo under ${maxSizeMB} MB or compress it.`
@@ -166,9 +162,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     toast.info("Image removed");
   };
 
-  // ----------------------------------------------------
-  // AVATAR VARIANT (Profile / User photos)
-  // ----------------------------------------------------
   if (variant === "avatar") {
     return (
       <div className={`flex flex-col items-center gap-3 ${className}`}>
@@ -177,10 +170,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         <div className="relative group">
           <div
             onClick={() => !disabled && !isUploading && fileInputRef.current?.click()}
-            className={`w-32 h-32 rounded-full overflow-hidden border-4 cursor-pointer relative transition-all duration-300 shadow-md ${
+            className={`w-32 h-32 rounded-full overflow-hidden [isolation:isolate] border-4 cursor-pointer relative transition-all duration-300 shadow-md ${
               dragActive
-                ? "border-[#dd6b01] scale-105"
-                : "border-white ring-2 ring-gray-200 hover:ring-[#dd6b01]"
+                ? "border-primary scale-105"
+                : "border-white ring-2 ring-gray-200 hover:ring-primary"
             } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -195,15 +188,14 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 className="w-full h-full object-cover object-center"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-orange-50 to-orange-100 flex flex-col items-center justify-center text-[#dd6b01]">
+              <div className="w-full h-full bg-gradient-to-br from-orange-50 to-orange-100 flex flex-col items-center justify-center text-primary">
                 <FaCamera className="text-3xl opacity-70 mb-1" />
                 <span className="text-[10px] font-semibold">Upload Photo</span>
               </div>
             )}
 
-            {/* Hover / Uploading Overlay */}
             <div
-              className={`absolute inset-0 bg-black/50 backdrop-blur-[2px] flex flex-col items-center justify-center text-white transition-opacity duration-200 ${
+              className={`absolute inset-0 rounded-full overflow-hidden [clip-path:circle(50%_at_50%_50%)] bg-black/50 backdrop-blur-[2px] flex flex-col items-center justify-center text-white transition-opacity duration-200 ${
                 isUploading ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               }`}
             >
@@ -245,9 +237,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     );
   }
 
-  // ----------------------------------------------------
-  // COMPACT VARIANT (Single-row or small thumbnail)
-  // ----------------------------------------------------
   if (variant === "compact") {
     return (
       <div className={`flex flex-col gap-1.5 w-full ${className}`}>
@@ -256,10 +245,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         <div className="flex items-center gap-3">
           <div
             onClick={() => !disabled && !isUploading && fileInputRef.current?.click()}
-            className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 hover:border-[#dd6b01] bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer relative shrink-0"
+            className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 hover:border-primary bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer relative shrink-0"
           >
             {isUploading ? (
-              <FaSpinner className="text-[#dd6b01] animate-spin text-lg" />
+              <FaSpinner className="text-primary animate-spin text-lg" />
             ) : internalPreview ? (
               <Image width={100} height={100} src={internalPreview} alt="Thumbnail" className="w-full h-full object-cover" />
             ) : (
@@ -272,7 +261,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled || isUploading}
-              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-orange-50 text-[#dd6b01] hover:bg-orange-100 border border-orange-200 transition-colors"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-full bg-orange-50 text-primary hover:bg-orange-100 border border-orange-200 transition-colors"
             >
               {internalPreview ? "Change Image" : "Select Image"}
             </button>
@@ -280,7 +269,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <button
                 type="button"
                 onClick={handleRemove}
-                className="px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-full transition-colors"
               >
                 Remove
               </button>
@@ -303,9 +292,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     );
   }
 
-  // ----------------------------------------------------
-  // BOX VARIANT (Default: Drag & Drop Card / Banner)
-  // ----------------------------------------------------
   return (
     <div className={`flex flex-col gap-2 w-full ${className}`}>
       {label && (
@@ -322,8 +308,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       <div
         className={`relative w-full ${height} ${aspectRatio || ""} border-2 border-dashed rounded-2xl flex items-center justify-center text-center cursor-pointer transition-all duration-300 overflow-hidden group ${
           dragActive
-            ? "border-[#dd6b01] bg-orange-50/80 shadow-lg scale-[0.99]"
-            : "border-gray-200 hover:border-[#dd6b01] bg-gray-50/80 hover:bg-orange-50/20"
+            ? "border-primary bg-orange-50/80 shadow-lg scale-[0.99]"
+            : "border-gray-200 hover:border-primary bg-gray-50/80 hover:bg-orange-50/20"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -332,7 +318,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       >
         {isUploading ? (
           <div className="flex flex-col items-center justify-center p-6 space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-orange-50 text-[#dd6b01] flex items-center justify-center shadow-inner">
+            <div className="w-14 h-14 rounded-2xl bg-orange-50 text-primary flex items-center justify-center shadow-inner">
               <FaSpinner className="text-3xl animate-spin" />
             </div>
             <div>
@@ -350,8 +336,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
               draggable={false}
             />
-            {/* Dark glass overlay on hover */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3 backdrop-blur-[2px]">
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3 backdrop-blur-[2px] rounded-2xl">
               <button
                 type="button"
                 onClick={(e) => {
@@ -360,7 +345,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 }}
                 className="px-4 py-2 bg-white text-gray-800 rounded-xl font-semibold text-xs shadow-lg hover:bg-gray-100 flex items-center gap-1.5 transition-transform hover:scale-105 cursor-pointer"
               >
-                <FaSyncAlt size={12} className="text-[#dd6b01]" /> Change Image
+                <FaSyncAlt size={12} className="text-primary" /> Change Image
               </button>
               <button
                 type="button"
@@ -373,12 +358,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center px-6 py-10 space-y-3">
-            <div className="w-16 h-16 rounded-2xl bg-orange-100/70 text-[#dd6b01] flex items-center justify-center group-hover:scale-110 group-hover:bg-[#dd6b01] group-hover:text-white transition-all duration-300 shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-orange-100/70 text-primary flex items-center justify-center group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm">
               <FaCloudUploadAlt className="text-3xl" />
             </div>
             <div>
               <p className="text-gray-800 font-semibold text-sm">
-                Drag & drop your image here, or <span className="text-[#dd6b01] underline underline-offset-2">browse</span>
+                Drag & drop your image here, or <span className="text-primary underline underline-offset-2">browse</span>
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Supports JPG, PNG, WebP or SVG up to {maxSizeMB}MB
