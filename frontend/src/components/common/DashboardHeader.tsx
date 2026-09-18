@@ -247,9 +247,8 @@ export const DashboardHeader = () => {
               )}
             </button>
 
-            {/* Notifications Dropdown Panel */}
             {showNotifDropdown && (
-              <div className="absolute top-full right-0 w-80 sm:w-88 mt-2 bg-white border border-slate-200/80 rounded shadow-xl z-50 p-4 text-left font-sans animate-in fade-in zoom-in-95">
+              <div className="absolute top-full -right-5 sm:right-0 w-80 sm:w-88 mt-2 bg-white border border-slate-200/80 rounded shadow-xl z-50 p-4 text-left font-sans animate-in fade-in zoom-in-95">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Notifications</h3>
@@ -305,7 +304,6 @@ export const DashboardHeader = () => {
             )}
           </div>
 
-          {/* User Account Info */}
           <div className="flex items-center gap-3 pl-3 sm:pl-4 border-l border-slate-200/80">
             <div className="text-right hidden sm:block">
               <p className="text-xs font-bold text-slate-900 leading-none">{userName}</p>
@@ -320,6 +318,9 @@ export const DashboardHeader = () => {
                 <Image 
                   src={userAvatar} 
                   alt={userName} 
+                  width={36}
+                  height={36}
+                  unoptimized
                   className="object-cover w-full h-full"
                   onError={() => setUserAvatar(null)}
                 />
