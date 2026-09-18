@@ -78,7 +78,7 @@ export default function DashboardLayoutClient({
           </div>
         )}
 
-        <main className={`flex-1 overflow-y-auto print:overflow-visible pt-0 sm:pt-16 pb-8 sm:pb-0`}>
+        <main className={`flex-1 overflow-y-auto print:overflow-visible ${!isExamPage ? "pt-0 sm:pt-16 " : "pt-0"} pb-8 sm:pb-0`}>
           <div className={isExamPage ? "w-full p-0 max-w-none print:p-0" : "p-3.5 sm:p-5 max-w-7xl mx-auto print:p-0 print:max-w-none"}>
             {allowed ? (
               children
