@@ -3,7 +3,12 @@
 import React, { useRef, useState, DragEvent } from "react";
 import { toast } from "sonner";
 import Image from "next/image";
-import { FaCloudUploadAlt, FaExclamationTriangle, FaArrowLeft, FaSave } from "react-icons/fa";
+import {
+  FaCloudUploadAlt,
+  FaExclamationTriangle,
+  FaArrowLeft,
+  FaSave,
+} from "react-icons/fa";
 import CustomSelect from "../../../../../components/ui/CustomSelect";
 import { Input } from "../../../../../components/ui/Input";
 import DateTimePicker from "../../../../../components/ui/DateTimePicker";
@@ -49,13 +54,16 @@ export default function EditExamClientView({
     }
   };
 
-  const hasNegative = initialExam?.negativeMarks !== undefined
-    ? Math.abs(Number(initialExam.negativeMarks)) > 0
-    : (initialExam?.negativeMarking ?? true);
+  const hasNegative =
+    initialExam?.negativeMarks !== undefined
+      ? Math.abs(Number(initialExam.negativeMarks)) > 0
+      : (initialExam?.negativeMarking ?? true);
 
-  const negativeVal = initialExam?.negativeMarks !== undefined && Number(initialExam.negativeMarks) !== 0
-    ? Math.abs(Number(initialExam.negativeMarks))
-    : (Number(initialExam?.negativeValue) || 0.5);
+  const negativeVal =
+    initialExam?.negativeMarks !== undefined &&
+    Number(initialExam.negativeMarks) !== 0
+      ? Math.abs(Number(initialExam.negativeMarks))
+      : Number(initialExam?.negativeValue) || 0.5;
 
   const [examPackData, setExamPackData] = useState({
     name: initialExam?.name || "",
@@ -64,9 +72,11 @@ export default function EditExamClientView({
     batch: initialExam?.batch || batchOptions[0] || "2024",
     image: initialExam?.image || "",
     totalMarks: initialExam?.totalMarks || 100,
-    perQuestionMark: initialExam?.perQuestionMarks || initialExam?.perQuestionMark || 2,
+    perQuestionMark:
+      initialExam?.perQuestionMarks || initialExam?.perQuestionMark || 2,
     passMark: initialExam?.passingMarks || initialExam?.passMark || 33,
-    durationMinutes: initialExam?.durationMinutes || initialExam?.duration || 30,
+    durationMinutes:
+      initialExam?.durationMinutes || initialExam?.duration || 30,
     startDate: formatDateTime(initialExam?.startDate || ""),
     endDate: formatDateTime(initialExam?.endDate || ""),
   });
@@ -107,7 +117,10 @@ export default function EditExamClientView({
       return;
     }
 
-    if (Number(examPackData.passMark) <= 0 || Number(examPackData.passMark) > 100) {
+    if (
+      Number(examPackData.passMark) <= 0 ||
+      Number(examPackData.passMark) > 100
+    ) {
       toast.error("Pass mark percentage must be between 1 and 100.");
       return;
     }
@@ -131,8 +144,12 @@ export default function EditExamClientView({
         randomization: examSettings.randomization,
         feedback: examSettings.feedback,
         negativeMarking: examSettings.negativeMarking,
-        negativeMarks: examSettings.negativeMarking ? (Number(examSettings.negativeValue) || 0.5) : 0,
-        negativeValue: examSettings.negativeMarking ? (Number(examSettings.negativeValue) || 0.5) : 0,
+        negativeMarks: examSettings.negativeMarking
+          ? Number(examSettings.negativeValue) || 0.5
+          : 0,
+        negativeValue: examSettings.negativeMarking
+          ? Number(examSettings.negativeValue) || 0.5
+          : 0,
         privateExam: examSettings.privateExam,
         privatePassword: examSettings.privatePassword,
       };
@@ -194,30 +211,46 @@ export default function EditExamClientView({
               label="Exam Title *"
               placeholder="Exam Name"
               value={examPackData.name}
-              onChange={(e) => setExamPackData({ ...examPackData, name: e.target.value })}
+              onChange={(e) =>
+                setExamPackData({ ...examPackData, name: e.target.value })
+              }
               required
             />
             <Input
               label="Brief Instructions or Syllabus"
               placeholder="Exam Details"
               value={examPackData.details}
-              onChange={(e) => setExamPackData({ ...examPackData, details: e.target.value })}
+              onChange={(e) =>
+                setExamPackData({ ...examPackData, details: e.target.value })
+              }
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <CustomSelect
               label="Target Level"
-              options={levelOptions.length ? levelOptions : ["Class 10", "HSC", "Admission", "University"]}
+              options={
+                levelOptions.length
+                  ? levelOptions
+                  : ["Class 10", "HSC", "Admission", "University"]
+              }
               value={examPackData.level}
-              onChange={(val) => setExamPackData({ ...examPackData, level: val })}
+              onChange={(val) =>
+                setExamPackData({ ...examPackData, level: val })
+              }
               placeholder="Select Level"
             />
             <CustomSelect
               label="Target Batch"
-              options={batchOptions.length ? batchOptions : ["2024", "2025", "2026", "2027"]}
+              options={
+                batchOptions.length
+                  ? batchOptions
+                  : ["2024", "2025", "2026", "2027"]
+              }
               value={examPackData.batch}
-              onChange={(val) => setExamPackData({ ...examPackData, batch: val })}
+              onChange={(val) =>
+                setExamPackData({ ...examPackData, batch: val })
+              }
               placeholder="Select Batch"
             />
           </div>
@@ -229,7 +262,9 @@ export default function EditExamClientView({
               folder="exams"
               height="h-44"
               value={examPackData.image}
-              onChange={(url) => setExamPackData({ ...examPackData, image: url || "" })}
+              onChange={(url) =>
+                setExamPackData({ ...examPackData, image: url || "" })
+              }
               description="Recommended ratio 16:9 for clean card displays."
             />
           </div>
@@ -254,7 +289,12 @@ export default function EditExamClientView({
               type="number"
               placeholder="100"
               value={examPackData.totalMarks}
-              onChange={(e) => setExamPackData({ ...examPackData, totalMarks: Number(e.target.value) })}
+              onChange={(e) =>
+                setExamPackData({
+                  ...examPackData,
+                  totalMarks: Number(e.target.value),
+                })
+              }
               min={1}
             />
             <Input
@@ -262,7 +302,12 @@ export default function EditExamClientView({
               type="number"
               placeholder="2"
               value={examPackData.perQuestionMark}
-              onChange={(e) => setExamPackData({ ...examPackData, perQuestionMark: Number(e.target.value) })}
+              onChange={(e) =>
+                setExamPackData({
+                  ...examPackData,
+                  perQuestionMark: Number(e.target.value),
+                })
+              }
               min={1}
             />
             <Input
@@ -270,7 +315,12 @@ export default function EditExamClientView({
               type="number"
               placeholder="33"
               value={examPackData.passMark}
-              onChange={(e) => setExamPackData({ ...examPackData, passMark: Number(e.target.value) })}
+              onChange={(e) =>
+                setExamPackData({
+                  ...examPackData,
+                  passMark: Number(e.target.value),
+                })
+              }
               min={1}
               max={100}
             />
@@ -279,7 +329,12 @@ export default function EditExamClientView({
               type="number"
               placeholder="30"
               value={examPackData.durationMinutes}
-              onChange={(e) => setExamPackData({ ...examPackData, durationMinutes: Number(e.target.value) })}
+              onChange={(e) =>
+                setExamPackData({
+                  ...examPackData,
+                  durationMinutes: Number(e.target.value),
+                })
+              }
               min={1}
             />
           </div>
@@ -289,12 +344,16 @@ export default function EditExamClientView({
             <DateTimePicker
               label="Exam Start Date & Time *"
               value={examPackData.startDate}
-              onChange={(val) => setExamPackData({ ...examPackData, startDate: val })}
+              onChange={(val) =>
+                setExamPackData({ ...examPackData, startDate: val })
+              }
             />
             <DateTimePicker
               label="Exam End Date & Time *"
               value={examPackData.endDate}
-              onChange={(val) => setExamPackData({ ...examPackData, endDate: val })}
+              onChange={(val) =>
+                setExamPackData({ ...examPackData, endDate: val })
+              }
             />
           </div>
         </div>
@@ -316,17 +375,23 @@ export default function EditExamClientView({
             <ToggleSwitch
               label="Negative Marking"
               checked={examSettings.negativeMarking}
-              onChange={(val) => setExamSettings({ ...examSettings, negativeMarking: val })}
+              onChange={(val) =>
+                setExamSettings({ ...examSettings, negativeMarking: val })
+              }
             />
             <ToggleSwitch
               label="Question Randomization"
               checked={examSettings.randomization}
-              onChange={(val) => setExamSettings({ ...examSettings, randomization: val })}
+              onChange={(val) =>
+                setExamSettings({ ...examSettings, randomization: val })
+              }
             />
             <ToggleSwitch
               label="Instant Feedback"
               checked={examSettings.feedback}
-              onChange={(val) => setExamSettings({ ...examSettings, feedback: val })}
+              onChange={(val) =>
+                setExamSettings({ ...examSettings, feedback: val })
+              }
             />
           </div>
 
@@ -356,12 +421,19 @@ export default function EditExamClientView({
 
                 {/* Quick Selection Pills */}
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11px] font-mono text-slate-500">PRESETS:</span>
+                  <span className="text-[11px] font-mono text-slate-500">
+                    PRESETS:
+                  </span>
                   {[0.25, 0.5, 0.75, 1.0].map((preset) => (
                     <button
                       key={preset}
                       type="button"
-                      onClick={() => setExamSettings({ ...examSettings, negativeValue: preset })}
+                      onClick={() =>
+                        setExamSettings({
+                          ...examSettings,
+                          negativeValue: preset,
+                        })
+                      }
                       className={`px-2.5 py-1 rounded text-[11px] font-mono font-bold border transition cursor-pointer ${
                         examSettings.negativeValue === preset
                           ? "bg-primary text-white border-primary shadow-2xs"
@@ -375,7 +447,11 @@ export default function EditExamClientView({
               </div>
 
               <p className="text-[11px] text-slate-500">
-                For every incorrect answer, <span className="font-mono font-bold text-amber-700">{examSettings.negativeValue || 0} marks</span> will be deducted from the candidate&apos;s total score.
+                For every incorrect answer,{" "}
+                <span className="font-mono font-bold text-amber-700">
+                  {examSettings.negativeValue || 0} marks
+                </span>{" "}
+                will be deducted from the candidate&apos;s total score.
               </p>
             </div>
           )}
@@ -386,7 +462,9 @@ export default function EditExamClientView({
               <ToggleSwitch
                 label="Private Exam (Requires Passcode)"
                 checked={examSettings.privateExam}
-                onChange={(val) => setExamSettings({ ...examSettings, privateExam: val })}
+                onChange={(val) =>
+                  setExamSettings({ ...examSettings, privateExam: val })
+                }
               />
               {examSettings.privateExam && (
                 <Input
@@ -394,7 +472,12 @@ export default function EditExamClientView({
                   type="password"
                   placeholder="Enter access passcode"
                   value={examSettings.privatePassword}
-                  onChange={(e) => setExamSettings({ ...examSettings, privatePassword: e.target.value })}
+                  onChange={(e) =>
+                    setExamSettings({
+                      ...examSettings,
+                      privatePassword: e.target.value,
+                    })
+                  }
                 />
               )}
             </div>

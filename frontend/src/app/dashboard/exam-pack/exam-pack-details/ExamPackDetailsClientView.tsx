@@ -2,7 +2,14 @@
 
 import React, { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FaEye, FaPlay, FaCalendarAlt, FaCheckCircle, FaSpinner, FaArrowLeft } from "react-icons/fa";
+import {
+  FaEye,
+  FaPlay,
+  FaCalendarAlt,
+  FaCheckCircle,
+  FaSpinner,
+  FaArrowLeft,
+} from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
@@ -65,7 +72,9 @@ export default function ExamPackDetailsClientView({
   // Fallback check from initialStats.recentExams
   if (initialStats?.recentExams) {
     initialStats.recentExams.forEach((item: any) => {
-      const cleanId = item.examId || (item.id.startsWith("#") ? item.id.substring(1) : item.id);
+      const cleanId =
+        item.examId ||
+        (item.id.startsWith("#") ? item.id.substring(1) : item.id);
       if (!attemptMap.has(cleanId)) {
         attemptMap.set(cleanId, { id: item.attemptId, examId: cleanId });
       }
@@ -95,7 +104,6 @@ export default function ExamPackDetailsClientView({
     };
   });
 
-
   return (
     <PageContainer className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
@@ -124,16 +132,29 @@ export default function ExamPackDetailsClientView({
               <th className="px-5 py-3.5 text-left">Exam Code</th>
               <th className="px-5 py-3.5 text-left">Start Date</th>
               <th className="px-5 py-3.5 text-left">End Date</th>
-              <th className="px-5 py-3.5 text-center">Status / Evaluation Report</th>
+              <th className="px-5 py-3.5 text-center">
+                Status / Evaluation Report
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm font-medium">
             {exams.map((exam) => (
-              <tr key={exam.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-5 py-3.5 font-bold text-slate-900 text-xs sm:text-sm">{exam.name}</td>
-                <td className="px-5 py-3.5 font-mono text-xs text-slate-500">#{exam.id}</td>
-                <td className="px-5 py-3.5 text-xs text-slate-600 font-semibold">{exam.startDate}</td>
-                <td className="px-5 py-3.5 text-xs text-slate-600 font-semibold">{exam.endDate}</td>
+              <tr
+                key={exam.id}
+                className="hover:bg-slate-50/50 transition-colors"
+              >
+                <td className="px-5 py-3.5 font-bold text-slate-900 text-xs sm:text-sm">
+                  {exam.name}
+                </td>
+                <td className="px-5 py-3.5 font-mono text-xs text-slate-500">
+                  #{exam.id}
+                </td>
+                <td className="px-5 py-3.5 text-xs text-slate-600 font-semibold">
+                  {exam.startDate}
+                </td>
+                <td className="px-5 py-3.5 text-xs text-slate-600 font-semibold">
+                  {exam.endDate}
+                </td>
                 <td className="px-5 py-3.5 text-center">
                   {exam.status === "Start Exam" && (
                     <PrimaryBtn
@@ -155,7 +176,9 @@ export default function ExamPackDetailsClientView({
                           link={`/dashboard/reporting/${exam.attemptId}`}
                           className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded"
                         >
-                          <span className="text-slate-700 font-bold">View Report</span>
+                          <span className="text-slate-700 font-bold">
+                            View Report
+                          </span>
                         </OutlineBtn>
                       ) : (
                         <OutlineBtn
@@ -163,7 +186,9 @@ export default function ExamPackDetailsClientView({
                           className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded"
                         >
                           <FaEye className="text-xs text-primary" />
-                          <span className="text-slate-700 font-bold">Reports</span>
+                          <span className="text-slate-700 font-bold">
+                            Reports
+                          </span>
                         </OutlineBtn>
                       )}
                     </div>
@@ -179,7 +204,10 @@ export default function ExamPackDetailsClientView({
 
             {isPending && (
               <tr>
-                <td colSpan={5} className="py-12 text-center text-slate-500 font-medium text-xs">
+                <td
+                  colSpan={5}
+                  className="py-12 text-center text-slate-500 font-medium text-xs"
+                >
                   <div className="flex flex-col items-center justify-center gap-2">
                     <FaSpinner className="animate-spin text-xl text-primary" />
                     <span>Loading exams...</span>
@@ -226,8 +254,8 @@ export default function ExamPackDetailsClientView({
                   exam.status === "Start Exam"
                     ? "bg-primary/10 text-primary border-primary/20"
                     : exam.status === "Complete"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : "bg-slate-100 text-slate-500 border-slate-200"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-slate-100 text-slate-500 border-slate-200"
                 }`}
               >
                 {exam.status === "Start Exam" ? "Available" : exam.status}
@@ -237,12 +265,20 @@ export default function ExamPackDetailsClientView({
             {/* Dates Grid */}
             <div className="grid grid-cols-2 gap-2 p-2 rounded bg-slate-50 border border-slate-100 text-[11px] font-mono">
               <div>
-                <span className="text-[9px] text-slate-400 block uppercase font-sans font-semibold">Start:</span>
-                <span className="text-slate-700 font-medium truncate block">{exam.startDate}</span>
+                <span className="text-[9px] text-slate-400 block uppercase font-sans font-semibold">
+                  Start:
+                </span>
+                <span className="text-slate-700 font-medium truncate block">
+                  {exam.startDate}
+                </span>
               </div>
               <div>
-                <span className="text-[9px] text-slate-400 block uppercase font-sans font-semibold">Deadline:</span>
-                <span className="text-slate-700 font-medium truncate block">{exam.endDate}</span>
+                <span className="text-[9px] text-slate-400 block uppercase font-sans font-semibold">
+                  Deadline:
+                </span>
+                <span className="text-slate-700 font-medium truncate block">
+                  {exam.endDate}
+                </span>
               </div>
             </div>
 

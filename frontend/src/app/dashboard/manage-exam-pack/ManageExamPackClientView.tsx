@@ -12,7 +12,9 @@ interface ManageExamPackClientViewProps {
   initialPacks: any[];
 }
 
-export default function ManageExamPackClientView({ initialPacks }: ManageExamPackClientViewProps) {
+export default function ManageExamPackClientView({
+  initialPacks,
+}: ManageExamPackClientViewProps) {
   const [examPacks, setExamPacks] = useState<any[]>(initialPacks || []);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -26,7 +28,10 @@ export default function ManageExamPackClientView({ initialPacks }: ManageExamPac
   useEffect(() => {
     if (!initialPacks || initialPacks.length === 0) {
       setLoading(true);
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("token") || undefined
+          : undefined;
       getExamPacksAction(token)
         .then((fetched) => {
           if (fetched && Array.isArray(fetched) && fetched.length > 0) {
@@ -46,7 +51,7 @@ export default function ManageExamPackClientView({ initialPacks }: ManageExamPac
       (p) =>
         p.title?.toLowerCase().includes(query) ||
         p.description?.toLowerCase().includes(query) ||
-        p.category?.toLowerCase().includes(query)
+        p.category?.toLowerCase().includes(query),
     );
   }, [examPacks, search]);
 
@@ -64,7 +69,8 @@ export default function ManageExamPackClientView({ initialPacks }: ManageExamPac
             Manage Exam Packs
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Create and organize syllabus packs, manage question banks, and configure mock papers.
+            Create and organize syllabus packs, manage question banks, and
+            configure mock papers.
           </p>
         </div>
 

@@ -1,7 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { FaCalendarAlt, FaClock, FaPlay, FaGraduationCap } from "react-icons/fa";
+import {
+  FaCalendarAlt,
+  FaClock,
+  FaPlay,
+  FaGraduationCap,
+} from "react-icons/fa";
 import { PrimaryBtn } from "../ui/PrimaryBtn";
 
 type UpcomingExamCardProps = {
@@ -36,11 +41,40 @@ export default function UpcomingExamCard({
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
-        <circle cx="50" cy="50" r="32" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="50" cy="50" r="18" stroke="currentColor" strokeWidth="1" strokeDasharray="2 4" />
-        <path d="M50 5 L50 95 M5 50 L95 50" stroke="currentColor" strokeWidth="0.75" />
-        <path d="M50 50 L75 25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <circle
+          cx="50"
+          cy="50"
+          r="45"
+          stroke="currentColor"
+          strokeWidth="1"
+          strokeDasharray="3 3"
+        />
+        <circle
+          cx="50"
+          cy="50"
+          r="32"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <circle
+          cx="50"
+          cy="50"
+          r="18"
+          stroke="currentColor"
+          strokeWidth="1"
+          strokeDasharray="2 4"
+        />
+        <path
+          d="M50 5 L50 95 M5 50 L95 50"
+          stroke="currentColor"
+          strokeWidth="0.75"
+        />
+        <path
+          d="M50 50 L75 25"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
         <circle cx="75" cy="25" r="2.5" fill="currentColor" />
         <circle cx="50" cy="50" r="4" fill="currentColor" />
       </svg>

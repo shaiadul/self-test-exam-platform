@@ -93,12 +93,16 @@ export default function EditProfileClientView({
       fieldsToCheck.push("adminTier", "adminDept", "adminBase");
     }
 
-    const filled = fieldsToCheck.filter(
-      (f) => Boolean((profileData as any)[f]?.trim?.())
+    const filled = fieldsToCheck.filter((f) =>
+      Boolean((profileData as any)[f]?.trim?.()),
     ).length;
     const pct = Math.round((filled / fieldsToCheck.length) * 100);
 
-    return { completeness: pct, filledCount: filled, totalCount: fieldsToCheck.length };
+    return {
+      completeness: pct,
+      filledCount: filled,
+      totalCount: fieldsToCheck.length,
+    };
   }, [profileData, normRole]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -124,11 +128,14 @@ export default function EditProfileClientView({
         if (profileData.level) payload.level = profileData.level;
         if (profileData.batch) payload.batch = profileData.batch;
         if (profileData.board) payload.board = profileData.board;
-        if (profileData.institution) payload.institution = profileData.institution;
+        if (profileData.institution)
+          payload.institution = profileData.institution;
       } else if (normRole === "teacher") {
         if (profileData.subject) payload.subject = profileData.subject;
-        if (profileData.designation) payload.designation = profileData.designation;
-        if (profileData.institution) payload.institution = profileData.institution;
+        if (profileData.designation)
+          payload.designation = profileData.designation;
+        if (profileData.institution)
+          payload.institution = profileData.institution;
       } else if (normRole === "admin") {
         if (profileData.adminTier) payload.adminTier = profileData.adminTier;
         if (profileData.adminDept) payload.adminDept = profileData.adminDept;
@@ -145,7 +152,7 @@ export default function EditProfileClientView({
             localStorage.removeItem("userImage");
           }
           window.dispatchEvent(
-            new CustomEvent("profileUpdated", { detail: res.user || payload })
+            new CustomEvent("profileUpdated", { detail: res.user || payload }),
           );
         }
         toast.success("Profile updated successfully!");
@@ -228,7 +235,6 @@ export default function EditProfileClientView({
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-         
           <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-4">
             {/* Identity Card with Ambient Banner & Telemetry HUD */}
             <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs group">
@@ -247,8 +253,23 @@ export default function EditProfileClientView({
                     strokeOpacity="0.3"
                     fill="none"
                   />
-                  <circle cx="260" cy="30" r="35" stroke="#f97a00" strokeWidth="0.8" strokeOpacity="0.25" strokeDasharray="3 3" fill="none" />
-                  <circle cx="260" cy="30" r="2" fill="#f97a00" fillOpacity="0.6" />
+                  <circle
+                    cx="260"
+                    cy="30"
+                    r="35"
+                    stroke="#f97a00"
+                    strokeWidth="0.8"
+                    strokeOpacity="0.25"
+                    strokeDasharray="3 3"
+                    fill="none"
+                  />
+                  <circle
+                    cx="260"
+                    cy="30"
+                    r="2"
+                    fill="#f97a00"
+                    fillOpacity="0.6"
+                  />
                 </svg>
                 <span className="relative z-10 inline-flex items-center ml-auto gap-1.5 px-2 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-mono font-black tracking-wider uppercase shadow-2xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -264,7 +285,9 @@ export default function EditProfileClientView({
                     variant="avatar"
                     folder="avatars"
                     value={profileData.image}
-                    onChange={(url) => setProfileData((prev) => ({ ...prev, image: url || "" }))}
+                    onChange={(url) =>
+                      setProfileData((prev) => ({ ...prev, image: url || "" }))
+                    }
                   />
                 </div>
 
@@ -274,23 +297,28 @@ export default function EditProfileClientView({
                 </h3>
 
                 {/* Role pill */}
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold border ${roleConfig.color} mb-1.5`}>
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-mono font-semibold border ${roleConfig.color} mb-1.5`}
+                >
                   {roleConfig.label}
                 </span>
 
                 {/* Email Chip */}
                 <div className="flex items-center justify-center gap-1.5 px-2.5 py-1 rounded bg-slate-50 border border-slate-200/70 text-slate-600 text-xs font-mono max-w-full truncate mb-2">
                   <FaEnvelope className="text-primary text-[10px] shrink-0" />
-                  <span className="truncate max-w-[220px]">{profileData.email}</span>
+                  <span className="truncate max-w-[220px]">
+                    {profileData.email}
+                  </span>
                 </div>
 
                 {/* Staged Avatar Change Alert */}
-                {profileData.image && profileData.image !== initialProfile?.image && (
-                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded flex items-center gap-1.5 mb-2 animate-fadeIn">
-                    <FaCheckCircle className="text-[10px] text-emerald-600" />
-                    IMAGE STAGED (CLICK SAVE)
-                  </span>
-                )}
+                {profileData.image &&
+                  profileData.image !== initialProfile?.image && (
+                    <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded flex items-center gap-1.5 mb-2 animate-fadeIn">
+                      <FaCheckCircle className="text-[10px] text-emerald-600" />
+                      IMAGE STAGED (CLICK SAVE)
+                    </span>
+                  )}
 
                 {/* Profile Integrity Gauge */}
                 <div className="w-full pt-3.5 mt-2 border-t border-slate-100">
@@ -299,7 +327,13 @@ export default function EditProfileClientView({
                       <FaShieldAlt className="text-primary text-[10px]" />
                       PROFILE INTEGRITY
                     </span>
-                    <span className={completeness >= 80 ? "text-emerald-600 font-black" : "text-amber-600 font-black"}>
+                    <span
+                      className={
+                        completeness >= 80
+                          ? "text-emerald-600 font-black"
+                          : "text-amber-600 font-black"
+                      }
+                    >
                       {completeness}% ({filledCount}/{totalCount})
                     </span>
                   </div>
@@ -309,8 +343,8 @@ export default function EditProfileClientView({
                         completeness >= 80
                           ? "bg-gradient-to-r from-emerald-500 to-teal-500"
                           : completeness >= 50
-                          ? "bg-gradient-to-r from-amber-400 to-orange-500"
-                          : "bg-gradient-to-r from-primary to-orange-600"
+                            ? "bg-gradient-to-r from-amber-400 to-orange-500"
+                            : "bg-gradient-to-r from-primary to-orange-600"
                       }`}
                       style={{ width: `${completeness}%` }}
                     />
@@ -384,13 +418,13 @@ export default function EditProfileClientView({
                   Cryptographic Identity Binding
                 </p>
                 <p className="text-slate-400 text-[10px] font-mono leading-relaxed mt-1">
-                  Exam attempts, certificates, and leaderboard ranks are cryptographically tied to this verified credentials profile.
+                  Exam attempts, certificates, and leaderboard ranks are
+                  cryptographically tied to this verified credentials profile.
                 </p>
               </div>
             </div>
           </div>
 
-        
           <div className="lg:col-span-8 space-y-5">
             <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
               <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
@@ -509,7 +543,13 @@ export default function EditProfileClientView({
                     options={
                       boardOptions.length
                         ? boardOptions
-                        : ["Dhaka", "Rajshahi", "Chittagong", "Cambridge", "Edexcel"]
+                        : [
+                            "Dhaka",
+                            "Rajshahi",
+                            "Chittagong",
+                            "Cambridge",
+                            "Edexcel",
+                          ]
                     }
                     value={profileData.board}
                     onChange={(val) => handleChange("board", val)}
@@ -520,7 +560,9 @@ export default function EditProfileClientView({
                     label="College / School Institution"
                     icon={<FaBuilding className="text-slate-400 text-xs" />}
                     value={profileData.institution}
-                    onChange={(e) => handleChange("institution", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("institution", e.target.value)
+                    }
                     placeholder="e.g. Dhaka College"
                   />
                 </div>
@@ -553,7 +595,9 @@ export default function EditProfileClientView({
                     label="Academic Designation"
                     icon={<FaGlobe className="text-slate-400 text-xs" />}
                     value={profileData.designation}
-                    onChange={(e) => handleChange("designation", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("designation", e.target.value)
+                    }
                     placeholder="e.g. Senior Lecturer"
                   />
 
@@ -562,7 +606,9 @@ export default function EditProfileClientView({
                       label="Institution / University Name"
                       icon={<FaBuilding className="text-slate-400 text-xs" />}
                       value={profileData.institution}
-                      onChange={(e) => handleChange("institution", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("institution", e.target.value)
+                      }
                       placeholder="e.g. Dhaka University"
                     />
                   </div>
@@ -602,7 +648,9 @@ export default function EditProfileClientView({
                     <Input
                       label="Regional Operations Base"
                       value={profileData.adminBase}
-                      onChange={(e) => handleChange("adminBase", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("adminBase", e.target.value)
+                      }
                       placeholder="Central Headquarters / Campus Node"
                     />
                   </div>

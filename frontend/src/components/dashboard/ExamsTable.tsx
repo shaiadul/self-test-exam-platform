@@ -44,7 +44,8 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
               const numScore = parseFloat(scoreParts[0]) || 0;
               const maxScore = parseFloat(scoreParts[1]) || 20;
               const ratio = maxScore > 0 ? (numScore / maxScore) * 100 : 0;
-              const isPassed = typeof exam.passed === "boolean" ? exam.passed : ratio >= 33;
+              const isPassed =
+                typeof exam.passed === "boolean" ? exam.passed : ratio >= 33;
 
               return (
                 <tr
@@ -110,7 +111,9 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
                           className={`h-full rounded ${
                             isPassed ? "bg-emerald-500" : "bg-rose-500"
                           }`}
-                          style={{ width: `${Math.min(100, Math.max(5, ratio))}%` }}
+                          style={{
+                            width: `${Math.min(100, Math.max(5, ratio))}%`,
+                          }}
                         />
                       </div>
                     </div>
@@ -138,13 +141,13 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
                         exam.answerSheet && exam.answerSheet !== "#"
                           ? exam.answerSheet
                           : exam.attemptId
-                          ? `/dashboard/reporting/${exam.attemptId}`
-                          : `/dashboard/reporting/${exam.id.replace("#", "")}`;
+                            ? `/dashboard/reporting/${exam.attemptId}`
+                            : `/dashboard/reporting/${exam.id.replace("#", "")}`;
 
                       return (
                         <OutlineBtn
                           link={reportLink}
-                          className="!text-[11px] !py-1 !px-2 shadow-xs !rounded font-mono"
+                          className="!text-[11px] !py-1.5 !px-2 shadow-xs !rounded font-mono"
                         >
                           <span>Review</span>
                         </OutlineBtn>
@@ -165,13 +168,14 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
           const numScore = parseFloat(scoreParts[0]) || 0;
           const maxScore = parseFloat(scoreParts[1]) || 20;
           const ratio = maxScore > 0 ? (numScore / maxScore) * 100 : 0;
-          const isPassed = typeof exam.passed === "boolean" ? exam.passed : ratio >= 33;
+          const isPassed =
+            typeof exam.passed === "boolean" ? exam.passed : ratio >= 33;
           const reportLink =
             exam.answerSheet && exam.answerSheet !== "#"
               ? exam.answerSheet
               : exam.attemptId
-              ? `/dashboard/reporting/${exam.attemptId}`
-              : `/dashboard/reporting/${exam.id.replace("#", "")}`;
+                ? `/dashboard/reporting/${exam.attemptId}`
+                : `/dashboard/reporting/${exam.id.replace("#", "")}`;
 
           return (
             <div
@@ -202,8 +206,16 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
               <div className="p-2 bg-slate-50/70 rounded border border-slate-100 space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-500 font-sans font-medium">Score:</span>
-                    <strong className={isPassed ? "text-emerald-600 font-bold" : "text-rose-600 font-bold"}>
+                    <span className="text-[10px] text-slate-500 font-sans font-medium">
+                      Score:
+                    </span>
+                    <strong
+                      className={
+                        isPassed
+                          ? "text-emerald-600 font-bold"
+                          : "text-rose-600 font-bold"
+                      }
+                    >
                       {exam.score || "0"}
                     </strong>
                     <span
@@ -226,7 +238,9 @@ export default function ExamsTable({ exams }: ExamsTableProps) {
                           : "bg-slate-100 text-slate-600 border-slate-200"
                       }`}
                     >
-                      {exam.negative && parseFloat(exam.negative) > 0 ? `-${exam.negative}` : "0.0"}
+                      {exam.negative && parseFloat(exam.negative) > 0
+                        ? `-${exam.negative}`
+                        : "0.0"}
                     </span>
                   </div>
                 </div>

@@ -42,7 +42,9 @@ interface ReportingClientViewProps {
   initialReports: Report[];
 }
 
-export default function ReportingClientView({ initialReports }: ReportingClientViewProps) {
+export default function ReportingClientView({
+  initialReports,
+}: ReportingClientViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"score" | "date">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -54,9 +56,14 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
     const totalExams = reports.length;
     const passedExams = reports.filter((r) => r.passed).length;
     const failedExams = totalExams - passedExams;
-    const totalScore = reports.reduce((acc, r) => acc + (Number(r.finalScore) || 0), 0);
-    const avgScore = totalExams > 0 ? (totalScore / totalExams).toFixed(1) : "0.0";
-    const passRate = totalExams > 0 ? Math.round((passedExams / totalExams) * 100) : 0;
+    const totalScore = reports.reduce(
+      (acc, r) => acc + (Number(r.finalScore) || 0),
+      0,
+    );
+    const avgScore =
+      totalExams > 0 ? (totalScore / totalExams).toFixed(1) : "0.0";
+    const passRate =
+      totalExams > 0 ? Math.round((passedExams / totalExams) * 100) : 0;
 
     return { totalExams, passedExams, failedExams, avgScore, passRate };
   }, [reports]);
@@ -67,12 +74,14 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
       (r) =>
         r.examName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         r.examId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.id.toString().includes(searchTerm)
+        r.id.toString().includes(searchTerm),
     );
 
     return filtered.sort((a, b) => {
       if (sortBy === "score") {
-        return sortOrder === "asc" ? a.finalScore - b.finalScore : b.finalScore - a.finalScore;
+        return sortOrder === "asc"
+          ? a.finalScore - b.finalScore
+          : b.finalScore - a.finalScore;
       } else {
         return sortOrder === "asc"
           ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -101,7 +110,8 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
             My Exam Reports & Results
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Browse and review comprehensive solutions for all mock exams you have attended.
+            Browse and review comprehensive solutions for all mock exams you
+            have attended.
           </p>
         </div>
 
@@ -126,7 +136,9 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
                 <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                   Total Attended
                 </p>
-                <p className="text-xl font-black font-mono text-slate-900">{summary.totalExams}</p>
+                <p className="text-xl font-black font-mono text-slate-900">
+                  {summary.totalExams}
+                </p>
               </div>
             </div>
 
@@ -155,7 +167,9 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
                 <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                   Failed Tests
                 </p>
-                <p className="text-xl font-black font-mono text-rose-500">{summary.failedExams}</p>
+                <p className="text-xl font-black font-mono text-rose-500">
+                  {summary.failedExams}
+                </p>
               </div>
             </div>
 
@@ -167,7 +181,9 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
                 <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                   Average Score
                 </p>
-                <p className="text-xl font-black font-mono text-primary">{summary.avgScore}</p>
+                <p className="text-xl font-black font-mono text-primary">
+                  {summary.avgScore}
+                </p>
               </div>
             </div>
           </div>
@@ -257,7 +273,11 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm font-medium">
                 {filteredReports.map((report) => {
-                  const dateFormatted = formatDate(report.createdAt, "MMM dd, yyyy", "Recent");
+                  const dateFormatted = formatDate(
+                    report.createdAt,
+                    "MMM dd, yyyy",
+                    "Recent",
+                  );
 
                   return (
                     <tr
@@ -307,7 +327,10 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
                       <td className="px-5 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3 text-xs font-bold">
                           <span className="text-slate-600">
-                            Total: <strong className="text-slate-900">{report.total}</strong>
+                            Total:{" "}
+                            <strong className="text-slate-900">
+                              {report.total}
+                            </strong>
                           </span>
                           <span className="text-emerald-600">
                             ✓ {report.correct}
@@ -355,7 +378,9 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
                           link={`/dashboard/reporting/${report.id}`}
                           className="!text-xs !py-1.5 !px-3.5 gap-1.5 shadow-xs"
                         >
-                          <span className="text-slate-700 font-bold">View Report</span>
+                          <span className="text-slate-700 font-bold">
+                            View Report
+                          </span>
                         </OutlineBtn>
                       </td>
                     </tr>
@@ -368,7 +393,11 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
           {/* Mobile Phone Card View */}
           <div className="block md:hidden space-y-3">
             {filteredReports.map((report) => {
-              const dateFormatted = formatDate(report.createdAt, "MMM dd, yyyy", "Recent");
+              const dateFormatted = formatDate(
+                report.createdAt,
+                "MMM dd, yyyy",
+                "Recent",
+              );
 
               return (
                 <div
@@ -410,19 +439,31 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
                   {/* Question Breakdown Strip */}
                   <div className="grid grid-cols-4 gap-1 p-2 rounded bg-slate-50 border border-slate-100 text-center font-mono text-[11px]">
                     <div>
-                      <span className="text-[9px] text-slate-400 font-sans block">Total</span>
+                      <span className="text-[9px] text-slate-400 font-sans block">
+                        Total
+                      </span>
                       <strong className="text-slate-800">{report.total}</strong>
                     </div>
                     <div>
-                      <span className="text-[9px] text-emerald-600 font-sans block">Correct</span>
-                      <strong className="text-emerald-700">✓ {report.correct}</strong>
+                      <span className="text-[9px] text-emerald-600 font-sans block">
+                        Correct
+                      </span>
+                      <strong className="text-emerald-700">
+                        ✓ {report.correct}
+                      </strong>
                     </div>
                     <div>
-                      <span className="text-[9px] text-rose-500 font-sans block">Wrong</span>
-                      <strong className="text-rose-600">✗ {report.wrong}</strong>
+                      <span className="text-[9px] text-rose-500 font-sans block">
+                        Wrong
+                      </span>
+                      <strong className="text-rose-600">
+                        ✗ {report.wrong}
+                      </strong>
                     </div>
                     <div>
-                      <span className="text-[9px] text-slate-400 font-sans block">Neg</span>
+                      <span className="text-[9px] text-slate-400 font-sans block">
+                        Neg
+                      </span>
                       <strong className="text-slate-600">
                         {report.negative > 0 ? `-${report.negative}` : "0"}
                       </strong>
@@ -475,4 +516,3 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
     </PageContainer>
   );
 }
-

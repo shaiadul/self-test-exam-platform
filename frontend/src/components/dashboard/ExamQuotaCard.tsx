@@ -196,14 +196,14 @@ export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
           <div className="grid grid-cols-2 gap-1.5 w-full sm:flex sm:w-auto sm:items-center sm:shrink-0">
             <OutlineBtn
               link="/dashboard/manage-exam-pack"
-              className="!text-xs !py-1 !px-2.5 !rounded !w-full !justify-center sm:!w-auto"
+              className="!text-xs !py-1.5 !px-2.5 !rounded !w-full !justify-center sm:!w-auto"
             >
               <span>Manage Packs</span>
             </OutlineBtn>
 
             <OutlineBtn
               link="/dashboard/requests"
-              className="!text-xs !py-1 !px-2.5 !rounded !w-full !justify-center sm:!w-auto"
+              className="!text-xs !py-1.5 !px-2.5 !rounded !w-full !justify-center sm:!w-auto"
             >
               <span>Request Increase</span>
               <FaArrowRight className="ml-1 text-[9px]" />
@@ -211,7 +211,7 @@ export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
 
             <PrimaryBtn
               link="/dashboard/manage-exam-pack/add"
-              className="!text-xs !py-1 !px-3 !rounded col-span-2 !w-full !justify-center sm:!w-auto"
+              className="!text-xs !py-1.5 !px-3 !rounded col-span-2 !w-full !justify-center sm:!w-auto"
             >
               <span>Create Exam Pack</span>
               <FaArrowRight className="ml-1 text-[9px]" />

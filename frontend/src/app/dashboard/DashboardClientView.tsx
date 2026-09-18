@@ -78,7 +78,8 @@ export default function DashboardClientView({
     profileData.board = initialProfile?.subject || "Curriculum Lead";
     profileData.level = initialProfile?.designation || "Faculty Member";
     profileData.batch = "";
-    profileData.institution = initialProfile?.institution || "Education Department";
+    profileData.institution =
+      initialProfile?.institution || "Education Department";
   } else if (normRole === "admin") {
     profileData.board = initialProfile?.adminTier || "System Admin";
     profileData.level = initialProfile?.adminDept || "Operations";
@@ -115,7 +116,11 @@ export default function DashboardClientView({
             </div>
 
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-              {greeting}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-primary">{firstName}</span>!
+              {greeting},{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-primary">
+                {firstName}
+              </span>
+              !
             </h1>
 
             <p className="text-slate-300 text-xs font-normal leading-relaxed">
@@ -238,7 +243,8 @@ export default function DashboardClientView({
                 </div>
 
                 <p className="text-orange-50 text-xs font-normal leading-relaxed max-w-xs mt-1">
-                  {stats?.institutionRank || "Complete self-tests to qualify for institution ranking."}
+                  {stats?.institutionRank ||
+                    "Complete self-tests to qualify for institution ranking."}
                 </p>
               </div>
 
@@ -525,7 +531,8 @@ export default function DashboardClientView({
                     Monthly Student Submission Volume
                   </h3>
                   <p className="text-slate-500 text-xs font-medium mt-0.5">
-                    Test submission activity across your courses in the past 5 months.
+                    Test submission activity across your courses in the past 5
+                    months.
                   </p>
                 </div>
                 <span className="text-[10px] font-mono bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded border border-blue-200">
@@ -617,7 +624,8 @@ export default function DashboardClientView({
                     Course Syllabus Packs & Submission Counts
                   </h3>
                   <p className="text-slate-500 text-xs font-medium mt-0.5">
-                    Overview of active exam modules currently published for students.
+                    Overview of active exam modules currently published for
+                    students.
                   </p>
                 </div>
                 <Link
@@ -643,7 +651,10 @@ export default function DashboardClientView({
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-sm font-medium">
                     {stats.assignedPacks.map((pack: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                      <tr
+                        key={idx}
+                        className="hover:bg-slate-50/50 transition-colors"
+                      >
                         <td className="px-3.5 py-2.5 font-mono text-xs font-bold text-slate-500">
                           #{pack.id}
                         </td>
@@ -690,7 +701,10 @@ export default function DashboardClientView({
                     </div>
                     <div className="flex items-center justify-between pt-1 border-t border-slate-50 text-xs">
                       <div className="font-mono text-slate-500 text-[11px]">
-                        Submissions: <span className="font-bold text-blue-600">{pack.score}</span>
+                        Submissions:{" "}
+                        <span className="font-bold text-blue-600">
+                          {pack.score}
+                        </span>
                       </div>
                       <Link
                         href="/dashboard/manage-exam-pack"
@@ -841,7 +855,8 @@ export default function DashboardClientView({
                     Total Platform Evaluation Volume
                   </h3>
                   <p className="text-slate-500 text-xs font-medium mt-0.5">
-                    Aggregated candidate attempts processed across the last 5 months.
+                    Aggregated candidate attempts processed across the last 5
+                    months.
                   </p>
                 </div>
                 <span className="text-[10px] font-mono bg-purple-50 text-purple-700 font-bold px-2 py-0.5 rounded border border-purple-200">
@@ -968,7 +983,10 @@ export default function DashboardClientView({
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-sm font-medium">
                     {stats.auditLogs.map((log: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                      <tr
+                        key={idx}
+                        className="hover:bg-slate-50/50 transition-colors"
+                      >
                         <td className="px-3.5 py-2.5 font-mono text-xs font-bold text-slate-500">
                           #{log.id}
                         </td>
@@ -1017,8 +1035,12 @@ export default function DashboardClientView({
                       {log.name}
                     </div>
                     <div className="flex items-center justify-between pt-1 border-t border-slate-50 text-xs">
-                      <span className="font-mono text-slate-400 text-[10px] uppercase font-bold">Raw Score</span>
-                      <span className="font-mono font-bold text-slate-700">{log.score}</span>
+                      <span className="font-mono text-slate-400 text-[10px] uppercase font-bold">
+                        Raw Score
+                      </span>
+                      <span className="font-mono font-bold text-slate-700">
+                        {log.score}
+                      </span>
                     </div>
                   </div>
                 ))}

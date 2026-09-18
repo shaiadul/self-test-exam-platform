@@ -64,7 +64,6 @@ export default function AddExamPackPage() {
             <FaArrowLeft className="text-xs" />
           </OutlineBtn>
           <div>
-           
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Create New Exam Pack
             </h1>
@@ -89,7 +88,9 @@ export default function AddExamPackPage() {
                 folder="exam-packs"
                 height="h-64"
                 value={examPackData.image}
-                onChange={(url) => setExamPackData((prev) => ({ ...prev, image: url || "" }))}
+                onChange={(url) =>
+                  setExamPackData((prev) => ({ ...prev, image: url || "" }))
+                }
                 description="Aspect ratio 16:9 recommended. Max 2MB."
               />
             </div>
@@ -101,8 +102,12 @@ export default function AddExamPackPage() {
               </div>
               <ul className="space-y-1 text-slate-500 font-medium">
                 <li>• Each pack holds individual exam question papers.</li>
-                <li>• Candidate access policies are derived from syllabus level.</li>
-                <li>• Published containers can be edited or augmented anytime.</li>
+                <li>
+                  • Candidate access policies are derived from syllabus level.
+                </li>
+                <li>
+                  • Published containers can be edited or augmented anytime.
+                </li>
               </ul>
             </div>
           </div>
@@ -113,7 +118,9 @@ export default function AddExamPackPage() {
                 label="Exam Pack Title *"
                 placeholder="e.g. Higher Secondary Physics Board Prep"
                 value={examPackData.name}
-                onChange={(e) => setExamPackData({ ...examPackData, name: e.target.value })}
+                onChange={(e) =>
+                  setExamPackData({ ...examPackData, name: e.target.value })
+                }
                 required
               />
 
@@ -126,7 +133,12 @@ export default function AddExamPackPage() {
                   placeholder="Provide syllabus outline, target topics, and chapter coverage..."
                   className="w-full p-3 bg-white border border-slate-300 rounded text-xs text-slate-800 placeholder:text-slate-400 font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all resize-none"
                   value={examPackData.details}
-                  onChange={(e) => setExamPackData({ ...examPackData, details: e.target.value })}
+                  onChange={(e) =>
+                    setExamPackData({
+                      ...examPackData,
+                      details: e.target.value,
+                    })
+                  }
                   required
                 />
               </div>
@@ -135,9 +147,19 @@ export default function AddExamPackPage() {
                 <CustomSelect
                   label="Target Academic Level"
                   placeholder="Select Level"
-                  options={["PSC", "SSC", "HSC", "Admission", "BCS", "Undergraduate", "Postgraduate"]}
+                  options={[
+                    "PSC",
+                    "SSC",
+                    "HSC",
+                    "Admission",
+                    "BCS",
+                    "Undergraduate",
+                    "Postgraduate",
+                  ]}
                   value={examPackData.level}
-                  onChange={(val) => setExamPackData({ ...examPackData, level: val })}
+                  onChange={(val) =>
+                    setExamPackData({ ...examPackData, level: val })
+                  }
                 />
 
                 <CustomSelect
@@ -145,7 +167,9 @@ export default function AddExamPackPage() {
                   placeholder="Select Batch"
                   options={["2024", "2025", "2026", "2027", "2028"]}
                   value={examPackData.batch}
-                  onChange={(val) => setExamPackData({ ...examPackData, batch: val })}
+                  onChange={(val) =>
+                    setExamPackData({ ...examPackData, batch: val })
+                  }
                 />
               </div>
             </div>
