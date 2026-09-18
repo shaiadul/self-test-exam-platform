@@ -7,7 +7,6 @@ import {
   FaUniversity,
   FaLayerGroup,
   FaCalendarAlt,
-  FaCheckCircle,
   FaUserEdit,
 } from "react-icons/fa";
 
