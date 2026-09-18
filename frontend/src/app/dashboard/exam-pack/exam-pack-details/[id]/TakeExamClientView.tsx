@@ -587,8 +587,8 @@ export default function TakeExamClientView({
   // --- 1. PASSWORD CHALLENGE SCREEN ---
   if (!isUnlocked) {
     return (
-      <PageContainer className="max-w-md mx-auto py-16 px-4">
-        <div className="bg-white rounded p-6 sm:p-7 border border-slate-200/80 shadow-xs text-center space-y-4">
+      <PageContainer className="max-w-md mx-auto py-8 sm:py-16 px-4">
+        <div className="bg-white rounded p-4 sm:p-7 border border-slate-200/80 shadow-xs text-center space-y-4">
           <div className="w-12 h-12 bg-primary/10 text-primary rounded flex items-center justify-center text-xl mx-auto border border-primary/20">
             <FaLock />
           </div>
@@ -1045,7 +1045,7 @@ export default function TakeExamClientView({
             {currentQ ? (
               <div className="bg-white rounded border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
                 {/* QUESTION META RIBBON */}
-                <div className="px-4 sm:px-5 py-2.5 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                <div className="px-3 sm:px-5 py-2.5 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="w-6 h-6 rounded bg-primary text-white font-mono font-bold text-xs flex items-center justify-center shadow-xs">
                       {currentQuestionIdx + 1}
@@ -1094,7 +1094,7 @@ export default function TakeExamClientView({
                 </div>
 
                 {/* QUESTION BODY (ZERO WASTED GAP) */}
-                <div className="p-4 sm:p-5 space-y-3.5">
+                <div className="p-3 sm:p-5 space-y-3.5">
                   {/* Passage Text (if applicable) */}
                   {currentQ.passage && (
                     <div className="p-3 bg-slate-50 rounded border border-slate-200 text-xs text-slate-700 leading-relaxed max-h-48 overflow-y-auto custom-scrollbar font-medium">
@@ -1166,22 +1166,22 @@ export default function TakeExamClientView({
                 </div>
 
                 {/* BOTTOM STICKY CONSOLE ACTION STRIP */}
-                <div className="px-4 sm:px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="px-3 sm:px-5 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-1.5 sm:gap-2">
                   <button
                     onClick={() => {
                       if (currentQuestionIdx > 0) setCurrentQuestionIdx((i) => i - 1);
                     }}
                     disabled={currentQuestionIdx === 0}
-                    className="px-3 py-1.5 text-xs font-bold rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-35 transition cursor-pointer flex items-center gap-1.5"
+                    className="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-35 transition cursor-pointer flex items-center gap-1 sm:gap-1.5"
                   >
                     <FaArrowLeft className="text-[10px]" />
                     <span className="hidden sm:inline">Previous</span>
                   </button>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <button
                       onClick={() => handleMarkAndNext(currentQ.id)}
-                      className="px-3 py-1.5 text-xs font-bold rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition cursor-pointer flex items-center gap-1.5"
+                      className="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition cursor-pointer flex items-center gap-1 sm:gap-1.5"
                     >
                       <FaFlag className="text-[10px]" />
                       <span className="hidden sm:inline">Mark & Next</span>
@@ -1191,18 +1191,18 @@ export default function TakeExamClientView({
                     {currentQuestionIdx < questions.length - 1 ? (
                       <button
                         onClick={() => setCurrentQuestionIdx((i) => i + 1)}
-                        className="px-3.5 sm:px-4 py-1.5 text-xs font-bold rounded bg-primary hover:bg-primary-dark text-white shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                        className="px-3 sm:px-4 py-1.5 text-xs font-bold rounded bg-primary hover:bg-primary-dark text-white shadow-xs transition cursor-pointer flex items-center gap-1 sm:gap-1.5"
                       >
-                        <span>Save & Next</span>
+                        <span>Next</span>
                         <FaArrowRight className="text-[10px]" />
                       </button>
                     ) : (
                       <button
                         onClick={() => setShowSubmitConfirm(true)}
-                        className="px-3.5 sm:px-4 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                        className="px-3 sm:px-4 py-1.5 text-xs font-bold rounded bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer flex items-center gap-1 sm:gap-1.5"
                       >
                         <FaCheckCircle className="text-[10px]" />
-                        <span>Finish Exam</span>
+                        <span>Finish</span>
                       </button>
                     )}
                   </div>

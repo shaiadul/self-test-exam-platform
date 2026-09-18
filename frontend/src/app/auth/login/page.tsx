@@ -70,7 +70,7 @@ export default function SignIn() {
 
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col">
-      <section className="flex items-center justify-between mx-auto max-w-7xl w-full px-6 py-8">
+      <section className="flex items-center justify-between mx-auto max-w-7xl w-full px-4 py-4 sm:px-6 sm:py-8">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -81,7 +81,7 @@ export default function SignIn() {
               alt="logo"
               width={180}
               height={40}
-              className="w-auto h-10"
+              className="w-auto h-8 sm:h-10"
             />
           </Link>
         </motion.div>
@@ -91,19 +91,19 @@ export default function SignIn() {
         >
           <Link
             href="/"
-            className="flex items-center gap-2 text-gray-500 hover:text-primary font-bold transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-500 hover:text-primary font-bold transition-colors"
           >
-            <FaArrowLeft className="text-sm" />
+            <FaArrowLeft className="text-xs" />
             <span>Back to Home</span>
           </Link>
         </motion.div>
       </section>
 
-      <section className="flex-1 flex items-center justify-center p-4 pb-16">
+      <section className="flex-1 flex items-center justify-center p-3 sm:p-4 pb-12 sm:pb-16">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-white p-6 sm:p-8 rounded border border-slate-200/80 shadow-xs"
+          className="w-full max-w-md bg-white p-4 sm:p-8 rounded border border-slate-200/80 shadow-xs"
         >
           <div className="text-center mb-6">
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1.5">

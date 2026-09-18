@@ -189,67 +189,126 @@ export default function ManageExamPackDetailClientView({
         </div>
 
         {exams.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/70 border-b border-slate-200/80 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider">
-                  <th className="py-3 px-4">Exam Name</th>
-                  <th className="py-3 px-4">Code / ID</th>
-                  <th className="py-3 px-4">Start Window</th>
-                  <th className="py-3 px-4">End Window</th>
-                  <th className="py-3 px-4 text-center">Questions</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {exams.map((exam) => (
-                  <tr key={exam.id} className="hover:bg-slate-50/50 transition">
-                    <td className="py-3.5 px-4 font-bold text-slate-900">
+          <>
+            {/* Desktop Table View (100% untouched) */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/70 border-b border-slate-200/80 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider">
+                    <th className="py-3 px-4">Exam Name</th>
+                    <th className="py-3 px-4">Code / ID</th>
+                    <th className="py-3 px-4">Start Window</th>
+                    <th className="py-3 px-4">End Window</th>
+                    <th className="py-3 px-4 text-center">Questions</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {exams.map((exam) => (
+                    <tr key={exam.id} className="hover:bg-slate-50/50 transition">
+                      <td className="py-3.5 px-4 font-bold text-slate-900">
+                        <Link
+                          href={exam.link}
+                          className="hover:text-primary transition"
+                        >
+                          {exam.name}
+                        </Link>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">
+                        #{exam.id}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600 font-medium font-mono text-[11px]">
+                        {formatDate(exam.startDate)}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600 font-medium font-mono text-[11px]">
+                        {formatDate(exam.endDate)}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <Link
+                          href={`/dashboard/question/add?examId=${exam.id}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200/80 text-[11px] font-bold transition font-mono"
+                        >
+                          <MdOutlineEditNote className="text-sm" /> MANAGE_QUESTIONS
+                        </Link>
+                      </td>
+                      <td className="py-3.5 px-4 text-right space-x-1">
+                        <button
+                          onClick={() => handleEditExam(exam.id)}
+                          className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition cursor-pointer"
+                          title="Edit Exam"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteExam(exam.id)}
+                          className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
+                          title="Delete Exam"
+                        >
+                          <FaTrashAlt />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Phone Cards View */}
+            <div className="block sm:hidden divide-y divide-slate-100">
+              {exams.map((exam) => (
+                <div key={exam.id} className="p-3.5 space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
                       <Link
                         href={exam.link}
-                        className="hover:text-primary transition"
+                        className="font-bold text-slate-900 text-xs hover:text-primary transition block truncate"
                       >
                         {exam.name}
                       </Link>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-slate-500">
-                      #{exam.id}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600 font-medium font-mono text-[11px]">
-                      {formatDate(exam.startDate)}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600 font-medium font-mono text-[11px]">
-                      {formatDate(exam.endDate)}
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <Link
-                        href={`/dashboard/question/add?examId=${exam.id}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200/80 text-[11px] font-bold transition font-mono"
-                      >
-                        <MdOutlineEditNote className="text-sm" /> MANAGE_QUESTIONS
-                      </Link>
-                    </td>
-                    <td className="py-3.5 px-4 text-right space-x-1">
+                      <span className="text-[10px] font-mono text-slate-400">
+                        Code: #{exam.id}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => handleEditExam(exam.id)}
                         className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition cursor-pointer"
                         title="Edit Exam"
                       >
-                        <FaEdit />
+                        <FaEdit className="text-xs" />
                       </button>
                       <button
                         onClick={() => handleDeleteExam(exam.id)}
                         className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
                         title="Delete Exam"
                       >
-                        <FaTrashAlt />
+                        <FaTrashAlt className="text-xs" />
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[10px] font-mono bg-slate-50 p-2 rounded border border-slate-100">
+                    <div>
+                      <span className="text-slate-400 block font-sans font-semibold">Start:</span>
+                      <span className="text-slate-700 truncate block">{formatDate(exam.startDate)}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-sans font-semibold">End:</span>
+                      <span className="text-slate-700 truncate block">{formatDate(exam.endDate)}</span>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/dashboard/question/add?examId=${exam.id}`}
+                    className="flex items-center justify-center gap-1.5 w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200 text-xs font-bold font-mono transition"
+                  >
+                    <MdOutlineEditNote className="text-base" />
+                    <span>Manage Questions</span>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </>
         ) : isPending ? (
           <div className="py-16 flex flex-col items-center justify-center gap-2 text-slate-400 font-medium">
             <FaSpinner className="animate-spin text-2xl text-primary" />

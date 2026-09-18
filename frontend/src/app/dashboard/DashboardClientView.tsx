@@ -635,7 +635,8 @@ export default function DashboardClientView({
                 </Link>
               </div>
 
-              <div className="overflow-x-auto rounded-none border border-slate-200/80">
+              {/* Desktop Table View */}
+              <div className="hidden sm:block overflow-x-auto rounded-none border border-slate-200/80">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
@@ -676,6 +677,37 @@ export default function DashboardClientView({
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Cards View */}
+              <div className="block sm:hidden divide-y divide-slate-100 border border-slate-200/80 bg-white">
+                {stats.assignedPacks.map((pack: any, idx: number) => (
+                  <div key={idx} className="p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[10px] font-bold text-slate-400">
+                        {pack.id}
+                      </span>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                        {pack.negative}
+                      </span>
+                    </div>
+                    <div className="font-bold text-slate-900 text-xs">
+                      {pack.name}
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-50 text-xs">
+                      <div className="font-mono text-slate-500 text-[11px]">
+                        Submissions: <span className="font-bold text-blue-600">{pack.score}</span>
+                      </div>
+                      <Link
+                        href="/dashboard/manage-exam-pack"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+                      >
+                        <span>Configure</span>
+                        <FaArrowRight className="text-[10px]" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -929,7 +961,8 @@ export default function DashboardClientView({
                 </Link>
               </div>
 
-              <div className="overflow-x-auto rounded-none border border-slate-200/80">
+              {/* Desktop Table View */}
+              <div className="hidden sm:block overflow-x-auto rounded-none border border-slate-200/80">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
@@ -966,6 +999,35 @@ export default function DashboardClientView({
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Cards View */}
+              <div className="block sm:hidden divide-y divide-slate-100 border border-slate-200/80 bg-white">
+                {stats.auditLogs.map((log: any, idx: number) => (
+                  <div key={idx} className="p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[10px] font-bold text-slate-400">
+                        {log.id}
+                      </span>
+                      <span
+                        className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${
+                          log.negative === "Passed"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-rose-50 text-rose-700 border-rose-200"
+                        }`}
+                      >
+                        {log.negative}
+                      </span>
+                    </div>
+                    <div className="font-bold text-slate-900 text-xs">
+                      {log.name}
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-50 text-xs">
+                      <span className="font-mono text-slate-400 text-[10px] uppercase font-bold">Raw Score</span>
+                      <span className="font-mono font-bold text-slate-700">{log.score}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

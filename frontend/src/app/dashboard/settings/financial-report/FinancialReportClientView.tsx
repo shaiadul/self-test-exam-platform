@@ -196,7 +196,8 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/70 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider border-b border-slate-200/80">
@@ -232,6 +233,43 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
 
             {transactions.length === 0 && (
               <div className="py-6">
+                <EmptyState
+                  compact
+                  type="reports"
+                  title="No Transactions Logged"
+                  description="No journal or ledger entries have been recorded yet."
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Cards View */}
+          <div className="block sm:hidden divide-y divide-slate-100">
+            {transactions.map((tx) => (
+              <div key={tx.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 transition">
+                <div className="flex items-center justify-between">
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${
+                    tx.type === "income" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"
+                  }`}>
+                    {tx.type}
+                  </span>
+                  <span className={`font-mono font-black text-xs ${
+                    tx.type === "income" ? "text-emerald-600" : "text-rose-500"
+                  }`}>
+                    {tx.type === "income" ? "+" : "-"}${tx.amount?.toFixed(2)}
+                  </span>
+                </div>
+                <div className="text-xs font-semibold text-slate-800">
+                  {tx.description}
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono">
+                  {tx.created_at ? new Date(tx.created_at).toLocaleDateString() : "Recent"}
+                </div>
+              </div>
+            ))}
+
+            {transactions.length === 0 && (
+              <div className="py-6 px-4 text-center">
                 <EmptyState
                   compact
                   type="reports"

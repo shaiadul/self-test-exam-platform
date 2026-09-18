@@ -102,7 +102,7 @@ export default function CompleteProfileClientView({
         )}
 
         {/* Form Container */}
-        <div className="relative overflow-hidden bg-white border border-slate-200/80 rounded p-6 sm:p-7 shadow-2xs">
+        <div className="relative overflow-hidden bg-white border border-slate-200/80 rounded p-4 sm:p-7 shadow-2xs">
           {/* Subtle Telemetry Matrix Grid */}
           <svg
             className="absolute -right-10 -bottom-10 w-48 h-48 text-slate-700 opacity-[0.03] pointer-events-none"

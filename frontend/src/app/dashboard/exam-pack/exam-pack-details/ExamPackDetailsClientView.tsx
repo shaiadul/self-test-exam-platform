@@ -117,7 +117,8 @@ export default function ExamPackDetailsClientView({
         </div>
       </div>
 
-      <div className="overflow-x-auto bg-white border border-slate-200/80 rounded-none shadow-xs">
+      {/* Desktop Table View (100% untouched) */}
+      <div className="hidden sm:block overflow-x-auto bg-white border border-slate-200/80 rounded-none shadow-xs">
         <table className="min-w-full border-collapse">
           <thead>
             <tr className="bg-slate-50/90 border-b border-slate-200/80 text-slate-500 font-extrabold text-[11px] uppercase tracking-wider">
@@ -203,6 +204,108 @@ export default function ExamPackDetailsClientView({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Phone Card View */}
+      <div className="block sm:hidden space-y-3">
+        {exams.map((exam) => (
+          <div
+            key={exam.id}
+            className="p-3.5 bg-white rounded border border-slate-200/80 shadow-2xs space-y-3"
+          >
+            {/* Header: Title & Code */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="font-bold text-slate-900 text-sm tracking-tight leading-snug">
+                  {exam.name}
+                </h3>
+                <span className="text-[10px] font-mono text-slate-400">
+                  ID: #{exam.id}
+                </span>
+              </div>
+              <span
+                className={`shrink-0 text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                  exam.status === "Start Exam"
+                    ? "bg-primary/10 text-primary border-primary/20"
+                    : exam.status === "Complete"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-slate-100 text-slate-500 border-slate-200"
+                }`}
+              >
+                {exam.status === "Start Exam" ? "Available" : exam.status}
+              </span>
+            </div>
+
+            {/* Dates Grid */}
+            <div className="grid grid-cols-2 gap-2 p-2 rounded bg-slate-50 border border-slate-100 text-[11px] font-mono">
+              <div>
+                <span className="text-[9px] text-slate-400 block uppercase font-sans font-semibold">Start:</span>
+                <span className="text-slate-700 font-medium truncate block">{exam.startDate}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-slate-400 block uppercase font-sans font-semibold">Deadline:</span>
+                <span className="text-slate-700 font-medium truncate block">{exam.endDate}</span>
+              </div>
+            </div>
+
+            {/* Action Button */}
+            {exam.status === "Start Exam" && (
+              <PrimaryBtn
+                link={exam.link}
+                className="w-full !text-xs !py-2.5 gap-1.5 shadow-xs !rounded justify-center"
+              >
+                <FaPlay className="text-[10px]" />
+                <span>Start Assessment Exam</span>
+              </PrimaryBtn>
+            )}
+
+            {exam.status === "Complete" && (
+              <div className="flex items-center gap-2">
+                {exam.attemptId ? (
+                  <OutlineBtn
+                    link={`/dashboard/reporting/${exam.attemptId}`}
+                    className="w-full !text-xs !py-2 shadow-xs !rounded justify-center font-bold font-mono"
+                  >
+                    <span>View Evaluation Report</span>
+                  </OutlineBtn>
+                ) : (
+                  <OutlineBtn
+                    link="/dashboard/reporting"
+                    className="w-full !text-xs !py-2 shadow-xs !rounded justify-center font-bold font-mono"
+                  >
+                    <span>View Results</span>
+                  </OutlineBtn>
+                )}
+              </div>
+            )}
+
+            {exam.status === "Expire" && (
+              <div className="w-full py-2 bg-slate-100 text-slate-500 rounded text-center text-xs font-mono font-bold border border-slate-200">
+                Exam Expired
+              </div>
+            )}
+          </div>
+        ))}
+
+        {isPending && (
+          <div className="py-8 text-center text-slate-500 font-medium text-xs bg-white rounded border border-slate-200/80">
+            <div className="flex flex-col items-center justify-center gap-2">
+              <FaSpinner className="animate-spin text-xl text-primary" />
+              <span>Loading exams...</span>
+            </div>
+          </div>
+        )}
+
+        {!isPending && exams.length === 0 && (
+          <div className="py-6 text-center bg-white rounded border border-slate-200/80">
+            <EmptyState
+              compact
+              type="exam"
+              title="No Active Exams"
+              description="No active exams are available in this pack at this time."
+            />
+          </div>
+        )}
       </div>
     </PageContainer>
   );

@@ -221,7 +221,7 @@ export default function TeacherReportDetailClientView({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
             {/* Standard Search Input */}
             <div className="flex items-center w-full md:w-60 border border-slate-200/80 rounded px-2.5 py-1.5 bg-white shadow-2xs focus-within:border-primary transition">
               <FaSearch className="text-slate-400 mr-2 text-xs" />
@@ -234,57 +234,60 @@ export default function TeacherReportDetailClientView({
               />
             </div>
 
-            {/* Reusable Dropdown */}
-            <div className="relative w-full md:w-44">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {/* Reusable Dropdown */}
+              <div className="relative flex-1 sm:w-44">
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="w-full flex items-center justify-between border border-slate-200/80 rounded px-2.5 py-1.5 text-xs bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shadow-2xs font-medium"
+                >
+                  <span className="flex items-center gap-1">
+                    <FaFilter className="text-[10px] text-slate-400 mr-1" />
+                    {sortOptions.find((o) => o.value === sortBy)?.label}
+                  </span>
+                  <span className="text-[10px] text-slate-400">▼</span>
+                </button>
+
+                {showDropdown && (
+                  <div className="absolute right-0 mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-20 overflow-hidden">
+                    {sortOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          setSortBy(opt.value as any);
+                          setShowDropdown(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition cursor-pointer ${
+                          sortBy === opt.value
+                            ? "font-bold text-primary bg-primary/5 font-mono"
+                            : "text-slate-700"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Toggle Order Button */}
               <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="w-full flex items-center justify-between border border-slate-200/80 rounded px-2.5 py-1.5 text-xs bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shadow-2xs font-medium"
+                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                className="flex items-center justify-center border border-slate-200/80 rounded p-2 bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shrink-0 shadow-2xs"
+                title={`Sort Order: ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
               >
-                <span className="flex items-center gap-1">
-                  <FaFilter className="text-[10px] text-slate-400 mr-1" />
-                  {sortOptions.find((o) => o.value === sortBy)?.label}
-                </span>
-                <span className="text-[10px] text-slate-400">▼</span>
+                {sortOrder === "asc" ? (
+                  <FaSortAmountUp className="text-primary text-xs" />
+                ) : (
+                  <FaSortAmountDown className="text-primary text-xs" />
+                )}
               </button>
-
-              {showDropdown && (
-                <div className="absolute right-0 mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-20 overflow-hidden">
-                  {sortOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => {
-                        setSortBy(opt.value as any);
-                        setShowDropdown(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition cursor-pointer ${
-                        sortBy === opt.value
-                          ? "font-bold text-primary bg-primary/5 font-mono"
-                          : "text-slate-700"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
-
-            {/* Toggle Order Button */}
-            <button
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="flex items-center justify-center border border-slate-200/80 rounded p-2 bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shrink-0 shadow-2xs"
-              title={`Sort Order: ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
-            >
-              {sortOrder === "asc" ? (
-                <FaSortAmountUp className="text-primary text-xs" />
-              ) : (
-                <FaSortAmountDown className="text-primary text-xs" />
-              )}
-            </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/70 border-b border-slate-200/80 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider">
@@ -337,6 +340,53 @@ export default function TeacherReportDetailClientView({
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards View */}
+        <div className="block sm:hidden divide-y divide-slate-100">
+          {sortedStudents.map((st) => (
+            <div key={st.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 transition">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                    st.meritRank === 1 ? "bg-amber-100 text-amber-800 border-amber-200" :
+                    st.meritRank === 2 ? "bg-slate-200 text-slate-800 border-slate-300" :
+                    st.meritRank === 3 ? "bg-orange-100 text-orange-800 border-orange-200" :
+                    "bg-slate-100 text-slate-600 border-slate-200"
+                  }`}>
+                    #{st.meritRank}
+                  </span>
+                  <span className="font-bold text-xs text-slate-900">{st.name}</span>
+                </div>
+                <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${
+                  st.passed ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"
+                }`}>
+                  {st.passed ? "PASSED" : "FAILED"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                <span className="truncate max-w-[180px]">{st.institution || "—"}</span>
+                <span className="font-mono text-[10px] text-slate-400">{st.time || "Recent"}</span>
+              </div>
+
+              <div className="flex items-center justify-between bg-slate-50 px-2.5 py-1.5 rounded border border-slate-100 text-xs">
+                <span className="font-mono text-[10px] font-bold text-slate-400 uppercase">Score Marks</span>
+                <span className="font-mono font-black text-slate-900">{st.score}</span>
+              </div>
+            </div>
+          ))}
+
+          {sortedStudents.length === 0 && (
+            <div className="py-8 px-4 text-center">
+              <EmptyState
+                compact
+                type="reports"
+                title="No Submissions Found"
+                description="No student attempts match your criteria."
+              />
+            </div>
+          )}
         </div>
       </div>
     </PageContainer>

@@ -251,7 +251,7 @@ export default function ReportingDetailClientView({
         </div>
 
         {/* Scorecard Component */}
-        <div className="bg-white rounded border border-slate-200/80 p-6 shadow-2xs">
+        <div className="bg-white rounded border border-slate-200/80 p-4 sm:p-6 shadow-2xs">
           <Scorecard
             result={{
               total: (attempt.correct || 0) + (attempt.wrong || 0),
@@ -268,7 +268,7 @@ export default function ReportingDetailClientView({
 
         {/* Detailed Question Solution Analysis */}
         {questions.length > 0 && (
-          <div className="bg-white p-6 rounded border border-slate-200/80 shadow-2xs space-y-6">
+          <div className="bg-white p-4 sm:p-6 rounded border border-slate-200/80 shadow-2xs space-y-6">
             <div className="border-b border-slate-100 pb-4">
               <h3 className="text-xl font-black text-slate-900 tracking-tight">
                 Question Analysis & Detailed Solutions
@@ -313,7 +313,7 @@ export default function ReportingDetailClientView({
                 return (
                   <div
                     key={q.id || idx}
-                    className={`p-5 rounded border transition-all ${
+                    className={`p-4 sm:p-5 rounded border transition-all ${
                       isCorrect
                         ? "bg-emerald-50/30 border-emerald-200"
                         : isUnanswered
@@ -378,21 +378,25 @@ export default function ReportingDetailClientView({
                                 optionIsCorrect
                                   ? "bg-emerald-100 border-emerald-300 text-emerald-900 font-bold"
                                   : optionIsChosen
-                                  ? "bg-rose-100 border-rose-300 text-rose-900 font-bold"
-                                  : "bg-white border-slate-200 text-slate-700"
+                                  ? "bg-rose-100 border-rose-300 text-rose-900"
+                                  : "bg-slate-50/50 border-slate-200 text-slate-700"
                               }`}
                             >
-                              <span className="truncate">
-                                {String.fromCharCode(65 + optIdx)}. {opt}
-                              </span>
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center text-[10px] font-mono shrink-0 font-bold text-slate-600">
+                                  {String.fromCharCode(65 + optIdx)}
+                                </span>
+                                <span className="truncate">{opt}</span>
+                              </div>
+
                               {optionIsCorrect && (
-                                <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-bold shrink-0">
-                                  Correct Answer
+                                <span className="text-[10px] text-emerald-700 font-bold shrink-0">
+                                  ✓ Correct
                                 </span>
                               )}
-                              {optionIsChosen && !optionIsCorrect && (
-                                <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded font-bold shrink-0">
-                                  Your Choice
+                              {!optionIsCorrect && optionIsChosen && (
+                                <span className="text-[10px] text-rose-600 font-bold shrink-0">
+                                  ✕ Your Pick
                                 </span>
                               )}
                             </div>
@@ -421,7 +425,7 @@ export default function ReportingDetailClientView({
 
         {/* Peer Leaderboard Table */}
         <div className="bg-white rounded-none border border-slate-200/80 shadow-xs overflow-hidden">
-          <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h3 className="text-xl font-black text-slate-900 tracking-tight">
                 Exam Merit Leaderboard
@@ -431,7 +435,7 @@ export default function ReportingDetailClientView({
               </p>
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <div className="flex items-center w-full sm:w-64 border border-slate-300 hover:border-slate-400 rounded px-3 py-2 bg-white transition">
                 <FaSearch className="text-primary mr-2 text-xs" />
                 <input
@@ -443,53 +447,56 @@ export default function ReportingDetailClientView({
                 />
               </div>
 
-              {/* Custom Sort Dropdown */}
-              <div className="relative w-full sm:w-44">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {/* Custom Sort Dropdown */}
+                <div className="relative w-full sm:w-44">
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="w-full flex items-center justify-between border border-slate-300 rounded px-3 py-2 text-xs bg-white hover:border-slate-400 transition text-slate-700 cursor-pointer"
+                  >
+                    <span className="flex items-center gap-1">
+                      <FaFilter className="text-[10px] text-gray-400 mr-1" />
+                      {sortOptions.find((o) => o.value === sortBy)?.label}
+                    </span>
+                    <span className="text-[10px] text-gray-400">▼</span>
+                  </button>
+
+                  {showDropdown && (
+                    <div className="absolute right-0 mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-20 overflow-hidden">
+                      {sortOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setSortBy(option.value as "score" | "name");
+                            setShowDropdown(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 text-xs hover:bg-primary/5 transition cursor-pointer ${
+                            sortBy === option.value
+                              ? "font-bold text-primary bg-primary/5"
+                              : "text-slate-700"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Order Toggle */}
                 <button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="w-full flex items-center justify-between border border-slate-300 rounded px-3 py-2 text-xs bg-white hover:border-slate-400 transition text-slate-700 cursor-pointer"
+                  onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                  className="flex items-center justify-center border border-slate-300 rounded p-2.5 bg-white hover:border-slate-400 transition text-slate-700 cursor-pointer shrink-0"
+                  title={`Sort Order: ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
                 >
-                  <span className="flex items-center gap-1">
-                    <FaFilter className="text-[10px] text-gray-400 mr-1" />
-                    {sortOptions.find((o) => o.value === sortBy)?.label}
-                  </span>
-                  <span className="text-[10px] text-gray-400">▼</span>
+                  {sortOrder === "asc" ? <FaSortAmountUp className="text-primary text-xs" /> : <FaSortAmountDown className="text-primary text-xs" />}
                 </button>
-
-                {showDropdown && (
-                  <div className="absolute right-0 mt-1 w-full bg-white border border-slate-200 rounded shadow-lg z-20 overflow-hidden">
-                    {sortOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setSortBy(option.value as "score" | "name");
-                          setShowDropdown(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 text-xs hover:bg-primary/5 transition cursor-pointer ${
-                          sortBy === option.value
-                            ? "font-bold text-primary bg-primary/5"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
-
-              {/* Order Toggle */}
-              <button
-                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                className="flex items-center justify-center border border-slate-300 rounded p-2.5 bg-white hover:border-slate-400 transition text-slate-700 cursor-pointer"
-                title={`Sort Order: ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
-              >
-                {sortOrder === "asc" ? <FaSortAmountUp className="text-primary text-xs" /> : <FaSortAmountDown className="text-primary text-xs" />}
-              </button>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop Table View (100% untouched) */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/90 text-slate-500 font-extrabold text-[11px] uppercase tracking-wider border-b border-slate-200/80">
@@ -538,6 +545,59 @@ export default function ReportingDetailClientView({
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Phone Peer Cards View */}
+          <div className="block sm:hidden divide-y divide-slate-100">
+            {filteredPeers.map((p) => (
+              <div
+                key={p.id}
+                className={`p-3.5 flex items-center justify-between gap-3 ${
+                  p.id === attempt.id ? "bg-orange-50/60 font-bold" : "hover:bg-slate-50/50"
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span
+                    className={`w-7 h-7 rounded flex items-center justify-center font-mono font-black text-xs shrink-0 ${
+                      p.merit === 1
+                        ? "bg-amber-100 text-amber-800 border border-amber-300"
+                        : p.merit === 2
+                        ? "bg-slate-200 text-slate-800 border border-slate-300"
+                        : p.merit === 3
+                        ? "bg-orange-100 text-orange-800 border border-orange-300"
+                        : "bg-slate-100 text-slate-600 border border-slate-200"
+                    }`}
+                  >
+                    #{p.merit}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-900 text-xs truncate">
+                      {p.name}
+                    </p>
+                    {p.id === attempt.id && (
+                      <span className="inline-block text-primary text-[9px] font-mono font-bold bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                        Your Result
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="text-sm font-mono font-black text-primary block leading-none">
+                    {p.score}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">
+                    {p.time}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {filteredPeers.length === 0 && (
+              <div className="py-8 text-center text-slate-400 font-medium text-xs">
+                No peer results match your search.
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -171,7 +171,8 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
       </div>
 
       <div className="bg-white rounded-none border border-slate-200/80 shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/70 border-b border-slate-200/80 text-slate-500 font-mono font-bold text-[10px] uppercase tracking-wider">
@@ -322,6 +323,125 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards View */}
+        <div className="block sm:hidden divide-y divide-slate-100">
+          {users.map((u) => (
+            <div key={u.id} className="p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono text-[10px] text-slate-400">#{u.id}</span>
+                  <span className="font-bold text-slate-900 text-xs">{u.name}</span>
+                </div>
+                <span
+                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${
+                    u.role === "admin"
+                      ? "bg-purple-50 text-purple-700 border-purple-200"
+                      : u.role === "teacher"
+                      ? "bg-blue-50 text-blue-700 border-blue-200"
+                      : "bg-slate-100 text-slate-700 border-slate-200"
+                  }`}
+                >
+                  {u.role}
+                </span>
+              </div>
+
+              <div className="font-mono text-[11px] text-slate-500 break-all">
+                {u.email}
+              </div>
+
+              {editingUserId === u.id && (
+                <div className="flex items-center gap-2 pt-1 bg-slate-50 p-2 rounded border border-slate-200">
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="flex-1 border border-slate-200 rounded px-2 py-1 text-xs font-semibold focus:outline-none focus:border-primary bg-white"
+                  >
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  <button
+                    onClick={() => handleRoleChange(u.id, selectedRole)}
+                    className="bg-emerald-600 text-white px-2.5 py-1 rounded text-xs font-bold hover:bg-emerald-700 cursor-pointer font-mono"
+                  >
+                    SAVE
+                  </button>
+                  <button
+                    onClick={() => setEditingUserId(null)}
+                    className="text-slate-400 hover:text-slate-600 text-xs px-1 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              {u.role === "teacher" && (
+                <div className="bg-slate-50 p-2 rounded border border-slate-100 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono">
+                    <span className="font-bold text-slate-400 uppercase">Exam Quota</span>
+                    <span className="font-bold text-slate-700">
+                      {u.createdExamsCount ?? 0} / {u.examLimit === -1 ? "∞" : (u.examLimit ?? 5)}
+                    </span>
+                  </div>
+                  <div className="w-full h-1 bg-slate-200 rounded overflow-hidden">
+                    {u.examLimit !== -1 ? (
+                      <div
+                        className={`h-full rounded transition-all ${
+                          (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
+                            ? "bg-rose-500"
+                            : (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) * 0.8
+                            ? "bg-amber-400"
+                            : "bg-emerald-500"
+                        }`}
+                        style={{
+                          width: `${Math.min(100, ((u.createdExamsCount ?? 0) / (u.examLimit ?? 5)) * 100)}%`,
+                        }}
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-emerald-400 rounded" />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-50">
+                <button
+                  onClick={() => {
+                    setEditingUserId(u.id);
+                    setSelectedRole(u.role);
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-bold px-2 py-1 hover:bg-blue-50 rounded transition cursor-pointer font-mono"
+                >
+                  <FaUserCog /> ROLE
+                </button>
+                {u.role === "teacher" && (
+                  <button
+                    onClick={() => {
+                      setLimitModalUser(u);
+                      setLimitValue(u.examLimit ?? 5);
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] text-violet-600 hover:text-violet-800 font-bold px-2 py-1 hover:bg-violet-50 rounded transition cursor-pointer font-mono"
+                  >
+                    <FaGraduationCap /> QUOTA
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDeleteUser(u.id, u.name)}
+                  className="inline-flex items-center gap-1 text-[11px] text-rose-600 hover:text-rose-800 font-bold px-2 py-1 hover:bg-rose-50 rounded transition cursor-pointer font-mono"
+                >
+                  <FaTrashAlt /> DEL
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {users.length === 0 && (
+            <div className="py-8 px-4 text-center text-slate-400 font-medium text-xs">
+              No users registered in system.
+            </div>
+          )}
         </div>
       </div>
 
