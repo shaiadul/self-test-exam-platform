@@ -430,7 +430,7 @@ export default function EditProfileClientView({
 
             {/* [SEC-03] Role-Specific Academic / Faculty / Governance */}
             {normRole === "student" && (
-              <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
+              <div className="relative rounded bg-white border border-slate-200/80 shadow-2xs">
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
