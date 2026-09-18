@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PageContainer } from "../../../../../components/common/PageContainer";
 import Scorecard from "../../../../../components/dashboard/Scorecard";
 import CertificatePrintLayout from "../../../../../components/dashboard/CertificatePrintLayout";
+import { formatDate, DATE_FORMATS } from "@/lib/date";
 import {
   submitExamAction,
   verifyExamPasscodeAction,
@@ -749,12 +750,7 @@ export default function TakeExamClientView({
           <CertificatePrintLayout
             candidateName={examResult.userName || "Student"}
             examName={examMeta.title}
-            examDate={new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+            examDate={formatDate(new Date(), DATE_FORMATS.DATETIME_FULL)}
             result={{
               total: (examResult.correct || 0) + (examResult.wrong || 0),
               correct: examResult.correct || 0,

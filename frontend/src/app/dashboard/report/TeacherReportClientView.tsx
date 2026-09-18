@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import { PageContainer } from "../../../components/common/PageContainer";
 import EmptyState from "../../../components/common/EmptyState";
+import { formatDate } from "@/lib/date";
 
 type Report = {
   id: string;
@@ -170,7 +171,7 @@ export default function TeacherReportClientView({ initialReports }: TeacherRepor
                   {report.packName}
                 </span>
                 <span className="text-[11px] font-mono text-slate-400 font-medium">
-                  {report.startDate}
+                  {formatDate(report.startDate, "MMM dd, yyyy")}
                 </span>
               </div>
 

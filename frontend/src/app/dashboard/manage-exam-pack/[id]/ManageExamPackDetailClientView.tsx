@@ -10,6 +10,7 @@ import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { deleteExamAction, deleteExamPackAction } from "../../../../lib/actions";
+import { formatDate } from "@/lib/date";
 
 type Exam = {
   id: string;
@@ -76,16 +77,7 @@ export default function ManageExamPackDetailClientView({
     }
   }, [packId, initialExams, initialPack, router]);
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "—";
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+
 
   const handleEditExam = (examId: string) => {
     router.push(`/dashboard/manage-exam-pack/${packId}/edit-exam?examId=${examId}`);
@@ -225,7 +217,7 @@ export default function ManageExamPackDetailClientView({
                           href={`/dashboard/question/add?examId=${exam.id}`}
                           className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200/80 text-[11px] font-bold transition font-mono"
                         >
-                          <MdOutlineEditNote className="text-sm" /> MANAGE_QUESTIONS
+                          <MdOutlineEditNote className="text-sm" /> Manage Questions
                         </Link>
                       </td>
                       <td className="py-3.5 px-4 text-right space-x-1">

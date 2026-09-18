@@ -8,6 +8,7 @@ import EmptyState from "../../../../components/common/EmptyState";
 import { createTransactionAction } from "../../../../lib/actions";
 import { Input } from "../../../../components/ui/Input";
 import CustomSelect from "../../../../components/ui/CustomSelect";
+import { formatDate } from "@/lib/date";
 
 interface Transaction {
   id: number;
@@ -218,7 +219,7 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
                       {tx.type === "income" ? "+" : "-"}${tx.amount?.toFixed(2)}
                     </td>
                     <td className="py-3.5 px-4 text-[11px] text-slate-400 font-mono">
-                      {tx.created_at ? new Date(tx.created_at).toLocaleDateString() : "Recent"}
+                      {formatDate(tx.created_at, "MMM dd, yyyy", "Recent")}
                     </td>
                   </tr>
                 ))}
@@ -257,7 +258,7 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
                   {tx.description}
                 </div>
                 <div className="text-[10px] text-slate-400 font-mono">
-                  {tx.created_at ? new Date(tx.created_at).toLocaleDateString() : "Recent"}
+                  {formatDate(tx.created_at, "MMM dd, yyyy", "Recent")}
                 </div>
               </div>
             ))}

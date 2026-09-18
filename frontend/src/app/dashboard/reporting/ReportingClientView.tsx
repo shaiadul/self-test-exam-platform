@@ -19,6 +19,7 @@ import { PageContainer } from "../../../components/common/PageContainer";
 import EmptyState from "../../../components/common/EmptyState";
 import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../components/ui/OutlineBtn";
+import { formatDate } from "@/lib/date";
 
 type Report = {
   id: number;
@@ -256,13 +257,7 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm font-medium">
                 {filteredReports.map((report) => {
-                  const dateFormatted = report.createdAt
-                    ? new Date(report.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "Recent";
+                  const dateFormatted = formatDate(report.createdAt, "MMM dd, yyyy", "Recent");
 
                   return (
                     <tr
@@ -373,13 +368,7 @@ export default function ReportingClientView({ initialReports }: ReportingClientV
           {/* Mobile Phone Card View */}
           <div className="block md:hidden space-y-3">
             {filteredReports.map((report) => {
-              const dateFormatted = report.createdAt
-                ? new Date(report.createdAt).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : "Recent";
+              const dateFormatted = formatDate(report.createdAt, "MMM dd, yyyy", "Recent");
 
               return (
                 <div

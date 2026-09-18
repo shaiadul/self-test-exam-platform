@@ -11,6 +11,7 @@ import {
   FaChevronRight,
   FaCheck,
 } from "react-icons/fa";
+import { formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 interface DateTimePickerProps {
   label?: string;
@@ -135,10 +136,7 @@ export default function DateTimePicker({
           <FaCalendarAlt className="text-slate-400 group-hover:text-primary transition-colors text-xs" />
           <span className={selectedDate ? "text-slate-900 font-mono text-xs" : "text-slate-400"}>
             {selectedDate
-              ? selectedDate.toLocaleString([], {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })
+              ? formatDateTime(selectedDate, DATE_FORMATS.DATETIME_COMMA)
               : "Select Date & Time"}
           </span>
         </span>

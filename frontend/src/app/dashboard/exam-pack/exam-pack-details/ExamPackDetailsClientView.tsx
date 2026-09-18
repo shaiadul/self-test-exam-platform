@@ -7,6 +7,7 @@ import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
+import { formatDate } from "@/lib/date";
 
 type Exam = {
   id: string;
@@ -86,8 +87,8 @@ export default function ExamPackDetailsClientView({
     return {
       id: e.id,
       name: e.name,
-      startDate: e.startDate,
-      endDate: e.endDate,
+      startDate: formatDate(e.startDate, "MMM dd, yyyy"),
+      endDate: formatDate(e.endDate, "MMM dd, yyyy"),
       status,
       link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
       attemptId: userAttempt?.id,

@@ -201,9 +201,9 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                         </select>
                         <button
                           onClick={() => handleRoleChange(u.id, selectedRole)}
-                          className="bg-emerald-600 text-white px-2 py-1 rounded text-xs font-bold hover:bg-emerald-700 cursor-pointer font-mono"
+                          className="bg-emerald-600 text-white px-2 py-1 rounded text-xs font-semibold hover:bg-emerald-700 cursor-pointer"
                         >
-                          SAVE
+                          Save
                         </button>
                         <button
                           onClick={() => setEditingUserId(null)}
@@ -251,7 +251,7 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
                                 ? "bg-rose-50 text-rose-600 border-rose-200"
                                 : "bg-emerald-50 text-emerald-700 border-emerald-200"
                             }`}>
-                              {(u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) ? "LIMIT_REACHED" : "AVAILABLE"}
+                              {(u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) ? "Limit Reached" : "Available"}
                             </span>
                           )}
                         </div>

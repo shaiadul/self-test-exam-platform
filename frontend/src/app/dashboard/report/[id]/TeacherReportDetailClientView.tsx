@@ -16,6 +16,7 @@ import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
+import { formatDateTime } from "@/lib/date";
 
 interface TeacherReportDetailClientViewProps {
   examId: string;
@@ -138,9 +139,6 @@ export default function TeacherReportDetailClientView({
                   {report.packName}
                 </span>
               )}
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
-                #{report.id || examId}
-              </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               {report.examName}
@@ -315,9 +313,8 @@ export default function TeacherReportDetailClientView({
                     </span>
                   </td>
                   <td className="py-3 px-4 font-bold text-slate-900">{st.name}</td>
-                  <td className="py-3 px-4 text-slate-500 text-[11px] font-medium">{st.institution || "—"}</td>
-                  <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">{st.time || "Recent"}</td>
-                  <td className="py-3 px-4 text-center font-mono font-black text-slate-900 text-sm">{st.score}</td>
+                  <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">{formatDateTime(st.time, "MMM dd, yyyy • hh:mm a", st.time || "Recent")}</td>
+                  <td className="py-3 px-4 text-center font-mono font-black text-slate-900 text-sm">{typeof st.score === "number" ? Number(st.score).toFixed(1) : st.score}</td>
                   <td className="py-3 px-4 text-right">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
                       st.passed ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"
@@ -369,7 +366,7 @@ export default function TeacherReportDetailClientView({
 
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
                 <span className="truncate max-w-[180px]">{st.institution || "—"}</span>
-                <span className="font-mono text-[10px] text-slate-400">{st.time || "Recent"}</span>
+                <span className="font-mono text-[10px] text-slate-400">{formatDateTime(st.time, "MMM dd, yyyy • hh:mm a", st.time || "Recent")}</span>
               </div>
 
               <div className="flex items-center justify-between bg-slate-50 px-2.5 py-1.5 rounded border border-slate-100 text-xs">

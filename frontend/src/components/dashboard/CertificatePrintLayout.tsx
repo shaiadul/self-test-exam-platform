@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { formatDate, DATE_FORMATS } from "@/lib/date";
 
 interface CertificatePrintLayoutProps {
   candidateName?: string;
@@ -21,12 +22,7 @@ interface CertificatePrintLayoutProps {
 export default function CertificatePrintLayout({
   candidateName = "Md Saidul Basar",
   examName,
-  examDate = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }),
+  examDate = formatDate(new Date(), DATE_FORMATS.DATETIME_FULL),
   result,
   totalMarks,
 }: CertificatePrintLayoutProps) {

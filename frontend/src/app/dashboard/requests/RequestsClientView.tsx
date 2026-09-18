@@ -239,11 +239,11 @@ export default function RequestsClientView({
       <div className="rounded bg-white border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600">
-              {isAdmin ? "SUBMITTED TEACHER REQUESTS" : "MY DISPATCHED REQUESTS"}
+            <span className="text-xs font-semibold text-slate-700">
+              {isAdmin ? "Submitted Teacher Requests" : "My Requests"}
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-200/70 text-slate-700 font-bold">
-              {requests.length} TOTAL
+              {requests.length} Total
             </span>
           </div>
         </div>
@@ -290,8 +290,8 @@ export default function RequestsClientView({
                       >
                         {r.status}
                       </span>
-                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 uppercase">
-                        {r.type === "pack" ? "PACK_LIMIT" : "EXAM_LIMIT"}
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                        {r.type === "pack" ? "Pack Limit" : "Exam Limit"}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1">
@@ -309,19 +309,19 @@ export default function RequestsClientView({
                       type="button"
                       disabled={busy}
                       onClick={() => review(r.id, "approved")}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition cursor-pointer disabled:opacity-60 font-mono"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition cursor-pointer disabled:opacity-60"
                     >
                       <FaCheck className="text-[9px]" />
-                      APPROVE
+                      Approve
                     </button>
                     <button
                       type="button"
                       disabled={busy}
                       onClick={() => review(r.id, "rejected")}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded border border-rose-200 bg-rose-50/50 hover:bg-rose-100 text-rose-700 shadow-2xs transition cursor-pointer disabled:opacity-60 font-mono"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded border border-rose-200 bg-rose-50/50 hover:bg-rose-100 text-rose-700 shadow-2xs transition cursor-pointer disabled:opacity-60"
                     >
                       <FaTimes className="text-[9px]" />
-                      REJECT
+                      Reject
                     </button>
                   </div>
                 )}

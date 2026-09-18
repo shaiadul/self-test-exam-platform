@@ -21,6 +21,7 @@ import CertificatePrintLayout from "../../../../components/dashboard/Certificate
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { useRouter } from "next/navigation";
+import { formatDate, formatTime, DATE_FORMATS } from "@/lib/date";
 
 interface InfoItemProps {
   label: string;
@@ -99,12 +100,7 @@ export default function ReportingDetailClientView({
         merit: rank,
         name: att.name,
         board: "Online",
-        time: att.time
-          ? new Date(att.time).toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "N/A",
+        time: formatTime(att.time, DATE_FORMATS.TIME_12H, "N/A"),
         score: att.score,
         negative: att.negative,
         institution: att.institution,
@@ -176,16 +172,7 @@ export default function ReportingDetailClientView({
         <CertificatePrintLayout
           candidateName={candidateDisplayName}
           examName={attempt.examName || "Mock Exam"}
-          examDate={
-            attempt.createdAt
-              ? new Date(attempt.createdAt).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })
-              : "Recent"
-          }
+          examDate={formatDate(attempt.createdAt, DATE_FORMATS.DATETIME_FULL, "Recent")}
           result={{
             total: (attempt.correct || 0) + (attempt.wrong || 0),
             correct: attempt.correct || 0,
@@ -235,15 +222,7 @@ export default function ReportingDetailClientView({
           <InfoItem label="Exam Code" value={`#${attempt.examId || "N/A"}`} />
           <InfoItem
             label="Submitted At"
-            value={
-              attempt.createdAt
-                ? new Date(attempt.createdAt).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : "N/A"
-            }
+            value={formatDate(attempt.createdAt, DATE_FORMATS.DATE_MEDIUM, "N/A")}
           />
         </div>
 

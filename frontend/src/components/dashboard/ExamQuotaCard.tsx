@@ -1,7 +1,12 @@
 "use client";
 
 import React from "react";
-import { FaClipboardList, FaArrowRight, FaInfinity, FaLock } from "react-icons/fa";
+import {
+  FaClipboardList,
+  FaArrowRight,
+  FaInfinity,
+  FaLock,
+} from "react-icons/fa";
 import { PrimaryBtn } from "../ui/PrimaryBtn";
 import { OutlineBtn } from "../ui/OutlineBtn";
 
@@ -12,23 +17,36 @@ interface ExamQuotaCardProps {
 
 export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
   const loaded = typeof limit === "number" && !Number.isNaN(limit);
-  const createdCount = typeof created === "number" && !Number.isNaN(created) ? created : 0;
+  const createdCount =
+    typeof created === "number" && !Number.isNaN(created) ? created : 0;
   const normalizedLimit = loaded && limit < 0 ? -1 : loaded ? limit : -2;
 
   const unlimited = normalizedLimit === -1;
   const reached = !unlimited && loaded && createdCount >= normalizedLimit;
-  const remaining = unlimited ? Infinity : loaded ? Math.max(normalizedLimit - createdCount, 0) : 0;
-  const pct = unlimited ? 100 : loaded && normalizedLimit > 0 ? Math.min(100, (createdCount / normalizedLimit) * 100) : 0;
+  const remaining = unlimited
+    ? Infinity
+    : loaded
+      ? Math.max(normalizedLimit - createdCount, 0)
+      : 0;
+  const pct = unlimited
+    ? 100
+    : loaded && normalizedLimit > 0
+      ? Math.min(100, (createdCount / normalizedLimit) * 100)
+      : 0;
 
-  const barColor = reached ? "bg-rose-500" : pct >= 80 ? "bg-amber-400" : "bg-emerald-500";
+  const barColor = reached
+    ? "bg-rose-500"
+    : pct >= 80
+      ? "bg-amber-400"
+      : "bg-emerald-500";
 
   const message = !loaded
     ? "Quota data is unavailable. If this persists, please ensure the server is running the latest build."
     : unlimited
-    ? "No restriction — you have unlimited exam pack access."
-    : reached
-    ? `You have created ${createdCount} of ${normalizedLimit} allowed exam packs. Submit a request to increase your limit.`
-    : `You have created ${createdCount} of ${normalizedLimit} allowed exam packs with ${remaining} slot${remaining === 1 ? "" : "s"} remaining.`;
+      ? "No restriction — you have unlimited exam pack access."
+      : reached
+        ? `You have created ${createdCount} of ${normalizedLimit} allowed exam packs. Submit a request to increase your limit.`
+        : `You have created ${createdCount} of ${normalizedLimit} allowed exam packs with ${remaining} slot${remaining === 1 ? "" : "s"} remaining.`;
 
   return (
     <div
@@ -36,8 +54,8 @@ export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
         !loaded
           ? "border-slate-200/80"
           : reached
-          ? "border-rose-200"
-          : "border-slate-200/80"
+            ? "border-rose-200"
+            : "border-slate-200/80"
       }`}
     >
       {/* Background Tech Waveform Grid Watermark */}
@@ -47,11 +65,41 @@ export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <circle cx="60" cy="60" r="50" stroke="currentColor" strokeWidth="1" strokeDasharray="2 4" />
-        <circle cx="60" cy="60" r="38" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="60" cy="60" r="22" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
-        <path d="M10 60 H110 M60 10 V110" stroke="currentColor" strokeWidth="0.75" />
-        <path d="M25 60 L40 45 L55 75 L70 50 L85 65 L95 60" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle
+          cx="60"
+          cy="60"
+          r="50"
+          stroke="currentColor"
+          strokeWidth="1"
+          strokeDasharray="2 4"
+        />
+        <circle
+          cx="60"
+          cy="60"
+          r="38"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+        <circle
+          cx="60"
+          cy="60"
+          r="22"
+          stroke="currentColor"
+          strokeWidth="1"
+          strokeDasharray="3 3"
+        />
+        <path
+          d="M10 60 H110 M60 10 V110"
+          stroke="currentColor"
+          strokeWidth="0.75"
+        />
+        <path
+          d="M25 60 L40 45 L55 75 L70 50 L85 65 L95 60"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
 
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -61,8 +109,8 @@ export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
               !loaded
                 ? "bg-slate-50 text-slate-400"
                 : reached
-                ? "bg-rose-50 text-rose-600"
-                : "bg-blue-50 text-blue-600"
+                  ? "bg-rose-50 text-rose-600"
+                  : "bg-blue-50 text-blue-600"
             }`}
           >
             <FaClipboardList />
@@ -145,23 +193,25 @@ export default function ExamQuotaCard({ created, limit }: ExamQuotaCardProps) {
             {reached && <FaLock className="shrink-0 text-[10px]" />}
             {message}
           </p>
-          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+          <div className="grid grid-cols-2 gap-1.5 w-full sm:flex sm:w-auto sm:items-center sm:shrink-0">
             <OutlineBtn
               link="/dashboard/manage-exam-pack"
-              className="!text-xs !py-1 !px-2.5 !rounded"
+              className="!text-xs !py-1 !px-2.5 !rounded !w-full !justify-center sm:!w-auto"
             >
               <span>Manage Packs</span>
             </OutlineBtn>
+
             <OutlineBtn
               link="/dashboard/requests"
-              className="!text-xs !py-1 !px-2.5 !rounded"
+              className="!text-xs !py-1 !px-2.5 !rounded !w-full !justify-center sm:!w-auto"
             >
               <span>Request Increase</span>
               <FaArrowRight className="ml-1 text-[9px]" />
             </OutlineBtn>
+
             <PrimaryBtn
               link="/dashboard/manage-exam-pack/add"
-              className="!text-xs !py-1 !px-3 !rounded"
+              className="!text-xs !py-1 !px-3 !rounded col-span-2 !w-full !justify-center sm:!w-auto"
             >
               <span>Create Exam Pack</span>
               <FaArrowRight className="ml-1 text-[9px]" />

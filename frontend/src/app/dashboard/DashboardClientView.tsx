@@ -11,6 +11,7 @@ import ExamQuotaCard from "../../components/dashboard/ExamQuotaCard";
 import EmptyState from "../../components/common/EmptyState";
 import { PrimaryBtn } from "../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../components/ui/OutlineBtn";
+import { formatDate, DATE_FORMATS } from "@/lib/date";
 import {
   FaAward,
   FaServer,
@@ -57,14 +58,7 @@ export default function DashboardClientView({
     else setGreeting("Good evening");
 
     const now = new Date();
-    setCurrentDateStr(
-      now.toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    );
+    setCurrentDateStr(formatDate(now, DATE_FORMATS.DATETIME_FULL));
   }, []);
 
   const profileData = {
@@ -651,7 +645,7 @@ export default function DashboardClientView({
                     {stats.assignedPacks.map((pack: any, idx: number) => (
                       <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-3.5 py-2.5 font-mono text-xs font-bold text-slate-500">
-                          {pack.id}
+                          #{pack.id}
                         </td>
                         <td className="px-3.5 py-2.5 font-bold text-slate-900 text-xs sm:text-sm">
                           {pack.name}
@@ -685,7 +679,7 @@ export default function DashboardClientView({
                   <div key={idx} className="p-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-[10px] font-bold text-slate-400">
-                        {pack.id}
+                        #{pack.id}
                       </span>
                       <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                         {pack.negative}
@@ -976,7 +970,7 @@ export default function DashboardClientView({
                     {stats.auditLogs.map((log: any, idx: number) => (
                       <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-3.5 py-2.5 font-mono text-xs font-bold text-slate-500">
-                          {log.id}
+                          #{log.id}
                         </td>
                         <td className="px-3.5 py-2.5 font-bold text-slate-900 text-xs sm:text-sm">
                           {log.name}
@@ -1007,7 +1001,7 @@ export default function DashboardClientView({
                   <div key={idx} className="p-3 space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-[10px] font-bold text-slate-400">
-                        {log.id}
+                        #{log.id}
                       </span>
                       <span
                         className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${
