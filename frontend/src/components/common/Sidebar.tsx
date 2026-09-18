@@ -84,8 +84,7 @@ export const Sidebar = ({ role = "student" }: { role?: string }) => {
 
   return (
     <aside className="hidden lg:flex flex-col w-72 h-screen sticky top-0 bg-white border-r border-slate-200/80 shadow-xs z-30 select-none">
-      {/* Brand Header */}
-      <div className="px-6 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
         <Link href="/" className="inline-block transition-transform hover:scale-[1.02]">
           <Image
             src="/global/logo2.png"
@@ -96,13 +95,11 @@ export const Sidebar = ({ role = "student" }: { role?: string }) => {
             className="w-auto h-8"
           />
         </Link>
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-          PRO
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-serif font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+          BETA
         </span>
       </div>
 
-      {/* Role & Status Pill */}
       <div className="px-4 pt-3 pb-1">
         <div className="px-3.5 py-2 rounded bg-slate-50 border border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -115,7 +112,6 @@ export const Sidebar = ({ role = "student" }: { role?: string }) => {
         </div>
       </div>
 
-      {/* Navigation Groups */}
       <nav className="flex-1 px-3 py-3 space-y-5 overflow-y-auto custom-scrollbar">
         {navGroups.map((group) => {
           const visibleItems = group.items.filter((item) => {
@@ -166,7 +162,6 @@ export const Sidebar = ({ role = "student" }: { role?: string }) => {
         })}
       </nav>
 
-      {/* User Quick Strip & Sign Out */}
       <div className="p-3 border-t border-slate-100 space-y-2 bg-slate-50/50">
         <Link
           href="/dashboard/edit-profile"
