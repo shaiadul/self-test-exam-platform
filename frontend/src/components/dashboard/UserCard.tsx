@@ -213,13 +213,6 @@ export default function UserCard({
                 )}
               </div>
             </div>
-            {/* Verified status pin */}
-            <div
-              className="absolute -bottom-1 -right-1 bg-white p-0.5 rounded shadow-2xs text-emerald-600 border border-emerald-100"
-              title="Verified Portal Account"
-            >
-              <FaCheckCircle className="text-xs" />
-            </div>
           </div>
 
           {/* Identity & Metadata Details */}
