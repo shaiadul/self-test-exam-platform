@@ -16,7 +16,7 @@ import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
-import { formatDateTime } from "@/lib/date";
+import { formatDate, formatDateTime } from "@/lib/date";
 
 interface TeacherReportDetailClientViewProps {
   examId: string;
@@ -29,7 +29,9 @@ export default function TeacherReportDetailClientView({
 }: TeacherReportDetailClientViewProps) {
   const [report] = useState<any>(initialReport);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"merit" | "score" | "name" | "institution">("merit");
+  const [sortBy, setSortBy] = useState<
+    "merit" | "score" | "name" | "institution"
+  >("merit");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -56,7 +58,7 @@ export default function TeacherReportDetailClientView({
 
     // Apply filter
     const filtered = ranked.filter((s) =>
-      s.name.toLowerCase().includes(searchTerm.toLowerCase())
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     // Apply user sort
@@ -148,7 +150,7 @@ export default function TeacherReportDetailClientView({
 
         <div className="flex items-center gap-2 font-mono text-xs text-slate-500">
           <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
-            DATE: {report.startDate || "RECENT"}
+            DATE: {formatDate(report.startDate) || "RECENT"}
           </span>
           <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold">
             {report.attempts?.length || 0} SUBMISSIONS
@@ -167,7 +169,9 @@ export default function TeacherReportDetailClientView({
               <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                 HIGHEST SCORE
               </p>
-              <p className="text-lg font-black font-mono text-slate-900">{report.highest ?? 0}</p>
+              <p className="text-lg font-black font-mono text-slate-900">
+                {report.highest ?? 0}
+              </p>
             </div>
           </div>
 
@@ -179,7 +183,9 @@ export default function TeacherReportDetailClientView({
               <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                 AVERAGE SCORE
               </p>
-              <p className="text-lg font-black font-mono text-blue-600">{report.average ?? 0}</p>
+              <p className="text-lg font-black font-mono text-blue-600">
+                {report.average ?? 0}
+              </p>
             </div>
           </div>
 
@@ -191,7 +197,9 @@ export default function TeacherReportDetailClientView({
               <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                 LOWEST SCORE
               </p>
-              <p className="text-lg font-black font-mono text-rose-500">{report.lowest ?? 0}</p>
+              <p className="text-lg font-black font-mono text-rose-500">
+                {report.lowest ?? 0}
+              </p>
             </div>
           </div>
 
@@ -203,7 +211,9 @@ export default function TeacherReportDetailClientView({
               <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                 PASS RATE
               </p>
-              <p className="text-lg font-black font-mono text-purple-600">{passRate}</p>
+              <p className="text-lg font-black font-mono text-purple-600">
+                {passRate}
+              </p>
             </div>
           </div>
         </div>
@@ -272,7 +282,9 @@ export default function TeacherReportDetailClientView({
 
               {/* Toggle Order Button */}
               <button
-                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                onClick={() =>
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                }
                 className="flex items-center justify-center border border-slate-200/80 rounded p-2 bg-white hover:border-primary/50 transition text-slate-700 cursor-pointer shrink-0 shadow-2xs"
                 title={`Sort Order: ${sortOrder === "asc" ? "Ascending" : "Descending"}`}
               >
@@ -303,22 +315,43 @@ export default function TeacherReportDetailClientView({
               {sortedStudents.map((st) => (
                 <tr key={st.id} className="hover:bg-slate-50/50 transition">
                   <td className="py-3 px-4 font-mono font-bold text-slate-900">
-                    <span className={`inline-flex items-center justify-center px-1.5 py-0.2 rounded text-[11px] font-mono font-bold border ${
-                      st.meritRank === 1 ? "bg-amber-100 text-amber-800 border-amber-200" :
-                      st.meritRank === 2 ? "bg-slate-200 text-slate-800 border-slate-300" :
-                      st.meritRank === 3 ? "bg-orange-100 text-orange-800 border-orange-200" :
-                      "bg-slate-100 text-slate-600 border-slate-200"
-                    }`}>
+                    <span
+                      className={`inline-flex items-center justify-center px-1.5 py-0.2 rounded text-[11px] font-mono font-bold border ${
+                        st.meritRank === 1
+                          ? "bg-amber-100 text-amber-800 border-amber-200"
+                          : st.meritRank === 2
+                            ? "bg-slate-200 text-slate-800 border-slate-300"
+                            : st.meritRank === 3
+                              ? "bg-orange-100 text-orange-800 border-orange-200"
+                              : "bg-slate-100 text-slate-600 border-slate-200"
+                      }`}
+                    >
                       #{st.meritRank}
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-bold text-slate-900">{st.name}</td>
-                  <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">{formatDateTime(st.time, "MMM dd, yyyy • hh:mm a", st.time || "Recent")}</td>
-                  <td className="py-3 px-4 text-center font-mono font-black text-slate-900 text-sm">{typeof st.score === "number" ? Number(st.score).toFixed(1) : st.score}</td>
+                  <td className="py-3 px-4 font-bold text-slate-900">
+                    {st.name}
+                  </td>
+                  <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">
+                    {formatDateTime(
+                      st.time,
+                      "MMM dd, yyyy • hh:mm a",
+                      st.time || "Recent",
+                    )}
+                  </td>
+                  <td className="py-3 px-4 text-center font-mono font-black text-slate-900 text-sm">
+                    {typeof st.score === "number"
+                      ? Number(st.score).toFixed(1)
+                      : st.score}
+                  </td>
                   <td className="py-3 px-4 text-right">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
-                      st.passed ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"
-                    }`}>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
+                        st.passed
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-rose-50 text-rose-700 border-rose-200"
+                      }`}
+                    >
                       {st.passed ? "PASSED" : "FAILED"}
                     </span>
                   </td>
@@ -344,34 +377,60 @@ export default function TeacherReportDetailClientView({
         {/* Mobile Cards View */}
         <div className="block sm:hidden divide-y divide-slate-100">
           {sortedStudents.map((st) => (
-            <div key={st.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 transition">
+            <div
+              key={st.id}
+              className="p-3.5 space-y-2 hover:bg-slate-50/50 transition"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${
-                    st.meritRank === 1 ? "bg-amber-100 text-amber-800 border-amber-200" :
-                    st.meritRank === 2 ? "bg-slate-200 text-slate-800 border-slate-300" :
-                    st.meritRank === 3 ? "bg-orange-100 text-orange-800 border-orange-200" :
-                    "bg-slate-100 text-slate-600 border-slate-200"
-                  }`}>
+                  <span
+                    className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                      st.meritRank === 1
+                        ? "bg-amber-100 text-amber-800 border-amber-200"
+                        : st.meritRank === 2
+                          ? "bg-slate-200 text-slate-800 border-slate-300"
+                          : st.meritRank === 3
+                            ? "bg-orange-100 text-orange-800 border-orange-200"
+                            : "bg-slate-100 text-slate-600 border-slate-200"
+                    }`}
+                  >
                     #{st.meritRank}
                   </span>
-                  <span className="font-bold text-xs text-slate-900">{st.name}</span>
+                  <span className="font-bold text-xs text-slate-900">
+                    {st.name}
+                  </span>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${
-                  st.passed ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"
-                }`}>
+                <span
+                  className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${
+                    st.passed
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-rose-50 text-rose-700 border-rose-200"
+                  }`}
+                >
                   {st.passed ? "PASSED" : "FAILED"}
                 </span>
               </div>
 
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-                <span className="truncate max-w-[180px]">{st.institution || "—"}</span>
-                <span className="font-mono text-[10px] text-slate-400">{formatDateTime(st.time, "MMM dd, yyyy • hh:mm a", st.time || "Recent")}</span>
+                <span className="truncate max-w-[180px]">
+                  {st.institution || "—"}
+                </span>
+                <span className="font-mono text-[10px] text-slate-400">
+                  {formatDateTime(
+                    st.time,
+                    "MMM dd, yyyy • hh:mm a",
+                    st.time || "Recent",
+                  )}
+                </span>
               </div>
 
               <div className="flex items-center justify-between bg-slate-50 px-2.5 py-1.5 rounded border border-slate-100 text-xs">
-                <span className="font-mono text-[10px] font-bold text-slate-400 uppercase">Score Marks</span>
-                <span className="font-mono font-black text-slate-900">{st.score}</span>
+                <span className="font-mono text-[10px] font-bold text-slate-400 uppercase">
+                  Score Marks
+                </span>
+                <span className="font-mono font-black text-slate-900">
+                  {st.score}
+                </span>
               </div>
             </div>
           ))}
