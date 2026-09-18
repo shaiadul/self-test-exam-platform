@@ -610,13 +610,12 @@ export default function EditProfileClientView({
               </div>
             )}
 
-            {/* Commit & Save Action HUD */}
-            <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
               <div className="text-xs text-slate-500">
                 Ready to save your profile changes
               </div>
 
-              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end">
                 <OutlineBtn
                   type="button"
                   onClick={() => router.back()}
