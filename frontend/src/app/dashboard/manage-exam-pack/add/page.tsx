@@ -96,7 +96,6 @@ export default function AddExamPackPage() {
               />
             </div>
 
-            {/* Architecture Guidelines Callout */}
             <div className="relative overflow-hidden rounded bg-slate-50 border border-slate-200/80 p-4 text-[11px] leading-relaxed text-slate-600 space-y-2">
               <div className="flex items-center gap-1.5 text-slate-900 font-bold text-xs">
                 <FaInfoCircle className="text-primary" />
@@ -110,9 +109,8 @@ export default function AddExamPackPage() {
             </div>
           </div>
 
-          {/* Metadata & Configuration Column */}
           <div className="lg:col-span-8 space-y-4">
-            <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 p-5 shadow-2xs space-y-4">
+            <div className="relative rounded bg-white border border-slate-200/80 p-5 shadow-2xs space-y-4">
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
                 [CFG-02] METADATA SPECIFICATIONS
               </span>
