@@ -30,11 +30,21 @@ const defaultData = [
 
 export default function ChartCard({
   data = defaultData,
-  color = "#dd6b01",
-  strokeColor = "#f59e0b",
+  color = "#f97a00",
+  strokeColor = "#f97a00",
   avgLabel = "Average Score",
 }: ChartCardProps) {
   const chartData = data && data.length > 0 ? data : defaultData;
+
+  // Resolve CSS variables or fall back to primary orange (#f97a00)
+  const resolvedColor =
+    !color || color.includes("var(--color-primary") || color === "primary"
+      ? "#f97a00"
+      : color;
+  const resolvedStroke =
+    !strokeColor || strokeColor.includes("var(--color-primary") || strokeColor === "primary"
+      ? resolvedColor
+      : strokeColor;
 
   // Calculate average value
   const avg =
@@ -48,7 +58,9 @@ export default function ChartCard({
     if (item.value < minItem.value) minItem = item;
   });
 
-  const gradientId = `areaGradient-${color.replace("#", "")}`;
+  // Generate safe alphanumeric ID so url(#id) never breaks SVG/CSS syntax
+  const safeId = resolvedColor.replace(/[^a-zA-Z0-9]/g, "");
+  const gradientId = `areaGradient-${safeId || "f97a00"}`;
 
   const lastItem = chartData[chartData.length - 1];
   const lastScore = lastItem ? lastItem.value : 0;
@@ -92,9 +104,10 @@ export default function ChartCard({
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity={0.30} />
-                <stop offset="60%" stopColor={strokeColor} stopOpacity={0.05} />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity={0.0} />
+                <stop offset="0%" stopColor={resolvedColor} stopOpacity={0.25} />
+                <stop offset="50%" stopColor={resolvedColor} stopOpacity={0.12} />
+                <stop offset="90%" stopColor={resolvedColor} stopOpacity={0.03} />
+                <stop offset="100%" stopColor={resolvedColor} stopOpacity={0.0} />
               </linearGradient>
             </defs>
 
@@ -197,18 +210,18 @@ export default function ChartCard({
             <Area
               type="monotone"
               dataKey="value"
-              stroke={color}
+              stroke={resolvedStroke}
               strokeWidth={2.5}
               fill={`url(#${gradientId})`}
               dot={{
                 r: 3.5,
                 fill: "#ffffff",
-                stroke: color,
+                stroke: resolvedStroke,
                 strokeWidth: 2,
               }}
               activeDot={{
                 r: 5.5,
-                fill: color,
+                fill: resolvedStroke,
                 stroke: "#ffffff",
                 strokeWidth: 2.5,
               }}
@@ -223,7 +236,7 @@ export default function ChartCard({
           <div className="flex items-center gap-1.5">
             <span
               className="w-2.5 h-2.5 rounded-sm"
-              style={{ backgroundColor: color }}
+              style={{ backgroundColor: resolvedColor }}
             />
             <span className="text-[11px]">Score Trajectory</span>
           </div>

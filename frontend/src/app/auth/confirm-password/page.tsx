@@ -5,6 +5,9 @@ import Link from "next/link";
 import logo2 from "../../../../public/global/logo2.png";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Input } from "../../../components/ui/Input";
+import { FaLock, FaArrowLeft } from "react-icons/fa";
+import { motion } from "framer-motion";
 
 export default function ConfirmPassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -30,67 +33,98 @@ export default function ConfirmPassword() {
   };
 
   return (
-    <main className="">
-      <section className="flex items-center justify-between mx-auto max-w-7xl w-full px-4 md:px-10 py-10">
-        <div>
+    <main className="min-h-screen bg-gray-50 flex flex-col">
+      <section className="flex items-center justify-between mx-auto max-w-7xl w-full px-6 py-8">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
           <Link href="/">
-            <Image src={logo2} alt="logo" className="w-40 md:w-60" />
+            <Image
+              src={logo2}
+              alt="logo"
+              width={180}
+              height={40}
+              className="w-auto h-10"
+            />
           </Link>
-        </div>
-        <div className="">
-          <Link href="/" className="text-sm md:text-lg font-semibold underline">
-            Back to Home
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <Link
+            href="/auth/login"
+            className="flex items-center gap-2 text-gray-500 hover:text-primary font-bold transition-colors"
+          >
+            <FaArrowLeft className="text-sm" />
+            <span>Back to Login</span>
           </Link>
-        </div>
+        </motion.div>
       </section>
 
-      <section className="flex-1 flex items-center justify-center py-20 px-4">
-        <div className="w-full max-w-md">
-          <h2 className="text-3xl md:text-4xl font-bold text-center gradient-text mb-6">
-            Set Your New Password
-          </h2>
+      <section className="flex-1 flex items-center justify-center p-4 pb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md bg-white p-6 sm:p-8 rounded border border-slate-200/80 shadow-xs"
+        >
+          <div className="text-center mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1.5">
+              Set New Password
+            </h2>
+            <p className="text-slate-500 text-xs font-medium">
+              Create a strong password to secure your account
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <input
-                type="text"
-                placeholder="Enter your New Password"
-                className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-              />
-            </div>
+            {errorMessage && (
+              <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-xs font-mono font-semibold rounded text-center">
+                {errorMessage}
+              </div>
+            )}
 
-            <div>
-              <input
-                type="text"
-                placeholder="Confirm your New Password"
-                className="w-full px-3 py-4 text-lg outline-none border border-solid border-[#f97a00] rounded-lg"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-              />
-            </div>
+            <Input
+              label="New Password"
+              type="password"
+              placeholder="Enter your new password"
+              icon={<FaLock />}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
 
-            {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+            <Input
+              label="Confirm Password"
+              type="password"
+              placeholder="Confirm your new password"
+              icon={<FaLock />}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold text-md md:text-lg px-4 md:px-6 py-3 md:py-3 rounded-full hover:opacity-90 transition cursor-pointer"
+              className="w-full bg-primary hover:bg-primary-dark text-white font-bold text-sm px-4 py-2.5 rounded shadow-xs transition-all active:scale-[0.99] cursor-pointer"
             >
-              Submit OTP
+              Reset Password
             </button>
+
+            <div className="text-center pt-2">
+              <p className="text-slate-500 text-xs font-medium">
+                Remember your password?{" "}
+                <Link
+                  href="/auth/login"
+                  className="font-bold text-primary hover:underline"
+                >
+                  Sign In
+                </Link>
+              </p>
+            </div>
           </form>
-        </div>
+        </motion.div>
       </section>
     </main>
   );

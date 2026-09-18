@@ -284,8 +284,8 @@ export default function DashboardClientView({
 
               <ChartCard
                 data={stats?.accuracyData || []}
-                color="var(--color-primary)"
-                strokeColor="#f59e0b"
+                color="#f97a00"
+                strokeColor="#f97a00"
                 avgLabel="Average Score"
               />
             </div>
