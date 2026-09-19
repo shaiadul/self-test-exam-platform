@@ -186,7 +186,7 @@ export default function TeacherReportClientView({ initialReports }: TeacherRepor
                     HIGHEST
                   </p>
                   <p className="text-xs font-black text-emerald-600">
-                    {report.highest}
+                    {Number(report.highest ?? 0).toFixed(2)}
                   </p>
                 </div>
                 <div className="border-x border-slate-200">
@@ -194,7 +194,7 @@ export default function TeacherReportClientView({ initialReports }: TeacherRepor
                     AVERAGE
                   </p>
                   <p className="text-xs font-black text-blue-600">
-                    {report.average}
+                    {Number(report.average ?? 0).toFixed(2)}
                   </p>
                 </div>
                 <div>
@@ -202,7 +202,7 @@ export default function TeacherReportClientView({ initialReports }: TeacherRepor
                     LOWEST
                   </p>
                   <p className="text-xs font-black text-rose-500">
-                    {report.lowest}
+                    {Number(report.lowest ?? 0).toFixed(2)}
                   </p>
                 </div>
               </div>

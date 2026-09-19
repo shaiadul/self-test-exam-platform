@@ -25,7 +25,6 @@ function isRouteAllowed(role: string, pathname: string): boolean {
     if (pathname.startsWith("/dashboard/manage-exam-pack")) return false;
     if (pathname.startsWith("/dashboard/teacher-reports")) return false;
     if (pathname.startsWith("/dashboard/question")) return false;
-    // Allow student reporting /dashboard/reporting, only block teacher evaluations /dashboard/report
     if (pathname.startsWith("/dashboard/report") && !pathname.startsWith("/dashboard/reporting")) return false;
     return true;
   }
@@ -41,8 +40,6 @@ export default function DashboardLayoutClient({
   initialRole?: string;
 }) {
   const pathname = usePathname();
-  // Start from the server-provided role so SSR and hydration render the same
-  // tree; the effect below only reconciles with localStorage after mount.
   const [userRole, setUserRole] = useState<string>(initialRole);
 
   useEffect(() => {
