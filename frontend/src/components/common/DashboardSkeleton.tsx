@@ -1,26 +1,32 @@
 import React from "react";
 
-export default function DashboardSkeleton() {
+interface DashboardSkeletonProps {
+  showHero?: boolean;
+}
+
+export default function DashboardSkeleton({ showHero = true }: DashboardSkeletonProps = {}) {
   return (
     <div className="space-y-4 sm:space-y-5 animate-fadeIn">
-      {/* 1. Hero / Welcome Banner Skeleton */}
-      <div className="relative overflow-hidden rounded bg-slate-900 border border-slate-800 p-4 sm:p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-2.5 max-w-xl">
-            <div className="flex items-center gap-2">
-              <div className="h-5 w-28 rounded bg-slate-800 animate-pulse" />
-              <div className="h-4 w-36 rounded bg-slate-800/60 animate-pulse hidden sm:block" />
+      {/* 1. Hero / Welcome Banner Skeleton (Black Part - Dashboard Only) */}
+      {showHero && (
+        <div className="relative overflow-hidden rounded bg-slate-900 border border-slate-800 p-4 sm:p-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-2.5 max-w-xl">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-28 rounded bg-slate-800 animate-pulse" />
+                <div className="h-4 w-36 rounded bg-slate-800/60 animate-pulse hidden sm:block" />
+              </div>
+              <div className="h-7 w-60 sm:w-80 rounded bg-slate-800 animate-pulse" />
+              <div className="h-3.5 w-full max-w-md rounded bg-slate-800/60 animate-pulse" />
             </div>
-            <div className="h-7 w-60 sm:w-80 rounded bg-slate-800 animate-pulse" />
-            <div className="h-3.5 w-full max-w-md rounded bg-slate-800/60 animate-pulse" />
-          </div>
 
-          <div className="flex items-center gap-2.5 shrink-0 pt-2 md:pt-0">
-            <div className="h-8 w-28 rounded bg-slate-800 animate-pulse" />
-            <div className="h-8 w-24 rounded bg-slate-800/70 animate-pulse" />
+            <div className="flex items-center gap-2.5 shrink-0 pt-2 md:pt-0">
+              <div className="h-8 w-28 rounded bg-slate-800 animate-pulse" />
+              <div className="h-8 w-24 rounded bg-slate-800/70 animate-pulse" />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 2. Top Profile & Highlight Summary Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">

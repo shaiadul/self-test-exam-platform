@@ -1,10 +1,5 @@
-import { PageContainer } from "../../../components/common/PageContainer";
-import DashboardSkeleton from "../../../components/common/DashboardSkeleton";
+import PageSkeleton from "../../../components/common/PageSkeleton";
 
 export default function Loading() {
-  return (
-    <PageContainer>
-      <DashboardSkeleton />
-    </PageContainer>
-  );
+  return <PageSkeleton />;
 }
