@@ -8,8 +8,13 @@ interface SocialAuthButtonsProps {
   className?: string;
 }
 
-export function SocialAuthButtons({ mode = "login", className = "" }: SocialAuthButtonsProps) {
-  const [loadingProvider, setLoadingProvider] = useState<"google" | "facebook" | null>(null);
+export function SocialAuthButtons({
+  mode = "login",
+  className = "",
+}: SocialAuthButtonsProps) {
+  const [loadingProvider, setLoadingProvider] = useState<
+    "google" | "facebook" | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSocialAuth = async (provider: "google" | "facebook") => {
@@ -25,13 +30,18 @@ export function SocialAuthButtons({ mode = "login", className = "" }: SocialAuth
       // If redirect: false or error returned
       if (result?.error) {
         // Fallback to direct Go OAuth endpoint if Auth.js provider is not configured
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+        const backendUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
         window.location.href = `${backendUrl}/auth/oauth/${provider}`;
       }
     } catch (err: any) {
-      console.warn("Auth.js initiation caught error, attempting direct Go OAuth fallback...", err);
+      console.warn(
+        "Auth.js initiation caught error, attempting direct Go OAuth fallback...",
+        err,
+      );
       // Fallback directly to Go OAuth endpoint
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+      const backendUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
       window.location.href = `${backendUrl}/auth/oauth/${provider}`;
     }
   };
@@ -53,7 +63,7 @@ export function SocialAuthButtons({ mode = "login", className = "" }: SocialAuth
           type="button"
           disabled={loadingProvider !== null}
           onClick={() => handleSocialAuth("google")}
-          className="relative inline-flex items-center justify-center gap-2.5 px-4 py-2.5 sm:py-2.5 bg-white hover:bg-slate-50/90 active:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs sm:text-sm font-semibold rounded-lg border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          className="relative inline-flex items-center justify-center gap-2.5 px-4 py-2 bg-white hover:bg-slate-50/90 active:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs sm:text-sm font-semibold rounded-lg border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           aria-label={`${actionLabel} with Google`}
         >
           {loadingProvider === "google" ? (
@@ -91,7 +101,7 @@ export function SocialAuthButtons({ mode = "login", className = "" }: SocialAuth
           type="button"
           disabled={loadingProvider !== null}
           onClick={() => handleSocialAuth("facebook")}
-          className="relative inline-flex items-center justify-center gap-2.5 px-4 py-2.5 sm:py-2.5 bg-white hover:bg-slate-50/90 active:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs sm:text-sm font-semibold rounded-lg border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1877F2]/40"
+          className="relative inline-flex items-center justify-center gap-2.5 px-4 py-2 bg-white hover:bg-slate-50/90 active:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs sm:text-sm font-semibold rounded-lg border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1877F2]/40"
           aria-label={`${actionLabel} with Facebook`}
         >
           {loadingProvider === "facebook" ? (
