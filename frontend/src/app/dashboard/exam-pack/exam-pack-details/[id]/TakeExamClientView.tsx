@@ -101,7 +101,8 @@ export default function TakeExamClientView({
   const [currentWarningMsg, setCurrentWarningMsg] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const isRunningRef = useRef(false);
-  isRunningRef.current = examStatus === "running";
+  const isFinishingRef = useRef(false);
+  isRunningRef.current = examStatus === "running" && !isFinishingRef.current;
 
   // Mark current question as visited
   useEffect(() => {
@@ -186,7 +187,9 @@ export default function TakeExamClientView({
   // Submit Exam Handler
   const handleFinish = useCallback(
     async (reason?: string) => {
-      if (examStatus === "submitted" || isSubmitting) return;
+      if (examStatus === "submitted" || isSubmitting || isFinishingRef.current) return;
+      isFinishingRef.current = true;
+      isRunningRef.current = false;
       setIsSubmitting(true);
       setShowSubmitConfirm(false);
 
@@ -232,7 +235,7 @@ export default function TakeExamClientView({
   // Trigger security violation warning
   const triggerSecurityWarning = useCallback(
     (reason: string) => {
-      if (!isRunningRef.current) return;
+      if (!isRunningRef.current || isFinishingRef.current) return;
 
       setWarnings((prev) => {
         const next = prev + 1;
@@ -294,13 +297,13 @@ export default function TakeExamClientView({
     if (examStatus !== "running") return;
 
     const handleVisibilityChange = () => {
-      if (document.hidden && isRunningRef.current) {
+      if (document.hidden && isRunningRef.current && !isFinishingRef.current) {
         triggerSecurityWarning("Tab switched or browser minimized.");
       }
     };
 
     const handleBlur = () => {
-      if (isRunningRef.current) {
+      if (isRunningRef.current && !isFinishingRef.current) {
         triggerSecurityWarning("Window lost focus or another application was opened.");
       }
     };
@@ -308,13 +311,13 @@ export default function TakeExamClientView({
     const handleFullscreenChange = () => {
       const active = !!document.fullscreenElement;
       setIsFullscreen(active);
-      if (!active && isRunningRef.current) {
+      if (!active && isRunningRef.current && !isFinishingRef.current) {
         triggerSecurityWarning("Exited fullscreen proctored mode.");
       }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isRunningRef.current) return;
+      if (!isRunningRef.current || isFinishingRef.current) return;
 
       // F12
       if (e.key === "F12") {
