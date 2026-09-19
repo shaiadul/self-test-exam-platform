@@ -57,9 +57,6 @@ export default function Auth() {
               <FaArrowLeft className="text-xs group-hover:-translate-x-0.5 transition-transform" />
               <span>Back to Home</span>
             </Link>
-            <span className="text-[11px] font-mono font-medium tracking-wide uppercase px-2 py-0.5 rounded bg-white/15 text-white border border-white/20">
-              Exam Portal
-            </span>
           </div>
 
           {/* Main Visual Center */}
