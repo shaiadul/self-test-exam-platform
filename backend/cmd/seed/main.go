@@ -50,10 +50,11 @@ func main() {
 			log.Fatalf("Failed to hash password for %s: %v", a.Email, err)
 		}
 
+		pwdStr := string(hashed)
 		u := &user.User{
 			Name:     a.Name,
 			Email:    a.Email,
-			Password: string(hashed),
+			Password: &pwdStr,
 			Role:     a.Role,
 		}
 		if err := userRepo.Create(u); err != nil {

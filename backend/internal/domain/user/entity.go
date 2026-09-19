@@ -6,8 +6,10 @@ type User struct {
 	ID                int       `json:"id" db:"id" gorm:"primaryKey;autoIncrement"`
 	Name              string    `json:"name" db:"name" gorm:"not null"`
 	Email             string    `json:"email" db:"email" gorm:"uniqueIndex;not null"`
-	Password          string    `json:"-" db:"password" gorm:"not null"`
+	Password          *string   `json:"-" db:"password" gorm:"column:password"`
 	Role              string    `json:"role" db:"role" gorm:"not null;default:student"`
+	Provider          *string   `json:"provider" db:"provider" gorm:"column:provider;default:'email'"`
+	ProviderID        *string   `json:"providerId" db:"provider_id" gorm:"column:provider_id;index"`
 	Image             *string   `json:"image" db:"image"`
 	Phone             *string   `json:"phone" db:"phone"`
 	Level             *string   `json:"level" db:"level"`
@@ -46,6 +48,16 @@ type RegisterRequest struct {
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type SocialLoginRequest struct {
+	Provider    string  `json:"provider"`
+	ProviderID  string  `json:"providerId"`
+	Email       string  `json:"email"`
+	Name        string  `json:"name"`
+	Image       *string `json:"image,omitempty"`
+	AccessToken *string `json:"accessToken,omitempty"`
+	IDToken     *string `json:"idToken,omitempty"`
 }
 
 type LoginResponse struct {

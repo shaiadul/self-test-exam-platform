@@ -53,11 +53,15 @@ func (s *UserService) Register(req user.RegisterRequest) (*user.LoginResponse, e
 		role = "teacher"
 	}
 
+	pwdStr := string(hashedPassword)
+	defaultProvider := "email"
+
 	u := &user.User{
 		Name:     req.Name,
 		Email:    req.Email,
-		Password: string(hashedPassword),
+		Password: &pwdStr,
 		Role:     role,
+		Provider: &defaultProvider,
 	}
 
 	if err := s.userRepo.Create(u); err != nil {
@@ -84,7 +88,11 @@ func (s *UserService) Login(req user.LoginRequest) (*user.LoginResponse, error) 
 		return nil, ErrInvalidCreds
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(req.Password)); err != nil {
+	if u.Password == nil || *u.Password == "" {
+		return nil, errors.New("this account was registered using social login (Google/Facebook). Please sign in using your social account")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(req.Password)); err != nil {
 		return nil, ErrInvalidCreds
 	}
 
@@ -96,6 +104,106 @@ func (s *UserService) Login(req user.LoginRequest) (*user.LoginResponse, error) 
 	return &user.LoginResponse{
 		Token: tokenString,
 		User:  *u,
+	}, nil
+}
+
+func (s *UserService) SocialLogin(req user.SocialLoginRequest) (*user.LoginResponse, error) {
+	provider := strings.ToLower(strings.TrimSpace(req.Provider))
+	providerID := strings.TrimSpace(req.ProviderID)
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	name := strings.TrimSpace(req.Name)
+
+	if provider != "google" && provider != "facebook" {
+		return nil, errors.New("unsupported social provider: must be google or facebook")
+	}
+	if providerID == "" || email == "" {
+		return nil, errors.New("providerId and email are required for social login")
+	}
+	if name == "" {
+		name = strings.Split(email, "@")[0]
+	}
+
+	// 1. Check if user exists by provider and providerId
+	u, err := s.userRepo.GetByProviderAndID(provider, providerID)
+	if err != nil {
+		return nil, err
+	}
+
+	if u != nil {
+		if req.Image != nil && *req.Image != "" && (u.Image == nil || *u.Image == "") {
+			_ = s.userRepo.LinkSocialAccount(u.ID, provider, providerID, req.Image)
+			u.Image = req.Image
+		}
+		tokenString, err := s.generateToken(u)
+		if err != nil {
+			return nil, err
+		}
+		return &user.LoginResponse{
+			Token: tokenString,
+			User:  *u,
+		}, nil
+	}
+
+	// 2. If not found by provider+id, check if existing user has this email
+	existingByEmail, err := s.userRepo.GetByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingByEmail != nil {
+		if err := s.userRepo.LinkSocialAccount(existingByEmail.ID, provider, providerID, req.Image); err != nil {
+			return nil, err
+		}
+		existingByEmail.Provider = &provider
+		existingByEmail.ProviderID = &providerID
+		if req.Image != nil && *req.Image != "" && (existingByEmail.Image == nil || *existingByEmail.Image == "") {
+			existingByEmail.Image = req.Image
+		}
+
+		tokenString, err := s.generateToken(existingByEmail)
+		if err != nil {
+			return nil, err
+		}
+		return &user.LoginResponse{
+			Token: tokenString,
+			User:  *existingByEmail,
+		}, nil
+	}
+
+	// 3. User does not exist, create new account
+	role := "student"
+	if email == os.Getenv("NEXT_PUBLIC_ADMIN_EMAIL") || email == "admin@test.com" {
+		role = "admin"
+	} else if email == os.Getenv("NEXT_PUBLIC_TEACHER_EMAIL") || email == "teacher@test.com" {
+		role = "teacher"
+	}
+
+	defaultExamLimit := 5
+	defaultExamPackLimit := 3
+
+	newUser := &user.User{
+		Name:          name,
+		Email:         email,
+		Role:          role,
+		Provider:      &provider,
+		ProviderID:    &providerID,
+		Image:         req.Image,
+		ExamLimit:     &defaultExamLimit,
+		ExamPackLimit: &defaultExamPackLimit,
+	}
+
+	if err := s.userRepo.Create(newUser); err != nil {
+		return nil, err
+	}
+
+	tokenString, err := s.generateToken(newUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user.LoginResponse{
+		Token: tokenString,
+		User:  *newUser,
 	}, nil
 }
 
@@ -173,7 +281,7 @@ func (s *UserService) ListUsers() ([]user.User, error) {
 	}
 	// Sanitize output (don't send passwords)
 	for i := range users {
-		users[i].Password = ""
+		users[i].Password = nil
 	}
 	return users, nil
 }

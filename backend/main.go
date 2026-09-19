@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/selftest/backend/config"
 	delivery "github.com/selftest/backend/internal/delivery/http"
+	"github.com/selftest/backend/internal/infrastructure/oauth"
 	"github.com/selftest/backend/internal/infrastructure/persistence"
 	"github.com/selftest/backend/internal/infrastructure/storage"
 	"github.com/selftest/backend/internal/service"
@@ -38,6 +39,8 @@ func main() {
 		fmt.Printf("Warning: Failed to initialize S3 storage: %v\n", err)
 	}
 
+	oauthService := oauth.NewOAuthService()
+
 	// 2. Initialize Domain / Application Services
 	userService := service.NewUserService(userRepo)
 	packService := service.NewExamPackService(packRepo, userRepo)
@@ -49,7 +52,7 @@ func main() {
 	requestService := service.NewExamRequestService(requestRepo, userRepo, packRepo)
 
 	// 3. Initialize Delivery HTTP Handlers
-	authHandler := delivery.NewAuthHandler(userService)
+	authHandler := delivery.NewAuthHandler(userService, oauthService)
 	packHandler := delivery.NewExamPackHandler(packService, examService)
 	examHandler := delivery.NewExamHandler(examService, attemptService)
 	attemptHandler := delivery.NewAttemptHandler(attemptService)

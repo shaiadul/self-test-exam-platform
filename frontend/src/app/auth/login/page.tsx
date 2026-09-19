@@ -11,6 +11,7 @@ import { FaEnvelope, FaLock, FaArrowLeft } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 import { loginAction } from "../../../lib/actions";
+import { SocialAuthButtons } from "../../../components/auth/SocialAuthButtons";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -24,6 +25,13 @@ export default function SignIn() {
   // Prefetch dashboard route so transition is instant
   useEffect(() => {
     router.prefetch("/dashboard");
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlErr = params.get("error");
+      if (urlErr) {
+        setError(decodeURIComponent(urlErr));
+      }
+    }
   }, [router]);
 
   // Environment fallback variables
@@ -158,6 +166,16 @@ export default function SignIn() {
             >
               {loading ? "Authenticating..." : "Sign In"}
             </PrimaryBtn>
+
+            <div className="relative flex items-center py-2">
+              <div className="flex-grow border-t border-slate-200/80"></div>
+              <span className="flex-shrink mx-3 text-slate-400 text-[11px] font-bold uppercase tracking-wider font-mono">
+                or continue with
+              </span>
+              <div className="flex-grow border-t border-slate-200/80"></div>
+            </div>
+
+            <SocialAuthButtons mode="login" />
 
             {/* Quick Demo Preset Credentials */}
             <div className="border-t border-slate-100 pt-4 mt-4">

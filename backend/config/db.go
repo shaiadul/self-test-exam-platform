@@ -152,10 +152,12 @@ func createIndexes() {
 		"CREATE INDEX IF NOT EXISTS idx_exam_requests_teacher_id ON exam_requests(teacher_id)",
 		"CREATE INDEX IF NOT EXISTS idx_exam_requests_pack_id ON exam_requests(pack_id)",
 		"CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)",
+		"CREATE INDEX IF NOT EXISTS idx_users_provider_provider_id ON users(provider, provider_id)",
+		"ALTER TABLE users ALTER COLUMN password DROP NOT NULL",
 	}
 	for _, q := range indexQueries {
 		if err := DB.Exec(q).Error; err != nil {
-			log.Printf("Failed to create index (%s): %v", q, err)
+			log.Printf("DB Exec query note (%s): %v", q, err)
 		}
 	}
 }

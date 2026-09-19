@@ -47,6 +47,29 @@ func (r *PostgresUserRepository) GetByID(id int) (*user.User, error) {
 	return &u, nil
 }
 
+func (r *PostgresUserRepository) GetByProviderAndID(provider, providerID string) (*user.User, error) {
+	var u user.User
+	err := r.db.Where("provider = ? AND provider_id = ?", provider, providerID).First(&u).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (r *PostgresUserRepository) LinkSocialAccount(userID int, provider, providerID string, image *string) error {
+	updates := map[string]interface{}{
+		"provider":    provider,
+		"provider_id": providerID,
+	}
+	if image != nil && *image != "" {
+		updates["image"] = *image
+	}
+	return r.db.Model(&user.User{}).Where("id = ?", userID).Updates(updates).Error
+}
+
 func (r *PostgresUserRepository) GetRoleByID(id int) (string, error) {
 	var role string
 	err := r.db.Model(&user.User{}).Where("id = ?", id).Pluck("role", &role).Error

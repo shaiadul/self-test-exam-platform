@@ -1,23 +1,32 @@
 package http
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/selftest/backend/internal/domain/user"
+	"github.com/selftest/backend/internal/infrastructure/oauth"
 	"github.com/selftest/backend/internal/service"
 	"github.com/selftest/backend/middleware"
 )
 
 type AuthHandler struct {
-	userService *service.UserService
+	userService  *service.UserService
+	oauthService *oauth.OAuthService
 }
 
-func NewAuthHandler(userService *service.UserService) *AuthHandler {
-	return &AuthHandler{userService: userService}
+func NewAuthHandler(userService *service.UserService, oauthService *oauth.OAuthService) *AuthHandler {
+	return &AuthHandler{
+		userService:  userService,
+		oauthService: oauthService,
+	}
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -194,3 +203,158 @@ func (h *AuthHandler) HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
 	}
 }
+
+// HandleSocialLogin handles direct token/profile verification from Next.js Auth.js (POST /api/auth/oauth/social)
+func (h *AuthHandler) HandleSocialLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req user.SocialLoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	res, err := h.userService.SocialLogin(req)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(res)
+}
+
+// HandleOAuthRedirect initiates Go OAuth2 flow (GET /api/auth/oauth/{provider})
+func (h *AuthHandler) HandleOAuthRedirect(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	path := strings.Trim(r.URL.Path, "/")
+	parts := strings.Split(path, "/")
+	if len(parts) < 4 {
+		http.Error(w, `{"error": "Invalid oauth provider"}`, http.StatusBadRequest)
+		return
+	}
+	provider := parts[3]
+
+	// Generate CSRF state
+	stateBytes := make([]byte, 16)
+	if _, err := rand.Read(stateBytes); err != nil {
+		http.Error(w, `{"error": "Failed to generate oauth state"}`, http.StatusInternalServerError)
+		return
+	}
+	state := hex.EncodeToString(stateBytes)
+
+	// Set state cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth_state",
+		Value:    state,
+		Path:     "/",
+		Expires:  time.Now().Add(10 * time.Minute),
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https",
+	})
+
+	authURL, err := h.oauthService.GetAuthURL(provider, state)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
+}
+
+// HandleOAuthCallback handles provider callback in Go OAuth2 flow (GET /api/auth/oauth/{provider}/callback)
+func (h *AuthHandler) HandleOAuthCallback(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	path := strings.Trim(r.URL.Path, "/")
+	parts := strings.Split(path, "/")
+	if len(parts) < 4 {
+		http.Error(w, `{"error": "Invalid oauth callback"}`, http.StatusBadRequest)
+		return
+	}
+	provider := parts[3]
+
+	// Check for provider error query params
+	if errParam := r.URL.Query().Get("error"); errParam != "" {
+		errDesc := r.URL.Query().Get("error_description")
+		if errDesc == "" {
+			errDesc = errParam
+		}
+		target := fmt.Sprintf("%s/auth/login?error=%s", h.oauthService.GetFrontendURL(), url.QueryEscape(errDesc))
+		http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+		return
+	}
+
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		target := fmt.Sprintf("%s/auth/login?error=missing_oauth_code", h.oauthService.GetFrontendURL())
+		http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+		return
+	}
+
+	// Validate state
+	state := r.URL.Query().Get("state")
+	if stateCookie, err := r.Cookie("oauth_state"); err == nil && stateCookie.Value != "" {
+		if stateCookie.Value != state {
+			target := fmt.Sprintf("%s/auth/login?error=invalid_oauth_state", h.oauthService.GetFrontendURL())
+			http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+			return
+		}
+	}
+
+	// Exchange code for user details
+	socialReq, err := h.oauthService.ExchangeAndFetchUser(r.Context(), provider, code)
+	if err != nil {
+		target := fmt.Sprintf("%s/auth/login?error=%s", h.oauthService.GetFrontendURL(), url.QueryEscape(err.Error()))
+		http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+		return
+	}
+
+	// Upsert / login in user service
+	res, err := h.userService.SocialLogin(*socialReq)
+	if err != nil {
+		target := fmt.Sprintf("%s/auth/login?error=%s", h.oauthService.GetFrontendURL(), url.QueryEscape(err.Error()))
+		http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+		return
+	}
+
+	// Set auth cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    res.Token,
+		Path:     "/",
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: false,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	// Redirect to frontend callback page to finalize session
+	imgStr := ""
+	if res.User.Image != nil {
+		imgStr = *res.User.Image
+	}
+	target := fmt.Sprintf("%s/auth/callback?token=%s&role=%s&name=%s&id=%d&email=%s&image=%s",
+		h.oauthService.GetFrontendURL(),
+		url.QueryEscape(res.Token),
+		url.QueryEscape(res.User.Role),
+		url.QueryEscape(res.User.Name),
+		res.User.ID,
+		url.QueryEscape(res.User.Email),
+		url.QueryEscape(imgStr),
+	)
+
+	http.Redirect(w, r, target, http.StatusTemporaryRedirect)
+}
+

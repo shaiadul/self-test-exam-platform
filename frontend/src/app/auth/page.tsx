@@ -14,6 +14,7 @@ import Lottie from "lottie-react";
 import onlineExamAnimation from "../../../public/animations/online-exam.json";
 import { PrimaryBtn } from "../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../components/ui/OutlineBtn";
+import { SocialAuthButtons } from "../../components/auth/SocialAuthButtons";
 
 export default function Auth() {
   return (
@@ -159,6 +160,16 @@ export default function Auth() {
                 >
                   Create New Account
                 </OutlineBtn>
+
+                <div className="relative flex items-center py-2 sm:py-3">
+                  <div className="flex-grow border-t border-slate-200"></div>
+                  <span className="flex-shrink mx-3 text-slate-400 text-[11px] font-bold uppercase tracking-wider font-mono">
+                    or quick social access
+                  </span>
+                  <div className="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <SocialAuthButtons mode="login" />
               </div>
 
               {/* Trust Footer Note */}

@@ -11,6 +11,7 @@ import { FaEnvelope, FaLock, FaArrowLeft, FaUser } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 import { registerAction } from "../../../lib/actions";
+import { SocialAuthButtons } from "../../../components/auth/SocialAuthButtons";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -137,6 +138,16 @@ export default function Register() {
             >
               {loading ? "Creating account..." : "Register Now"}
             </PrimaryBtn>
+
+            <div className="relative flex items-center py-2">
+              <div className="flex-grow border-t border-slate-200/80"></div>
+              <span className="flex-shrink mx-3 text-slate-400 text-[11px] font-bold uppercase tracking-wider font-mono">
+                or sign up with
+              </span>
+              <div className="flex-grow border-t border-slate-200/80"></div>
+            </div>
+
+            <SocialAuthButtons mode="register" />
 
             <div className="text-center pt-2">
               <p className="text-slate-500 text-xs font-medium">
