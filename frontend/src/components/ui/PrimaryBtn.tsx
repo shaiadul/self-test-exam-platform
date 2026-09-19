@@ -18,7 +18,7 @@ export function PrimaryBtn({
   const baseClasses = cn(
     "inline-flex items-center justify-center px-3.5 py-2 sm:px-4 sm:py-2",
     "rounded text-white font-semibold text-xs sm:text-sm whitespace-nowrap",
-    "bg-primary hover:bg-primary-dark transition duration-150 active:scale-[0.99] cursor-pointer shadow-xs",
+    "bg-primary hover:bg-primary-dark transition duration-150 active:scale-[0.99] cursor-pointer shadow-xs disabled:opacity-70 disabled:cursor-not-allowed",
     className,
   );
 

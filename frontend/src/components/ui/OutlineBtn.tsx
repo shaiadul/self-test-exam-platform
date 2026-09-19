@@ -38,7 +38,7 @@ export function OutlineBtn({
 }: OutlineButtonProps) {
   const baseClasses = cn(
     "inline-flex items-center justify-center whitespace-nowrap relative overflow-hidden cursor-pointer",
-    "hover:opacity-90 transition duration-300",
+    "hover:opacity-90 transition duration-300 disabled:opacity-70 disabled:cursor-not-allowed",
     sizeClasses[size],
     variantClasses[variant],
     className,

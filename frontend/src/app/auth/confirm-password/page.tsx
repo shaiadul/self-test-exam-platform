@@ -6,6 +6,7 @@ import logo2 from "../../../../public/global/logo2.png";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Input } from "../../../components/ui/Input";
+import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
 import { FaLock, FaArrowLeft } from "react-icons/fa";
 import { motion } from "framer-motion";
 
@@ -105,12 +106,12 @@ export default function ConfirmPassword() {
               required
             />
 
-            <button
+            <PrimaryBtn
               type="submit"
-              className="w-full bg-primary hover:bg-primary-dark text-white font-bold text-sm px-4 py-2.5 rounded shadow-xs transition-all active:scale-[0.99] cursor-pointer"
+              className="w-full py-2.5 text-sm font-bold"
             >
               Reset Password
-            </button>
+            </PrimaryBtn>
 
             <div className="text-center pt-2">
               <p className="text-slate-500 text-xs font-medium">
