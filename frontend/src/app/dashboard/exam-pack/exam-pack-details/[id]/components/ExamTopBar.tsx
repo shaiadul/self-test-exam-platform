@@ -94,6 +94,16 @@ export const ExamTopBar: React.FC<ExamTopBarProps> = ({
   onToggleFullscreen,
   onOpenSubmitConfirm,
 }) => {
+  // Bounded timer: cannot exceed the remaining time until the exam window closes
+  const effectiveDurationSeconds = React.useMemo(() => {
+    const configured = Math.max(1, (examMeta.durationMinutes || 30) * 60);
+    if (!examMeta.endDate) return configured;
+    const endMs = new Date(examMeta.endDate).getTime();
+    if (isNaN(endMs)) return configured;
+    const windowRemaining = Math.max(0, Math.floor((endMs - Date.now()) / 1000));
+    return Math.min(configured, windowRemaining);
+  }, [examMeta.durationMinutes, examMeta.endDate]);
+
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs px-3 sm:px-6 py-2.5">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
@@ -127,7 +137,7 @@ export const ExamTopBar: React.FC<ExamTopBarProps> = ({
         {/* Center: Countdown Timer */}
         <div className="shrink-0">
           <Timer
-            duration={examMeta.durationMinutes * 60}
+            duration={effectiveDurationSeconds}
             onTimeUp={onTimeUp}
             isRunning={true}
           />

@@ -11,7 +11,7 @@ import {
   FaChevronRight,
   FaCheck,
 } from "react-icons/fa";
-import { formatDateTime, DATE_FORMATS } from "@/lib/date";
+import { formatDateTime, toValidDate, DATE_FORMATS } from "@/lib/date";
 
 interface DateTimePickerProps {
   label?: string;
@@ -40,7 +40,7 @@ export default function DateTimePicker({
   onChange,
 }: DateTimePickerProps) {
   const today = new Date();
-  const initialDate = value ? new Date(value) : null;
+  const initialDate = toValidDate(value);
 
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(initialDate);
@@ -56,6 +56,22 @@ export default function DateTimePicker({
   const [currentYear, setCurrentYear] = useState(
     initialDate?.getFullYear() ?? today.getFullYear()
   );
+
+  // Sync internal state when external value prop changes
+  useEffect(() => {
+    if (value) {
+      const parsed = toValidDate(value);
+      if (parsed) {
+        setSelectedDate(parsed);
+        setHour(parsed.getHours());
+        setMinute(parsed.getMinutes());
+        setCurrentMonth(parsed.getMonth());
+        setCurrentYear(parsed.getFullYear());
+      }
+    } else {
+      setSelectedDate(null);
+    }
+  }, [value]);
 
   // Close when clicking outside
   useEffect(() => {

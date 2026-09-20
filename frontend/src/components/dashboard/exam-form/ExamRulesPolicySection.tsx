@@ -27,21 +27,40 @@ export const ExamRulesPolicySection: React.FC<ExamRulesPolicySectionProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <ToggleSwitch
-          label="Negative Marking"
-          checked={settings.negativeMarking}
-          onChange={(val) => onChange({ negativeMarking: val })}
-        />
-        <ToggleSwitch
-          label="Question Randomization"
-          checked={settings.randomization}
-          onChange={(val) => onChange({ randomization: val })}
-        />
-        <ToggleSwitch
-          label="Instant Feedback"
-          checked={settings.feedback}
-          onChange={(val) => onChange({ feedback: val })}
-        />
+        <div className="space-y-1">
+          <ToggleSwitch
+            label="Negative Marking"
+            checked={settings.negativeMarking}
+            onChange={(val) => onChange({ negativeMarking: val })}
+          />
+          <p className="text-[11px] text-slate-500 font-sans">
+            Deducts penalty marks for every wrong answer.
+          </p>
+        </div>
+
+        <div className="space-y-1">
+          <ToggleSwitch
+            label="Question Randomization"
+            checked={settings.randomization}
+            onChange={(val) => onChange({ randomization: val })}
+          />
+          <p className="text-[11px] text-slate-500 font-sans">
+            Shuffles question sequence dynamically for every student.
+          </p>
+        </div>
+
+        <div className="space-y-1">
+          <ToggleSwitch
+            label="Instant Feedback"
+            checked={settings.feedback}
+            onChange={(val) => onChange({ feedback: val })}
+          />
+          <p className="text-[11px] text-slate-500 font-sans">
+            {settings.feedback
+              ? "Students immediately view scores & solutions upon submit."
+              : "Results & solutions hidden from students upon submit."}
+          </p>
+        </div>
       </div>
 
       {/* Enhanced Negative Marking Value Section */}

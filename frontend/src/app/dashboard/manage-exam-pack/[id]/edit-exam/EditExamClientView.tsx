@@ -12,12 +12,14 @@ import { ExamFormData, ExamSettingsData } from "../../../../../components/dashbo
 import { ExamBasicDetailsSection } from "../../../../../components/dashboard/exam-form/ExamBasicDetailsSection";
 import { ExamScoringScheduleSection } from "../../../../../components/dashboard/exam-form/ExamScoringScheduleSection";
 import { ExamRulesPolicySection } from "../../../../../components/dashboard/exam-form/ExamRulesPolicySection";
+import { toValidDate } from "@/lib/date";
 
 interface EditExamClientViewProps {
   packId: number;
   examId: string;
   initialAssets: any[];
   initialExam: any;
+  questionCount?: number;
 }
 
 export default function EditExamClientView({
@@ -25,6 +27,7 @@ export default function EditExamClientView({
   examId,
   initialAssets,
   initialExam,
+  questionCount = 0,
 }: EditExamClientViewProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -70,8 +73,8 @@ export default function EditExamClientView({
     passMark: initialExam?.passingMarks || initialExam?.passMark || 33,
     durationMinutes:
       initialExam?.durationMinutes || initialExam?.duration || 30,
-    startDate: formatDateTime(initialExam?.startDate || ""),
-    endDate: formatDateTime(initialExam?.endDate || ""),
+    startDate: toValidDate(initialExam?.startDate)?.toISOString() || "",
+    endDate: toValidDate(initialExam?.endDate)?.toISOString() || "",
   });
 
   const [examSettings, setExamSettings] = useState<ExamSettingsData>({
@@ -125,7 +128,7 @@ export default function EditExamClientView({
         details: examPackData.details.trim(),
         level: examPackData.level,
         batch: examPackData.batch,
-        totalMarks: Number(examPackData.totalMarks) || 100,
+        totalMarks: questionCount * (Number(examPackData.perQuestionMark) || 2),
         passingMarks: Number(examPackData.passMark) || 33,
         passMark: Number(examPackData.passMark) || 33,
         perQuestionMarks: Number(examPackData.perQuestionMark) || 2,
@@ -144,7 +147,9 @@ export default function EditExamClientView({
           ? Number(examSettings.negativeValue) || 0.5
           : 0,
         privateExam: examSettings.privateExam,
-        privatePassword: examSettings.privatePassword,
+        isPrivate: examSettings.privateExam,
+        passcode: examSettings.privatePassword || "",
+        privatePassword: examSettings.privatePassword || "",
       };
 
       const res = await updateExamAction(examId, packId, payload);
@@ -198,6 +203,9 @@ export default function EditExamClientView({
         <ExamScoringScheduleSection
           data={examPackData}
           onChange={(patch) => setExamPackData((prev) => ({ ...prev, ...patch }))}
+          questionCount={questionCount}
+          negativeMarking={examSettings.negativeMarking}
+          negativeValue={examSettings.negativeValue}
         />
 
         {/* Section 3: Negative Marking & Rules */}

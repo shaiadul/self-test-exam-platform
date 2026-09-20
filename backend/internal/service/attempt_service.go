@@ -48,7 +48,7 @@ func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.Submi
 	if now.Before(targetExam.StartDate) {
 		return nil, ErrExamNotStarted
 	}
-	if now.After(targetExam.EndDate) {
+	if now.After(targetExam.EndDate.Add(2 * time.Minute)) {
 		return nil, ErrExamEnded
 	}
 
@@ -109,6 +109,7 @@ func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.Submi
 	return &attempt.SubmitExamResponse{
 		ExamAttempt: newAttempt,
 		UserName:    userName,
+		Feedback:    targetExam.Feedback,
 	}, nil
 }
 
@@ -212,6 +213,12 @@ func (s *AttemptService) GetAttemptQuestions(userID, attemptID int) ([]exam.Ques
 	if a.UserID != userID && !s.isStaff(userID) {
 		return nil, ErrForbidden
 	}
+
+	targetExam, err := s.examRepo.GetExamByID(a.ExamID)
+	if err == nil && targetExam != nil && !targetExam.Feedback && !s.isStaff(userID) {
+		return []exam.Question{}, nil
+	}
+
 	return s.examRepo.GetQuestionsByExamID(a.ExamID)
 }
 
@@ -288,5 +295,7 @@ func (s *AttemptService) GetAttemptDetails(userID, id int) (*attempt.AttemptDeta
 		TotalMarks:       totalMarks,
 		PassingMarks:     passingMarks,
 		NegativeMarks:    negativeMarks,
+		Feedback:         targetExam != nil && targetExam.Feedback,
+		Randomization:    targetExam != nil && targetExam.Randomization,
 	}, nil
 }

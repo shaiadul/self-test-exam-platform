@@ -17,9 +17,9 @@ func NewPostgresExamRepository(db *gorm.DB) *PostgresExamRepository {
 	return &PostgresExamRepository{db: db}
 }
 
-const examColumns = `id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, COALESCE(is_private, false) AS is_private, COALESCE(passcode, '') AS passcode, COALESCE(duration_minutes, 30) AS duration_minutes, created_by, created_at, updated_at`
+const examColumns = `id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, COALESCE(is_private, false) AS is_private, COALESCE(passcode, '') AS passcode, COALESCE(duration_minutes, 30) AS duration_minutes, COALESCE(randomization, false) AS randomization, COALESCE(feedback, true) AS feedback, created_by, created_at, updated_at`
 
-const examColumnsE = `e.id, e.exam_pack_id, e.name, e.start_date, e.end_date, e.level, e.batch, e.total_marks, e.passing_marks, e.per_question_marks, e.negative_marks, COALESCE(e.is_private, false) AS is_private, COALESCE(e.passcode, '') AS passcode, COALESCE(e.duration_minutes, 30) AS duration_minutes, e.created_by, e.created_at, e.updated_at`
+const examColumnsE = `e.id, e.exam_pack_id, e.name, e.start_date, e.end_date, e.level, e.batch, e.total_marks, e.passing_marks, e.per_question_marks, e.negative_marks, COALESCE(e.is_private, false) AS is_private, COALESCE(e.passcode, '') AS passcode, COALESCE(e.duration_minutes, 30) AS duration_minutes, COALESCE(e.randomization, false) AS randomization, COALESCE(e.feedback, true) AS feedback, e.created_by, e.created_at, e.updated_at`
 
 func (r *PostgresExamRepository) GetExamsByPackID(packID int) ([]exam.Exam, error) {
 	exams := []exam.Exam{}

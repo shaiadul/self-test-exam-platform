@@ -1,4 +1,4 @@
-import { getExamDetailsAction, getSystemAssetsAction } from "../../../../../lib/actions";
+import { getExamDetailsAction, getQuestionsAction, getSystemAssetsAction } from "../../../../../lib/actions";
 import EditExamClientView from "./EditExamClientView";
 
 export default async function EditExamPage({
@@ -13,9 +13,10 @@ export default async function EditExamPage({
   const packId = id ? parseInt(id) : 0;
   const eId = examId || "";
 
-  const [assets, exam] = await Promise.all([
+  const [assets, exam, questions] = await Promise.all([
     getSystemAssetsAction(),
     eId ? getExamDetailsAction(eId) : Promise.resolve(null),
+    eId ? getQuestionsAction(eId) : Promise.resolve([]),
   ]);
 
   return (
@@ -24,6 +25,7 @@ export default async function EditExamPage({
       examId={eId}
       initialAssets={assets || []}
       initialExam={exam}
+      questionCount={Array.isArray(questions) ? questions.length : 0}
     />
   );
 }

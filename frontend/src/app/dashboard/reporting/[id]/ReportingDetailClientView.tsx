@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { FaArrowLeft, FaPrint, FaTimesCircle } from "react-icons/fa";
+import { FaArrowLeft, FaEyeSlash, FaPrint, FaTimesCircle } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import Scorecard from "../../../../components/dashboard/Scorecard";
 import CertificatePrintLayout from "../../../../components/dashboard/CertificatePrintLayout";
@@ -139,19 +139,37 @@ export default function ReportingDetailClientView({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 self-start sm:self-center">
-            <PrimaryBtn
-              onClick={() => window.print()}
-              className="!text-xs !py-2.5 !px-5 gap-2 !from-purple-600 !to-indigo-600 shadow-md shadow-purple-500/15"
-            >
-              <FaPrint className="text-xs" />
-              <span>Print Official Certificate</span>
-            </PrimaryBtn>
-          </div>
+          {attempt.feedback !== false && (
+            <div className="flex items-center gap-3 self-start sm:self-center">
+              <PrimaryBtn
+                onClick={() => window.print()}
+                className="!text-xs !py-2.5 !px-5 gap-2 !from-purple-600 !to-indigo-600 shadow-md shadow-purple-500/15"
+              >
+                <FaPrint className="text-xs" />
+                <span>Print Official Certificate</span>
+              </PrimaryBtn>
+            </div>
+          )}
         </div>
 
         {/* Info Grid */}
         <ReportingDetailInfoGrid attempt={attempt} />
+
+        {attempt.feedback === false && (
+          <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-4 sm:p-5 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 text-base mt-0.5">
+              <FaEyeSlash />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-950 mb-0.5">
+                Instant Feedback Disabled by Instructor
+              </h3>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                The instructor has turned off instant feedback for this examination. Correct answer keys, question-by-question solution analysis, and detailed explanations are withheld from students.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Scorecard Component */}
         <div className="bg-white rounded border border-slate-200/80 p-4 sm:p-6 shadow-2xs">
@@ -169,11 +187,13 @@ export default function ReportingDetailClientView({
           />
         </div>
 
-        {/* Detailed Question Solution Analysis */}
-        <ReportingDetailQuestionsList
-          questions={questions}
-          userAnswersMap={userAnswersMap}
-        />
+        {/* Detailed Question Solution Analysis - Only visible if feedback is enabled */}
+        {attempt.feedback !== false ? (
+          <ReportingDetailQuestionsList
+            questions={questions}
+            userAnswersMap={userAnswersMap}
+          />
+        ) : null}
 
         {/* Peer Leaderboard Table & Mobile Cards */}
         <ReportingDetailMeritSection

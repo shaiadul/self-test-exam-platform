@@ -154,6 +154,8 @@ func createIndexes() {
 		"CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)",
 		"CREATE INDEX IF NOT EXISTS idx_users_provider_provider_id ON users(provider, provider_id)",
 		"ALTER TABLE users ALTER COLUMN password DROP NOT NULL",
+		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS randomization BOOLEAN DEFAULT false",
+		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS feedback BOOLEAN DEFAULT true",
 	}
 	for _, q := range indexQueries {
 		if err := DB.Exec(q).Error; err != nil {

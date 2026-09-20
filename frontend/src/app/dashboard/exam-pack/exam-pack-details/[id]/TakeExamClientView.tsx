@@ -18,6 +18,7 @@ import { ExamSubmitConfirmModal } from "./components/ExamSubmitConfirmModal";
 import { ExamTopBar } from "./components/ExamTopBar";
 import { ExamQuestionCard } from "./components/ExamQuestionCard";
 import { ExamQuestionMatrix } from "./components/ExamQuestionMatrix";
+import { formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 interface TakeExamClientViewProps {
   examId: string;
@@ -33,8 +34,9 @@ export default function TakeExamClientView({
   const router = useRouter();
 
   // Helper to parse question items safely
-  const normalizeQuestions = (list: any[]): QuestionData[] => {
-    return (list || []).map((q: any, idx: number) => {
+  // Helper to parse question items safely with optional randomization
+  const normalizeQuestions = (list: any[], randomize = false): QuestionData[] => {
+    let result = (list || []).map((q: any, idx: number) => {
       let parsedOptions: string[] = [];
       if (Array.isArray(q.options)) {
         parsedOptions = q.options;
@@ -56,7 +58,16 @@ export default function TakeExamClientView({
         pictureUrl: q.pictureUrl || undefined,
       };
     });
+
+    if (randomize && result.length > 1) {
+      result = [...result].sort(() => Math.random() - 0.5);
+    }
+
+    return result;
   };
+
+  const isRandomized = initialExam?.randomization ?? false;
+  const hasFeedback = initialExam?.feedback ?? true;
 
   const [examMeta, setExamMeta] = useState<ExamMeta>({
     title: initialExam?.name || "Examination",
@@ -67,10 +78,14 @@ export default function TakeExamClientView({
     negativeMarks: initialExam?.negativeMarks ? Math.abs(Number(initialExam.negativeMarks)) : 0,
     isPrivate: initialExam?.isPrivate ?? false,
     passcode: initialExam?.passcode || "",
+    randomization: isRandomized,
+    feedback: hasFeedback,
+    startDate: initialExam?.startDate || "",
+    endDate: initialExam?.endDate || "",
   });
 
   const [questions, setQuestions] = useState<QuestionData[]>(() =>
-    normalizeQuestions(initialQuestions)
+    normalizeQuestions(initialQuestions, isRandomized)
   );
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
@@ -139,6 +154,10 @@ export default function TakeExamClientView({
           negativeMarks: details.negativeMarks ? Math.abs(Number(details.negativeMarks)) : prev.negativeMarks,
           isPrivate: details.isPrivate ?? prev.isPrivate,
           passcode: details.passcode || prev.passcode,
+          randomization: details.randomization ?? prev.randomization,
+          feedback: details.feedback ?? prev.feedback,
+          startDate: details.startDate || prev.startDate,
+          endDate: details.endDate || prev.endDate,
         }));
         if (!details.isPrivate) {
           setIsUnlocked(true);
@@ -146,7 +165,7 @@ export default function TakeExamClientView({
       }
 
       if (Array.isArray(qs) && qs.length > 0) {
-        setQuestions(normalizeQuestions(qs));
+        setQuestions(normalizeQuestions(qs, details?.randomization ?? isRandomized));
       }
     } catch {
       toast.error("Failed to load live question bank.");
@@ -216,7 +235,14 @@ export default function TakeExamClientView({
         const res = await submitExamAction(examId, mappedAnswers, warnings, securityMsg, enteredPasscode);
 
         if (res.success && res.result) {
-          setExamResult(res.result);
+          const resultData = {
+            ...res.result,
+            feedback:
+              res.result.feedback !== undefined
+                ? res.result.feedback
+                : (examMeta.feedback ?? true),
+          };
+          setExamResult(resultData);
           setExamStatus("submitted");
           setShowWarningModal(false);
           toast.success("Exam submitted successfully!");
@@ -286,6 +312,25 @@ export default function TakeExamClientView({
   const handleStartExam = async () => {
     if (questions.length === 0) {
       toast.error("No questions available for this exam yet.");
+      return;
+    }
+    const currentTime = new Date();
+    if (examMeta.startDate && currentTime < new Date(examMeta.startDate)) {
+      toast.error(
+        `Exam has not started yet. Scheduled start: ${formatDateTime(
+          examMeta.startDate,
+          DATE_FORMATS.DATETIME_COMMA
+        )}`
+      );
+      return;
+    }
+    if (examMeta.endDate && currentTime > new Date(examMeta.endDate)) {
+      toast.error(
+        `Exam window is closed. Ended on ${formatDateTime(
+          examMeta.endDate,
+          DATE_FORMATS.DATETIME_COMMA
+        )}`
+      );
       return;
     }
     await enterFullscreen();

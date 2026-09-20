@@ -14,14 +14,14 @@ import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
-import { formatDate } from "@/lib/date";
+import { formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 type Exam = {
   id: string;
   name: string;
   startDate: string;
   endDate: string;
-  status: "Start Exam" | "Complete" | "Expire";
+  status: "Start Exam" | "Complete" | "Expire" | "Upcoming";
   link: string;
   attemptId?: number;
 };
@@ -83,21 +83,24 @@ export default function ExamPackDetailsClientView({
 
   const now = new Date();
   const exams: Exam[] = (initialExams || []).map((e: any) => {
+    const start = new Date(e.startDate);
     const end = new Date(e.endDate);
     const userAttempt = attemptMap.get(e.id);
-    let status: "Start Exam" | "Complete" | "Expire" = "Start Exam";
+    let status: "Start Exam" | "Complete" | "Expire" | "Upcoming" = "Start Exam";
 
     if (userAttempt) {
       status = "Complete";
     } else if (now > end) {
       status = "Expire";
+    } else if (now < start) {
+      status = "Upcoming";
     }
 
     return {
       id: e.id,
       name: e.name,
-      startDate: formatDate(e.startDate, "MMM dd, yyyy"),
-      endDate: formatDate(e.endDate, "MMM dd, yyyy"),
+      startDate: formatDateTime(e.startDate, DATE_FORMATS.DATETIME_MEDIUM),
+      endDate: formatDateTime(e.endDate, DATE_FORMATS.DATETIME_MEDIUM),
       status,
       link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
       attemptId: userAttempt?.id,
@@ -196,6 +199,11 @@ export default function ExamPackDetailsClientView({
                   {exam.status === "Expire" && (
                     <span className="inline-block px-3.5 py-1 bg-slate-100 text-slate-500 font-bold text-xs rounded-full border border-slate-200">
                       Expired
+                    </span>
+                  )}
+                  {exam.status === "Upcoming" && (
+                    <span className="inline-block px-3.5 py-1 bg-amber-50 text-amber-700 font-bold text-xs rounded-full border border-amber-200">
+                      Upcoming
                     </span>
                   )}
                 </td>
@@ -316,6 +324,12 @@ export default function ExamPackDetailsClientView({
             {exam.status === "Expire" && (
               <div className="w-full py-2 bg-slate-100 text-slate-500 rounded text-center text-xs font-mono font-bold border border-slate-200">
                 Exam Expired
+              </div>
+            )}
+
+            {exam.status === "Upcoming" && (
+              <div className="w-full py-2 bg-amber-50 text-amber-700 rounded text-center text-xs font-mono font-bold border border-amber-200">
+                Upcoming Exam
               </div>
             )}
           </div>

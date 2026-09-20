@@ -48,6 +48,8 @@ type CreateExamInput struct {
 	PrivatePassword  *string     `json:"privatePassword"`
 	DurationMinutes  *int        `json:"durationMinutes"`
 	Duration         *int        `json:"duration"`
+	Randomization    *bool       `json:"randomization"`
+	Feedback         *bool       `json:"feedback"`
 }
 
 type UpdateExamInput struct {
@@ -70,6 +72,8 @@ type UpdateExamInput struct {
 	PrivatePassword  *string     `json:"privatePassword"`
 	DurationMinutes  *int        `json:"durationMinutes"`
 	Duration         *int        `json:"duration"`
+	Randomization    *bool       `json:"randomization"`
+	Feedback         *bool       `json:"feedback"`
 }
 
 type QuestionInput struct {
@@ -347,6 +351,15 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 		e.PerQuestionMarks = 2
 	}
 
+	// Calculate total marks based on question length and per-question marks
+	if existingQuestions, qerr := s.repo.GetQuestionsByExamID(examID); qerr == nil && len(existingQuestions) > 0 {
+		e.TotalMarks = len(existingQuestions) * e.PerQuestionMarks
+	} else if input.TotalMarks != nil && *input.TotalMarks > 0 {
+		e.TotalMarks = *input.TotalMarks
+	} else {
+		e.TotalMarks = e.PerQuestionMarks
+	}
+
 	// Negative marks logic:
 	if input.NegativeMarking != nil && !*input.NegativeMarking {
 		e.NegativeMarks = 0.0
@@ -389,6 +402,18 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 		e.DurationMinutes = *input.Duration
 	} else {
 		e.DurationMinutes = 30
+	}
+
+	// Policy settings (Randomization & Feedback)
+	if input.Randomization != nil {
+		e.Randomization = *input.Randomization
+	} else {
+		e.Randomization = false
+	}
+	if input.Feedback != nil {
+		e.Feedback = *input.Feedback
+	} else {
+		e.Feedback = true
 	}
 
 	if creatorID > 0 {
@@ -446,6 +471,9 @@ func (s *ExamService) UpdateExam(userID int, id string, input UpdateExamInput) (
 			e.EndDate = et
 		}
 	}
+	if e.EndDate.Before(e.StartDate) {
+		return nil, ErrEndDateBeforeStart
+	}
 	if strings.TrimSpace(input.Level) != "" {
 		e.Level = strings.TrimSpace(input.Level)
 	}
@@ -464,6 +492,13 @@ func (s *ExamService) UpdateExam(userID int, id string, input UpdateExamInput) (
 		e.PerQuestionMarks = *input.PerQuestionMarks
 	} else if input.PerQuestionMark != nil && *input.PerQuestionMark > 0 {
 		e.PerQuestionMarks = *input.PerQuestionMark
+	}
+
+	// Always calculate total marks dynamically based on question length and per-question marks
+	if existingQuestions, qerr := s.repo.GetQuestionsByExamID(id); qerr == nil && len(existingQuestions) > 0 {
+		e.TotalMarks = len(existingQuestions) * e.PerQuestionMarks
+	} else if input.TotalMarks != nil && *input.TotalMarks > 0 {
+		e.TotalMarks = *input.TotalMarks
 	}
 
 	// Negative marks
@@ -502,6 +537,14 @@ func (s *ExamService) UpdateExam(userID int, id string, input UpdateExamInput) (
 		e.DurationMinutes = *input.DurationMinutes
 	} else if input.Duration != nil && *input.Duration > 0 {
 		e.DurationMinutes = *input.Duration
+	}
+
+	// Policy settings (Randomization & Feedback)
+	if input.Randomization != nil {
+		e.Randomization = *input.Randomization
+	}
+	if input.Feedback != nil {
+		e.Feedback = *input.Feedback
 	}
 
 	if err := s.repo.UpdateExam(e); err != nil {
@@ -658,6 +701,8 @@ func (s *ExamService) CreateQuestion(userID int, examID string, input QuestionIn
 		return nil, err
 	}
 
+	s.syncExamTotalMarks(examID)
+
 	return &q, nil
 }
 
@@ -745,7 +790,28 @@ func (s *ExamService) DeleteQuestion(userID int, examID string, questionID int) 
 	if err := s.assertQuestionEdit(userID, examID, existing); err != nil {
 		return err
 	}
-	return s.repo.DeleteQuestion(questionID)
+	if err := s.repo.DeleteQuestion(questionID); err != nil {
+		return err
+	}
+	s.syncExamTotalMarks(examID)
+	return nil
+}
+
+func (s *ExamService) syncExamTotalMarks(examID string) {
+	e, err := s.repo.GetExamByID(examID)
+	if err != nil || e == nil {
+		return
+	}
+	qs, err := s.repo.GetQuestionsByExamID(examID)
+	if err != nil {
+		return
+	}
+	perQ := e.PerQuestionMarks
+	if perQ <= 0 {
+		perQ = 1
+	}
+	e.TotalMarks = len(qs) * perQ
+	_ = s.repo.UpdateExam(e)
 }
 
 func ParseFlexibleTime(val interface{}) (time.Time, error) {

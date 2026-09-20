@@ -19,4 +19,8 @@ export interface ExamMeta {
   negativeMarks: number;
   isPrivate: boolean;
   passcode?: string;
+  randomization?: boolean;
+  feedback?: boolean;
+  startDate?: string;
+  endDate?: string;
 }

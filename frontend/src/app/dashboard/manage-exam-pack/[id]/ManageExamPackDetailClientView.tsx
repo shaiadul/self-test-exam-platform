@@ -15,7 +15,7 @@ import {
   getExamPackDetailsAction,
   getTeacherExamsAction,
 } from "../../../../lib/actions";
-import { formatDate } from "@/lib/date";
+import { formatDate, formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 type Exam = {
   id: string;
@@ -258,10 +258,10 @@ export default function ManageExamPackDetailClientView({
                         #{exam.id}
                       </td>
                       <td className="py-3.5 px-4 text-slate-600 font-medium font-mono text-[11px]">
-                        {formatDate(exam.startDate)}
+                        {formatDateTime(exam.startDate, DATE_FORMATS.DATETIME_MEDIUM)}
                       </td>
                       <td className="py-3.5 px-4 text-slate-600 font-medium font-mono text-[11px]">
-                        {formatDate(exam.endDate)}
+                        {formatDateTime(exam.endDate, DATE_FORMATS.DATETIME_MEDIUM)}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <Link
@@ -327,14 +327,14 @@ export default function ManageExamPackDetailClientView({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-[10px] font-mono bg-slate-50 p-2 rounded border border-slate-100">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono bg-slate-50 p-2 rounded border border-slate-100">
                     <div>
                       <span className="text-slate-400 block font-sans font-semibold">Start:</span>
-                      <span className="text-slate-700 truncate block">{formatDate(exam.startDate)}</span>
+                      <span className="text-slate-700 truncate block">{formatDateTime(exam.startDate, DATE_FORMATS.DATETIME_MEDIUM)}</span>
                     </div>
                     <div>
                       <span className="text-slate-400 block font-sans font-semibold">End:</span>
-                      <span className="text-slate-700 truncate block">{formatDate(exam.endDate)}</span>
+                      <span className="text-slate-700 truncate block">{formatDateTime(exam.endDate, DATE_FORMATS.DATETIME_MEDIUM)}</span>
                     </div>
                   </div>
 

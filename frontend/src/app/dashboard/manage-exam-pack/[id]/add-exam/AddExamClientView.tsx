@@ -97,7 +97,7 @@ export default function AddExamClientView({
         details: examPackData.details.trim(),
         level: examPackData.level,
         batch: examPackData.batch,
-        totalMarks: Number(examPackData.totalMarks) || 100,
+        totalMarks: Number(examPackData.perQuestionMark) || 2,
         passingMarks: Number(examPackData.passMark) || 33,
         passMark: Number(examPackData.passMark) || 33,
         perQuestionMarks: Number(examPackData.perQuestionMark) || 2,
@@ -116,7 +116,9 @@ export default function AddExamClientView({
           ? Number(examSettings.negativeValue) || 0.5
           : 0,
         privateExam: examSettings.privateExam,
-        privatePassword: examSettings.privatePassword,
+        isPrivate: examSettings.privateExam,
+        passcode: examSettings.privatePassword || "",
+        privatePassword: examSettings.privatePassword || "",
       };
 
       const res = await createExamAction(packId, payload);
@@ -170,6 +172,9 @@ export default function AddExamClientView({
         <ExamScoringScheduleSection
           data={examPackData}
           onChange={(patch) => setExamPackData((prev) => ({ ...prev, ...patch }))}
+          questionCount={0}
+          negativeMarking={examSettings.negativeMarking}
+          negativeValue={examSettings.negativeValue}
         />
 
         {/* Section 3: Negative Marking & Rules */}

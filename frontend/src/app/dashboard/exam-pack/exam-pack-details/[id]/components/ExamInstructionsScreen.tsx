@@ -1,9 +1,10 @@
 import React from "react";
-import { FaShieldAlt, FaSync, FaExpand } from "react-icons/fa";
+import { FaShieldAlt, FaSync, FaExpand, FaCalendarAlt } from "react-icons/fa";
 import { PageContainer } from "../../../../../../components/common/PageContainer";
 import { PrimaryBtn } from "../../../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../../../components/ui/OutlineBtn";
 import { ExamMeta, QuestionData } from "../types";
+import { formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 interface ExamInstructionsScreenProps {
   examMeta: ExamMeta;
@@ -22,6 +23,12 @@ export const ExamInstructionsScreen: React.FC<ExamInstructionsScreenProps> = ({
   onExit,
   onRefreshQuestions,
 }) => {
+  const now = new Date();
+  const startDate = examMeta.startDate ? new Date(examMeta.startDate) : null;
+  const endDate = examMeta.endDate ? new Date(examMeta.endDate) : null;
+  const isUpcoming = startDate ? now < startDate : false;
+  const isExpired = endDate ? now > endDate : false;
+
   return (
     <PageContainer className="max-w-3xl mx-auto py-10 px-4">
       <div className="bg-white rounded p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
@@ -37,6 +44,57 @@ export const ExamInstructionsScreen: React.FC<ExamInstructionsScreenProps> = ({
             Please review all proctored parameters and security protocols before launching.
           </p>
         </div>
+
+        {/* Schedule Window Bar */}
+        {(examMeta.startDate || examMeta.endDate) && (
+          <div className="p-3.5 bg-slate-50 rounded border border-slate-200/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
+            <div className="flex items-center gap-2 text-slate-700">
+              <FaCalendarAlt className="text-primary text-sm shrink-0" />
+              <span className="font-bold">Exam Schedule Window:</span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-[11px] text-slate-600">
+              <div>
+                <span className="text-slate-400 font-sans font-semibold mr-1">Starts:</span>
+                <strong className="text-slate-800">
+                  {formatDateTime(examMeta.startDate, DATE_FORMATS.DATETIME_MEDIUM)}
+                </strong>
+              </div>
+              <div>
+                <span className="text-slate-400 font-sans font-semibold mr-1">Ends:</span>
+                <strong className="text-slate-800">
+                  {formatDateTime(examMeta.endDate, DATE_FORMATS.DATETIME_MEDIUM)}
+                </strong>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Status Alert Banners */}
+        {isUpcoming && (
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded text-center space-y-1">
+            <p className="text-sm font-bold text-amber-900 flex items-center justify-center gap-2">
+              <span>⏰</span> Exam Scheduled — Not Started Yet
+            </p>
+            <p className="text-xs text-amber-800">
+              This examination will become available on{" "}
+              <strong>{formatDateTime(examMeta.startDate, DATE_FORMATS.DATETIME_COMMA)}</strong>.
+              You cannot start this exam before the scheduled start time.
+            </p>
+          </div>
+        )}
+
+        {isExpired && (
+          <div className="p-4 bg-rose-50 border border-rose-200 rounded text-center space-y-1">
+            <p className="text-sm font-bold text-rose-900 flex items-center justify-center gap-2">
+              <span>🚫</span> Exam Window Closed
+            </p>
+            <p className="text-xs text-rose-800">
+              The scheduled window for this exam closed on{" "}
+              <strong>{formatDateTime(examMeta.endDate, DATE_FORMATS.DATETIME_COMMA)}</strong>.
+              Submissions are no longer permitted.
+            </p>
+          </div>
+        )}
 
         {/* Exam Parameters Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50 border border-slate-200/80 rounded text-center">
@@ -109,11 +167,19 @@ export const ExamInstructionsScreen: React.FC<ExamInstructionsScreenProps> = ({
           </OutlineBtn>
           <PrimaryBtn
             onClick={onStartExam}
-            disabled={loadingQuestions || questions.length === 0}
+            disabled={loadingQuestions || questions.length === 0 || isUpcoming || isExpired}
             className="flex-1 !text-xs !py-2.5 !rounded shadow-xs gap-2 disabled:opacity-50"
           >
             <FaExpand className="text-xs" />
-            <span>{loadingQuestions ? "Synchronizing..." : "Start Examination"}</span>
+            <span>
+              {isUpcoming
+                ? "Scheduled (Not Started)"
+                : isExpired
+                ? "Exam Window Closed"
+                : loadingQuestions
+                ? "Synchronizing..."
+                : "Start Examination"}
+            </span>
           </PrimaryBtn>
         </div>
       </div>

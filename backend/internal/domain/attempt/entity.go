@@ -30,6 +30,7 @@ type SubmitExamRequest struct {
 type SubmitExamResponse struct {
 	ExamAttempt
 	UserName string `json:"userName"`
+	Feedback bool   `json:"feedback"`
 }
 
 type AttemptWithExam struct {
@@ -76,6 +77,8 @@ type AttemptDetailsResponse struct {
 	TotalMarks       int       `json:"totalMarks"`
 	PassingMarks     int       `json:"passingMarks"`
 	NegativeMarks    float64   `json:"negativeMarks"`
+	Feedback         bool      `json:"feedback"`
+	Randomization    bool      `json:"randomization"`
 }
 
 type EvaluationResult struct {
