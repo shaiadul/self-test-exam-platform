@@ -28,6 +28,21 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
   normRole,
   stats,
 }) => {
+  const hasAccuracy =
+    Array.isArray(stats?.accuracyData) && stats.accuracyData.length > 0;
+
+  const isRanked = Boolean(
+    stats?.rank &&
+      stats.rank > 0 &&
+      stats?.completedCount &&
+      stats.completedCount > 0
+  );
+
+  const displayRank = isRanked ? `#${stats.rank}` : "Unranked";
+  const displayInstRank = isRanked
+    ? stats.institutionRank
+    : "Complete self-tests to qualify for institution ranking.";
+
   return (
     <div className="space-y-4 sm:space-y-5 animate-fadeIn">
       {/* Top Banner Row */}
@@ -61,19 +76,22 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
               </span>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl sm:text-4xl font-mono font-black tracking-tight">
-                  #{stats?.rank || 0}
+                  {displayRank}
                 </span>
-                {stats?.rank > 0 && (
+                {isRanked ? (
                   <span className="text-[10px] font-mono font-bold bg-white/25 px-1.5 py-0.2 rounded border border-white/30 text-white">
                     Ranked
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-mono font-bold bg-white/20 px-1.5 py-0.2 rounded border border-white/30 text-orange-100">
+                    Unranked
                   </span>
                 )}
               </div>
             </div>
 
             <p className="text-orange-50 text-xs font-normal leading-relaxed max-w-xs mt-1">
-              {stats?.institutionRank ||
-                "Complete self-tests to qualify for institution ranking."}
+              {displayInstRank}
             </p>
           </div>
 
@@ -98,9 +116,11 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
                   Evaluation Accuracy Trends
                 </h3>
-                <span className="text-[9px] font-mono bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.2 rounded border border-emerald-200">
-                  LIVE
-                </span>
+                {hasAccuracy && (
+                  <span className="text-[9px] font-mono bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.2 rounded border border-emerald-200">
+                    LIVE
+                  </span>
+                )}
               </div>
               <p className="text-slate-500 text-xs">
                 Score trajectories across recent attempts.
@@ -108,16 +128,31 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
             </div>
             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 text-slate-600 rounded border border-slate-200 text-[11px] font-mono font-bold">
               <FaChartLine className="text-primary text-[10px]" />
-              <span>Last {stats?.accuracyData?.length || 5} Tests</span>
+              <span>
+                {hasAccuracy ? `Last ${stats.accuracyData.length} Tests` : "No Tests Yet"}
+              </span>
             </div>
           </div>
 
-          <ChartCard
-            data={stats?.accuracyData || []}
-            color="#f97a00"
-            strokeColor="#f97a00"
-            avgLabel="Average Score"
-          />
+          {hasAccuracy ? (
+            <ChartCard
+              data={stats.accuracyData}
+              color="#f97a00"
+              strokeColor="#f97a00"
+              avgLabel="Average Score"
+            />
+          ) : (
+            <div className="border border-slate-200/80 rounded bg-slate-50/50 py-4 my-auto">
+              <EmptyState
+                compact
+                type="exam"
+                title="No Accuracy Trends Yet"
+                description="Complete mock examinations to track your evaluation accuracy trajectories over time."
+                actionLabel="Explore Mock Exams"
+                actionHref="/dashboard/exam-pack"
+              />
+            </div>
+          )}
         </div>
 
         {/* 4-Card Stats Grid */}
@@ -126,7 +161,10 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
             stats={[
               {
                 label: "Completed Exams",
-                value: stats?.completedCount?.toString() || "0",
+                value:
+                  stats?.completedCount !== undefined
+                    ? stats.completedCount.toString()
+                    : "0",
               },
               {
                 label: "Average Mark",
@@ -138,7 +176,10 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
               },
               {
                 label: "Failed Attempts",
-                value: stats?.failedCount?.toString() || "0",
+                value:
+                  stats?.failedCount !== undefined
+                    ? stats.failedCount.toString()
+                    : "0",
               },
             ]}
           />

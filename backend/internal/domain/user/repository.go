@@ -18,4 +18,5 @@ type UserRepository interface {
 	GetUserCountByRole(role string) (int, error)
 	CountIncompleteTeachers() (int, error)
 	GetStudentRank(userID int) (int, error)
+	GetStudentInstitutionRank(userID int, institution string) (int, error)
 }

@@ -122,17 +122,37 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 			})
 		}
 
-		rank, err := s.userRepo.GetStudentRank(userID)
-		if err != nil || rank == 0 {
-			rank = 0
+		rank := 0
+		institutionRank := ""
+		institutionName := valOrDefault(u.Institution, "")
+
+		if completed > 0 {
+			var err error
+			rank, err = s.userRepo.GetStudentRank(userID)
+			if err != nil {
+				rank = 0
+			}
+
+			if rank > 0 {
+				if institutionName != "" {
+					instRank, err := s.userRepo.GetStudentInstitutionRank(userID, institutionName)
+					if err == nil && instRank > 0 {
+						institutionRank = fmt.Sprintf("Rank #%d at %s", instRank, institutionName)
+					} else {
+						institutionRank = fmt.Sprintf("Rank #%d at %s", rank, institutionName)
+					}
+				} else {
+					institutionRank = fmt.Sprintf("Rank #%d across platform", rank)
+				}
+			}
 		}
 
-		institutionName := valOrDefault(u.Institution, "your institution")
-		institutionRank := ""
-		if rank > 0 {
-			institutionRank = fmt.Sprintf("Rank #%d at %s", rank, institutionName)
-		} else {
-			institutionRank = fmt.Sprintf("Complete exams to get ranked at %s", institutionName)
+		if rank == 0 {
+			if institutionName != "" {
+				institutionRank = fmt.Sprintf("Complete exams to qualify for ranking at %s", institutionName)
+			} else {
+				institutionRank = "Complete self-tests to qualify for institution ranking."
+			}
 		}
 
 		stats := report.StudentStats{

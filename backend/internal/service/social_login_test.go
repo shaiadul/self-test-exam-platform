@@ -80,6 +80,7 @@ func (m *mockUserRepo) Delete(id int) error                                     
 func (m *mockUserRepo) GetUserCountByRole(role string) (int, error)               { return 0, nil }
 func (m *mockUserRepo) CountIncompleteTeachers() (int, error)                     { return 0, nil }
 func (m *mockUserRepo) GetStudentRank(userID int) (int, error)                    { return 1, nil }
+func (m *mockUserRepo) GetStudentInstitutionRank(userID int, inst string) (int, error) { return 1, nil }
 
 func TestSocialLogin_NewUser(t *testing.T) {
 	repo := newMockUserRepo()

@@ -187,6 +187,15 @@ func (r *PostgresUserRepository) CountIncompleteTeachers() (int, error) {
 }
 
 func (r *PostgresUserRepository) GetStudentRank(userID int) (int, error) {
+	// If the student has no completed attempts, they are unranked (rank = 0)
+	var attemptCount int64
+	if err := r.db.Table("exam_attempts").Where("user_id = ?", userID).Count(&attemptCount).Error; err != nil {
+		return 0, err
+	}
+	if attemptCount == 0 {
+		return 0, nil
+	}
+
 	// Rank = number of students with a higher average final_score + 1
 	query := `
 		SELECT COUNT(DISTINCT ea2.user_id) + 1
@@ -195,14 +204,50 @@ func (r *PostgresUserRepository) GetStudentRank(userID int) (int, error) {
 			FROM exam_attempts
 			GROUP BY user_id
 		) ea2
-		WHERE ea2.avg_score > COALESCE((
+		WHERE ea2.avg_score > (
 			SELECT AVG(final_score)
 			FROM exam_attempts
 			WHERE user_id = $1
-		), 0)`
+		)`
 
 	var rank int
 	if err := r.db.Raw(query, userID).Scan(&rank).Error; err != nil {
+		return 0, err
+	}
+	return rank, nil
+}
+
+func (r *PostgresUserRepository) GetStudentInstitutionRank(userID int, institution string) (int, error) {
+	if institution == "" {
+		return 0, nil
+	}
+
+	var attemptCount int64
+	if err := r.db.Table("exam_attempts").Where("user_id = ?", userID).Count(&attemptCount).Error; err != nil {
+		return 0, err
+	}
+	if attemptCount == 0 {
+		return 0, nil
+	}
+
+	// Institution Rank = number of students within same institution with a higher average final_score + 1
+	query := `
+		SELECT COUNT(DISTINCT ea2.user_id) + 1
+		FROM (
+			SELECT ea.user_id, AVG(ea.final_score) AS avg_score
+			FROM exam_attempts ea
+			JOIN users u ON u.id = ea.user_id
+			WHERE LOWER(TRIM(u.institution)) = LOWER(TRIM($2))
+			GROUP BY ea.user_id
+		) ea2
+		WHERE ea2.avg_score > (
+			SELECT AVG(final_score)
+			FROM exam_attempts
+			WHERE user_id = $1
+		)`
+
+	var rank int
+	if err := r.db.Raw(query, userID, institution).Scan(&rank).Error; err != nil {
 		return 0, err
 	}
 	return rank, nil
