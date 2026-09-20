@@ -15,9 +15,12 @@ type ExamAttempt struct {
 	Negative        float64   `json:"negative" db:"negative" gorm:"type:numeric(6,2);not null"`
 	FinalScore      float64   `json:"finalScore" db:"final_score" gorm:"type:numeric(6,2);not null"`
 	Passed          bool      `json:"passed" db:"passed" gorm:"not null"`
-	WarningCount    int       `json:"warningCount" db:"warning_count" gorm:"default:0"`
-	SecurityMessage string    `json:"securityMessage" db:"security_message"`
-	CreatedAt       time.Time `json:"createdAt" db:"created_at" gorm:"autoCreateTime"`
+	WarningCount    int        `json:"warningCount" db:"warning_count" gorm:"default:0"`
+	SecurityMessage string     `json:"securityMessage" db:"security_message"`
+	DurationSeconds int        `json:"durationSeconds" db:"duration_seconds" gorm:"default:0"`
+	StartedAt       *time.Time `json:"startedAt" db:"started_at"`
+	AttemptNumber   int        `json:"attemptNumber" db:"attempt_number" gorm:"default:1"`
+	CreatedAt       time.Time  `json:"createdAt" db:"created_at" gorm:"autoCreateTime"`
 }
 
 type SubmitExamRequest struct {
@@ -25,6 +28,8 @@ type SubmitExamRequest struct {
 	WarningCount    int                    `json:"warningCount"`
 	SecurityMessage string                 `json:"securityMessage"`
 	Passcode        string                 `json:"passcode"`
+	DurationSeconds int                    `json:"durationSeconds"`
+	StartedAt       *time.Time             `json:"startedAt"`
 }
 
 type SubmitExamResponse struct {
@@ -34,51 +39,57 @@ type SubmitExamResponse struct {
 }
 
 type AttemptWithExam struct {
-	ID              int       `json:"id"`
-	UserID          int       `json:"userId"`
-	ExamID          string    `json:"examId"`
-	ExamName        string    `json:"examName"`
-	PackName        string    `json:"packName"`
-	Answers         string    `json:"answers"`
-	Total           int       `json:"total"`
-	Correct         int       `json:"correct"`
-	Wrong           int       `json:"wrong"`
-	Negative        float64   `json:"negative"`
-	FinalScore      float64   `json:"finalScore"`
-	Passed          bool      `json:"passed"`
-	WarningCount    int       `json:"warningCount"`
-	SecurityMessage string    `json:"securityMessage"`
-	CreatedAt       time.Time `json:"createdAt"`
+	ID              int        `json:"id"`
+	UserID          int        `json:"userId"`
+	ExamID          string     `json:"examId"`
+	ExamName        string     `json:"examName"`
+	PackName        string     `json:"packName"`
+	Answers         string     `json:"answers"`
+	Total           int        `json:"total"`
+	Correct         int        `json:"correct"`
+	Wrong           int        `json:"wrong"`
+	Negative        float64    `json:"negative"`
+	FinalScore      float64    `json:"finalScore"`
+	Passed          bool       `json:"passed"`
+	WarningCount    int        `json:"warningCount"`
+	SecurityMessage string     `json:"securityMessage"`
+	DurationSeconds int        `json:"durationSeconds"`
+	StartedAt       *time.Time `json:"startedAt"`
+	AttemptNumber   int        `json:"attemptNumber"`
+	CreatedAt       time.Time  `json:"createdAt"`
 }
 
 type AttemptDetailsResponse struct {
-	ID               int       `json:"id"`
-	UserID           int       `json:"userId"`
-	UserName         string    `json:"userName"`
-	ExamID           string    `json:"examId"`
-	ExamName         string    `json:"examName"`
-	ExamPackID       int       `json:"examPackId"`
-	PackName         string    `json:"packName"`
-	Answers          string    `json:"answers"`
-	Total            int       `json:"total"`
-	Correct          int       `json:"correct"`
-	Wrong            int       `json:"wrong"`
-	Negative         float64   `json:"negative"`
-	FinalScore       float64   `json:"finalScore"`
-	Passed           bool      `json:"passed"`
-	WarningCount     int       `json:"warningCount"`
-	SecurityMessage  string    `json:"securityMessage"`
-	CreatedAt        time.Time `json:"createdAt"`
-	StartDate        time.Time `json:"startDate"`
-	EndDate          time.Time `json:"endDate"`
-	Level            string    `json:"level"`
-	Batch            string    `json:"batch"`
-	PerQuestionMarks int       `json:"perQuestionMarks"`
-	TotalMarks       int       `json:"totalMarks"`
-	PassingMarks     int       `json:"passingMarks"`
-	NegativeMarks    float64   `json:"negativeMarks"`
-	Feedback         bool      `json:"feedback"`
-	Randomization    bool      `json:"randomization"`
+	ID               int        `json:"id"`
+	UserID           int        `json:"userId"`
+	UserName         string     `json:"userName"`
+	ExamID           string     `json:"examId"`
+	ExamName         string     `json:"examName"`
+	ExamPackID       int        `json:"examPackId"`
+	PackName         string     `json:"packName"`
+	Answers          string     `json:"answers"`
+	Total            int        `json:"total"`
+	Correct          int        `json:"correct"`
+	Wrong            int        `json:"wrong"`
+	Negative         float64    `json:"negative"`
+	FinalScore       float64    `json:"finalScore"`
+	Passed           bool       `json:"passed"`
+	WarningCount     int        `json:"warningCount"`
+	SecurityMessage  string     `json:"securityMessage"`
+	DurationSeconds  int        `json:"durationSeconds"`
+	StartedAt        *time.Time `json:"startedAt"`
+	AttemptNumber    int        `json:"attemptNumber"`
+	CreatedAt        time.Time  `json:"createdAt"`
+	StartDate        time.Time  `json:"startDate"`
+	EndDate          time.Time  `json:"endDate"`
+	Level            string     `json:"level"`
+	Batch            string     `json:"batch"`
+	PerQuestionMarks int        `json:"perQuestionMarks"`
+	TotalMarks       int        `json:"totalMarks"`
+	PassingMarks     int        `json:"passingMarks"`
+	NegativeMarks    float64    `json:"negativeMarks"`
+	Feedback         bool       `json:"feedback"`
+	Randomization    bool       `json:"randomization"`
 }
 
 type EvaluationResult struct {

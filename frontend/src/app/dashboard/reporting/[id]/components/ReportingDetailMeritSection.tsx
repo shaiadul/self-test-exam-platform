@@ -12,12 +12,14 @@ export const ReportingDetailMeritSection: React.FC<ReportingDetailMeritSectionPr
   currentAttemptId,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"score" | "name">("score");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortBy, setSortBy] = useState<"merit" | "score" | "duration" | "name">("merit");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [showDropdown, setShowDropdown] = useState(false);
 
   const sortOptions = [
+    { label: "Merit Position", value: "merit" },
     { label: "Marks Scored", value: "score" },
+    { label: "Time Taken", value: "duration" },
     { label: "Candidate Name", value: "name" },
   ];
 
@@ -26,11 +28,23 @@ export const ReportingDetailMeritSection: React.FC<ReportingDetailMeritSectionPr
       .filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
       .sort((a, b) => {
         if (sortBy === "score") {
-          return sortOrder === "asc" ? a.score - b.score : b.score - a.score;
-        } else {
+          if (b.score !== a.score) {
+            return sortOrder === "asc" ? a.score - b.score : b.score - a.score;
+          }
+          return a.merit - b.merit;
+        } else if (sortBy === "duration") {
+          const durA = a.durationSeconds && a.durationSeconds > 0 ? a.durationSeconds : Infinity;
+          const durB = b.durationSeconds && b.durationSeconds > 0 ? b.durationSeconds : Infinity;
+          if (durA !== durB) {
+            return sortOrder === "asc" ? durA - durB : durB - durA;
+          }
+          return a.merit - b.merit;
+        } else if (sortBy === "name") {
           return sortOrder === "asc"
             ? a.name.localeCompare(b.name)
             : b.name.localeCompare(a.name);
+        } else {
+          return sortOrder === "asc" ? a.merit - b.merit : b.merit - a.merit;
         }
       });
   }, [peers, searchTerm, sortBy, sortOrder]);
@@ -80,7 +94,7 @@ export const ReportingDetailMeritSection: React.FC<ReportingDetailMeritSectionPr
                     <button
                       key={option.value}
                       onClick={() => {
-                        setSortBy(option.value as "score" | "name");
+                        setSortBy(option.value as "merit" | "score" | "duration" | "name");
                         setShowDropdown(false);
                       }}
                       className={`w-full text-left px-3 py-2 text-xs hover:bg-primary/5 transition cursor-pointer ${
@@ -120,6 +134,7 @@ export const ReportingDetailMeritSection: React.FC<ReportingDetailMeritSectionPr
               <th className="py-3.5 px-6">Rank</th>
               <th className="py-3.5 px-6">Candidate</th>
               <th className="py-3.5 px-6">Score</th>
+              <th className="py-3.5 px-6">Time Taken</th>
               <th className="py-3.5 px-6">Date</th>
             </tr>
           </thead>
@@ -137,15 +152,30 @@ export const ReportingDetailMeritSection: React.FC<ReportingDetailMeritSectionPr
                   #{p.merit}
                 </td>
                 <td className="py-4 px-6 font-bold text-slate-900">
-                  {p.name}{" "}
+                  <span>{p.name}</span>
                   {p.id === currentAttemptId && (
-                    <span className="text-primary text-[10px] font-mono font-bold ml-1 bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+                    <span className="text-primary text-[10px] font-mono font-bold ml-1.5 bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
                       You
+                    </span>
+                  )}
+                  {p.attemptNumber && p.attemptNumber > 1 && (
+                    <span className="text-amber-700 text-[9px] font-mono font-semibold ml-1.5 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                      Retake #{p.attemptNumber}
                     </span>
                   )}
                 </td>
                 <td className="py-4 px-6 font-black text-primary">
                   {p.score}
+                </td>
+                <td className="py-4 px-6 text-xs text-slate-700 font-semibold font-mono">
+                  {p.durationFormatted && p.durationFormatted !== "N/A" ? (
+                    <span className="inline-flex items-center gap-1.5 bg-slate-100 px-2 py-0.5 rounded text-slate-700">
+                      <span className="text-[10px]">⏱️</span>
+                      {p.durationFormatted}
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 font-normal">--</span>
+                  )}
                 </td>
                 <td className="py-4 px-6 text-xs text-slate-500 font-semibold">
                   {p.time}
@@ -155,7 +185,7 @@ export const ReportingDetailMeritSection: React.FC<ReportingDetailMeritSectionPr
 
             {filteredPeers.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-10 text-center text-slate-400 font-medium text-xs">
+                <td colSpan={5} className="py-10 text-center text-slate-400 font-medium text-xs">
                   No peer results match your search.
                 </td>
               </tr>
@@ -191,11 +221,23 @@ export const ReportingDetailMeritSection: React.FC<ReportingDetailMeritSectionPr
                 <p className="font-bold text-slate-900 text-xs truncate">
                   {p.name}
                 </p>
-                {p.id === currentAttemptId && (
-                  <span className="inline-block text-primary text-[9px] font-mono font-bold bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
-                    Your Result
-                  </span>
-                )}
+                <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                  {p.id === currentAttemptId && (
+                    <span className="inline-block text-primary text-[9px] font-mono font-bold bg-primary/10 px-1.5 py-0.2 rounded border border-primary/20">
+                      Your Result
+                    </span>
+                  )}
+                  {p.attemptNumber && p.attemptNumber > 1 && (
+                    <span className="inline-block text-amber-700 text-[8px] font-mono font-semibold bg-amber-50 px-1 py-0.2 rounded border border-amber-200">
+                      Retake #{p.attemptNumber}
+                    </span>
+                  )}
+                  {p.durationFormatted && p.durationFormatted !== "N/A" && (
+                    <span className="inline-block text-slate-600 text-[9px] font-mono font-medium">
+                      ⏱️ {p.durationFormatted}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 

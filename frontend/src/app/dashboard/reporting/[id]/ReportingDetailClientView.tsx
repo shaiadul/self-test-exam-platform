@@ -29,21 +29,75 @@ export default function ReportingDetailClientView({
   const attempt = initialAttempt;
   const questions = initialQuestions || [];
 
-  // Compute peers and rank from initialReportDetails
+  // Helper to format duration in minutes and seconds
+  const formatDuration = (seconds?: number): string => {
+    if (!seconds || seconds <= 0) return "N/A";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins === 0) return `${secs}s`;
+    if (secs === 0) return `${mins}m`;
+    return `${mins}m ${secs}s`;
+  };
+
+  // Compute peers and rank from initialReportDetails with multi-tier tie-breakers:
+  // 1. Highest Score / Points
+  // 2. Less time taken (lower duration)
+  // 3. Attempt Number (first attempt before retakes)
+  // 4. Started earlier (earlier start/submission date-time)
   const { peers } = useMemo(() => {
     if (!initialReportDetails?.attempts || !attempt) {
       return { peers: [] };
     }
 
-    const sorted = [...initialReportDetails.attempts].sort(
-      (a, b) => b.score - a.score
-    );
+    const sorted = [...initialReportDetails.attempts].sort((a, b) => {
+      // 1. Score (higher score wins)
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+
+      // 2. Who took less time (lower durationSeconds wins)
+      const durA = a.durationSeconds && a.durationSeconds > 0 ? a.durationSeconds : Infinity;
+      const durB = b.durationSeconds && b.durationSeconds > 0 ? b.durationSeconds : Infinity;
+      if (durA !== durB) {
+        return durA - durB;
+      }
+
+      // 3. Attempt Number (1st attempt before retakes / who started again)
+      const attNumA = a.attemptNumber && a.attemptNumber > 0 ? a.attemptNumber : 1;
+      const attNumB = b.attemptNumber && b.attemptNumber > 0 ? b.attemptNumber : 1;
+      if (attNumA !== attNumB) {
+        return attNumA - attNumB;
+      }
+
+      // 4. Who started earlier
+      const timeA = new Date(a.startedAt || a.time).getTime() || 0;
+      const timeB = new Date(b.startedAt || b.time).getTime() || 0;
+      return timeA - timeB;
+    });
+
     let rank = 1;
 
     const formattedPeers: PeerStudent[] = sorted.map((att, idx) => {
-      if (idx > 0 && att.score < sorted[idx - 1].score) {
-        rank = idx + 1;
+      if (idx > 0) {
+        const prev = sorted[idx - 1];
+        const prevDur = prev.durationSeconds && prev.durationSeconds > 0 ? prev.durationSeconds : Infinity;
+        const curDur = att.durationSeconds && att.durationSeconds > 0 ? att.durationSeconds : Infinity;
+        const prevAttNum = prev.attemptNumber && prev.attemptNumber > 0 ? prev.attemptNumber : 1;
+        const curAttNum = att.attemptNumber && att.attemptNumber > 0 ? att.attemptNumber : 1;
+        const prevTime = new Date(prev.startedAt || prev.time).getTime() || 0;
+        const curTime = new Date(att.startedAt || att.time).getTime() || 0;
+
+        const isExactTie =
+          att.score === prev.score &&
+          curDur === prevDur &&
+          curAttNum === prevAttNum &&
+          curTime === prevTime;
+
+        if (!isExactTie) {
+          rank = idx + 1;
+        }
       }
+
       return {
         id: att.id,
         merit: rank,
@@ -53,6 +107,10 @@ export default function ReportingDetailClientView({
         score: att.score,
         negative: att.negative,
         institution: att.institution,
+        durationSeconds: att.durationSeconds,
+        durationFormatted: formatDuration(att.durationSeconds),
+        startedAt: att.startedAt,
+        attemptNumber: att.attemptNumber || 1,
       };
     });
 

@@ -120,13 +120,16 @@ type TeacherReportDetail struct {
 }
 
 type TeacherAttemptDetail struct {
-	ID          int       `json:"id"`
-	Name        string    `json:"name"`
-	Institution string    `json:"institution"`
-	Time        time.Time `json:"time"`
-	Score       float64   `json:"score"`
-	Negative    float64   `json:"negative"`
-	Passed      bool      `json:"passed"`
+	ID              int        `json:"id"`
+	Name            string     `json:"name"`
+	Institution     string     `json:"institution"`
+	Time            time.Time  `json:"time"`
+	Score           float64    `json:"score"`
+	Negative        float64    `json:"negative"`
+	Passed          bool       `json:"passed"`
+	DurationSeconds int        `json:"durationSeconds"`
+	StartedAt       *time.Time `json:"startedAt"`
+	AttemptNumber   int        `json:"attemptNumber"`
 }
 
 type ExamAnalysisStats struct {

@@ -30,23 +30,56 @@ export default function TeacherReportDetailClientView({
   const sortedStudents = useMemo(() => {
     if (!report?.attempts) return [];
 
-    // Map attempts and assign rank based on score descending
-    const list = [...report.attempts];
-    const ranked = list
-      .sort((a, b) => b.score - a.score)
-      .map((att, idx) => ({
-        ...att,
-        meritRank: idx + 1,
-      }));
-
-    // Resolve ties
-    let currentRank = 1;
-    for (let i = 0; i < ranked.length; i++) {
-      if (i > 0 && ranked[i].score < ranked[i - 1].score) {
-        currentRank = i + 1;
+    // Map attempts and assign rank based on standardized leaderboard tie-breakers:
+    // 1. Highest Score
+    // 2. Lower Duration / Less time taken
+    // 3. Attempt Number (original attempt before retakes)
+    // 4. Started earlier (earlier start/submission date-time)
+    const list = [...report.attempts].sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
       }
-      ranked[i].meritRank = currentRank;
-    }
+      const durA = a.durationSeconds && a.durationSeconds > 0 ? a.durationSeconds : Infinity;
+      const durB = b.durationSeconds && b.durationSeconds > 0 ? b.durationSeconds : Infinity;
+      if (durA !== durB) {
+        return durA - durB;
+      }
+      const attNumA = a.attemptNumber && a.attemptNumber > 0 ? a.attemptNumber : 1;
+      const attNumB = b.attemptNumber && b.attemptNumber > 0 ? b.attemptNumber : 1;
+      if (attNumA !== attNumB) {
+        return attNumA - attNumB;
+      }
+      const timeA = new Date(a.startedAt || a.time).getTime() || 0;
+      const timeB = new Date(b.startedAt || b.time).getTime() || 0;
+      return timeA - timeB;
+    });
+
+    let currentRank = 1;
+    const ranked = list.map((att, idx) => {
+      if (idx > 0) {
+        const prev = list[idx - 1];
+        const prevDur = prev.durationSeconds && prev.durationSeconds > 0 ? prev.durationSeconds : Infinity;
+        const curDur = att.durationSeconds && att.durationSeconds > 0 ? att.durationSeconds : Infinity;
+        const prevAttNum = prev.attemptNumber && prev.attemptNumber > 0 ? prev.attemptNumber : 1;
+        const curAttNum = att.attemptNumber && att.attemptNumber > 0 ? att.attemptNumber : 1;
+        const prevTime = new Date(prev.startedAt || prev.time).getTime() || 0;
+        const curTime = new Date(att.startedAt || att.time).getTime() || 0;
+
+        const isExactTie =
+          att.score === prev.score &&
+          curDur === prevDur &&
+          curAttNum === prevAttNum &&
+          curTime === prevTime;
+
+        if (!isExactTie) {
+          currentRank = idx + 1;
+        }
+      }
+      return {
+        ...att,
+        meritRank: currentRank,
+      };
+    });
 
     // Apply filter
     const filtered = ranked.filter((s) =>

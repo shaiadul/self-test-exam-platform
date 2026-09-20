@@ -102,6 +102,8 @@ export default function TakeExamClientView({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [examResult, setExamResult] = useState<any>(null);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [examStartTime, setExamStartTime] = useState<Date | null>(null);
+  const examStartTimeRef = useRef<Date | null>(null);
 
   // Focus Navigation & Question State
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState<number>(0);
@@ -232,7 +234,21 @@ export default function TakeExamClientView({
         const securityMsg =
           reason || (warnings > 0 ? `Completed with ${warnings} security warning(s)` : "Normal Clean Submission");
 
-        const res = await submitExamAction(examId, mappedAnswers, warnings, securityMsg, enteredPasscode);
+        const started = examStartTimeRef.current || new Date();
+        const durationSeconds = Math.max(
+          1,
+          Math.round((Date.now() - started.getTime()) / 1000)
+        );
+
+        const res = await submitExamAction(
+          examId,
+          mappedAnswers,
+          warnings,
+          securityMsg,
+          enteredPasscode,
+          durationSeconds,
+          started.toISOString()
+        );
 
         if (res.success && res.result) {
           const resultData = {
@@ -334,6 +350,9 @@ export default function TakeExamClientView({
       return;
     }
     await enterFullscreen();
+    const startedAt = new Date();
+    setExamStartTime(startedAt);
+    examStartTimeRef.current = startedAt;
     setExamStatus("running");
   };
 

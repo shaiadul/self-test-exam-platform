@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -523,15 +524,48 @@ func (s *ReportService) GetTeacherReportDetails(userID int, examID string) (*rep
 			}
 
 			studentAttempts = append(studentAttempts, report.TeacherAttemptDetail{
-				ID:          a.ID,
-				Name:        studentName,
-				Institution: studentInst,
-				Time:        a.CreatedAt,
-				Score:       a.FinalScore,
-				Negative:    a.Negative,
-				Passed:      a.Passed,
+				ID:              a.ID,
+				Name:            studentName,
+				Institution:     studentInst,
+				Time:            a.CreatedAt,
+				Score:           a.FinalScore,
+				Negative:        a.Negative,
+				Passed:          a.Passed,
+				DurationSeconds: a.DurationSeconds,
+				StartedAt:       a.StartedAt,
+				AttemptNumber:   a.AttemptNumber,
 			})
 		}
+
+		// Rank candidates according to standard merit leaderboard tie-breaker:
+		// 1. Higher Score
+		// 2. Lower DurationSeconds (took less time)
+		// 3. Lower AttemptNumber (original attempt before "start again" retake)
+		// 4. Earlier StartedAt/Time (started earlier)
+		sort.SliceStable(studentAttempts, func(i, j int) bool {
+			if studentAttempts[i].Score != studentAttempts[j].Score {
+				return studentAttempts[i].Score > studentAttempts[j].Score
+			}
+			durI := studentAttempts[i].DurationSeconds
+			durJ := studentAttempts[j].DurationSeconds
+			if durI > 0 && durJ > 0 && durI != durJ {
+				return durI < durJ
+			}
+			attI := studentAttempts[i].AttemptNumber
+			attJ := studentAttempts[j].AttemptNumber
+			if attI > 0 && attJ > 0 && attI != attJ {
+				return attI < attJ
+			}
+			timeI := studentAttempts[i].Time
+			if studentAttempts[i].StartedAt != nil && !studentAttempts[i].StartedAt.IsZero() {
+				timeI = *studentAttempts[i].StartedAt
+			}
+			timeJ := studentAttempts[j].Time
+			if studentAttempts[j].StartedAt != nil && !studentAttempts[j].StartedAt.IsZero() {
+				timeJ = *studentAttempts[j].StartedAt
+			}
+			return timeI.Before(timeJ)
+		})
 	}
 
 	average := 0.0

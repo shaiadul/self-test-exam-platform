@@ -83,6 +83,46 @@ func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.Submi
 		securityMessage = securityMessage[:500]
 	}
 
+	// Time taken / duration calculation
+	durationSeconds := req.DurationSeconds
+	maxAllowedDuration := 30 * 60
+	if targetExam.DurationMinutes > 0 {
+		maxAllowedDuration = targetExam.DurationMinutes * 60
+	}
+	if durationSeconds > maxAllowedDuration+120 {
+		durationSeconds = maxAllowedDuration
+	}
+
+	var startedAt *time.Time
+	if req.StartedAt != nil && !req.StartedAt.IsZero() {
+		startedAt = req.StartedAt
+		if durationSeconds <= 0 {
+			calcSec := int(now.Sub(*req.StartedAt).Seconds())
+			if calcSec > 0 {
+				durationSeconds = calcSec
+			}
+		}
+	} else if durationSeconds > 0 {
+		calcStart := now.Add(-time.Duration(durationSeconds) * time.Second)
+		startedAt = &calcStart
+	} else {
+		startedAt = &now
+	}
+
+	if durationSeconds < 1 {
+		durationSeconds = 1
+	}
+
+	// Calculate attempt number for this user on this exam (first attempt vs retakes)
+	attemptNum := 1
+	if userAttempts, err := s.attemptRepo.GetExamAttemptsByUserID(userID); err == nil {
+		for _, ea := range userAttempts {
+			if ea.ExamID == examID {
+				attemptNum++
+			}
+		}
+	}
+
 	newAttempt := attempt.ExamAttempt{
 		UserID:          userID,
 		ExamID:          examID,
@@ -95,6 +135,9 @@ func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.Submi
 		Passed:          evalResult.Passed,
 		WarningCount:    warningCount,
 		SecurityMessage: securityMessage,
+		DurationSeconds: durationSeconds,
+		StartedAt:       startedAt,
+		AttemptNumber:   attemptNum,
 	}
 
 	if err := s.attemptRepo.CreateExamAttempt(&newAttempt); err != nil {
@@ -179,6 +222,9 @@ func (s *AttemptService) GetUserAttempts(userID int) ([]attempt.AttemptWithExam,
 			Passed:          a.Passed,
 			WarningCount:    a.WarningCount,
 			SecurityMessage: a.SecurityMessage,
+			DurationSeconds: a.DurationSeconds,
+			StartedAt:       a.StartedAt,
+			AttemptNumber:   a.AttemptNumber,
 			CreatedAt:       a.CreatedAt,
 		})
 	}
@@ -286,6 +332,9 @@ func (s *AttemptService) GetAttemptDetails(userID, id int) (*attempt.AttemptDeta
 		Passed:           a.Passed,
 		WarningCount:     a.WarningCount,
 		SecurityMessage:  a.SecurityMessage,
+		DurationSeconds:  a.DurationSeconds,
+		StartedAt:        a.StartedAt,
+		AttemptNumber:    a.AttemptNumber,
 		CreatedAt:        a.CreatedAt,
 		StartDate:        startDate,
 		EndDate:          endDate,

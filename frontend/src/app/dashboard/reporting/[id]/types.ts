@@ -8,6 +8,10 @@ export interface PeerStudent {
   negative: number;
   image?: string;
   institution?: string;
+  durationSeconds?: number;
+  durationFormatted?: string;
+  startedAt?: string;
+  attemptNumber?: number;
 }
 
 export interface QuestionItem {

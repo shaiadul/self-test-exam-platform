@@ -156,6 +156,10 @@ func createIndexes() {
 		"ALTER TABLE users ALTER COLUMN password DROP NOT NULL",
 		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS randomization BOOLEAN DEFAULT false",
 		"ALTER TABLE exams ADD COLUMN IF NOT EXISTS feedback BOOLEAN DEFAULT true",
+		"ALTER TABLE exam_attempts ADD COLUMN IF NOT EXISTS duration_seconds INT DEFAULT 0",
+		"ALTER TABLE exam_attempts ADD COLUMN IF NOT EXISTS started_at TIMESTAMP WITH TIME ZONE",
+		"ALTER TABLE exam_attempts ADD COLUMN IF NOT EXISTS attempt_number INT DEFAULT 1",
+		"CREATE INDEX IF NOT EXISTS idx_exam_attempts_exam_score_duration ON exam_attempts(exam_id, final_score DESC, duration_seconds ASC)",
 	}
 	for _, q := range indexQueries {
 		if err := DB.Exec(q).Error; err != nil {

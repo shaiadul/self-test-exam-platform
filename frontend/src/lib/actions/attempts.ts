@@ -9,6 +9,8 @@ export async function submitExamAction(
 	warningCount: number,
 	securityMessage: string,
 	passcode?: string,
+	durationSeconds?: number,
+	startedAt?: string,
 	clientToken?: string
 ) {
 	try {
@@ -16,7 +18,7 @@ export async function submitExamAction(
 			`/exams/${examId}/submit`,
 			{
 				method: "POST",
-				body: JSON.stringify({ answers, warningCount, securityMessage, passcode }),
+				body: JSON.stringify({ answers, warningCount, securityMessage, passcode, durationSeconds, startedAt }),
 			},
 			clientToken
 		);
