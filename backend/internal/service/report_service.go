@@ -214,15 +214,46 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 			createdPacksCount = 0
 		}
 
-		packs, _ := s.examPackRepo.GetExamPacks()
-		totalQuestions, err := s.examRepo.CountAllQuestions()
+		packs, err := s.examPackRepo.GetExamPacksByCreator(u.ID)
 		if err != nil {
-			totalQuestions = 0
+			packs = []exampack.ExamPack{}
+		}
+
+		assignedPacks := []report.AssignedPackDetail{}
+		examsByPack := map[int][]exam.Exam{}
+		allExamIDs := []string{}
+		for _, p := range packs {
+			exams, _ := s.examRepo.GetExamsByPackID(p.ID)
+			examsByPack[p.ID] = exams
+			for _, e := range exams {
+				allExamIDs = append(allExamIDs, e.ID)
+			}
+		}
+		attemptStats := s.attemptStatsMap(allExamIDs)
+
+		totalQuestions := 0
+		for _, examID := range allExamIDs {
+			qs, err := s.examRepo.GetQuestionsByExamID(examID)
+			if err == nil {
+				totalQuestions += len(qs)
+			}
+		}
+
+		examIDSet := make(map[string]bool, len(allExamIDs))
+		for _, id := range allExamIDs {
+			examIDSet[id] = true
+		}
+
+		teacherAttempts := make([]attempt.ExamAttempt, 0, len(allAttempts))
+		for _, a := range allAttempts {
+			if examIDSet[a.ExamID] {
+				teacherAttempts = append(teacherAttempts, a)
+			}
 		}
 
 		var sumScores float64
 		var totalWeight float64
-		for _, a := range allAttempts {
+		for _, a := range teacherAttempts {
 			sumScores += a.FinalScore
 			totalWeight += float64(a.Total * 2)
 		}
@@ -231,9 +262,9 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 			avgStr = fmt.Sprintf("%.1f%%", (sumScores/totalWeight)*100)
 		}
 
-		totalAttempts := len(allAttempts)
+		totalAttempts := len(teacherAttempts)
 		passedCount := 0
-		for _, a := range allAttempts {
+		for _, a := range teacherAttempts {
 			if a.Passed {
 				passedCount++
 			}
@@ -252,7 +283,7 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 			monthStart := time.Date(monthTime.Year(), monthTime.Month(), 1, 0, 0, 0, 0, time.UTC)
 			monthEnd := monthStart.AddDate(0, 1, 0)
 			count := 0
-			for _, a := range allAttempts {
+			for _, a := range teacherAttempts {
 				if !a.CreatedAt.Before(monthStart) && a.CreatedAt.Before(monthEnd) {
 					count++
 				}
@@ -262,18 +293,6 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 				Value: float64(count),
 			})
 		}
-
-		assignedPacks := []report.AssignedPackDetail{}
-		examsByPack := map[int][]exam.Exam{}
-		allExamIDs := []string{}
-		for _, p := range packs {
-			exams, _ := s.examRepo.GetExamsByPackID(p.ID)
-			examsByPack[p.ID] = exams
-			for _, e := range exams {
-				allExamIDs = append(allExamIDs, e.ID)
-			}
-		}
-		attemptStats := s.attemptStatsMap(allExamIDs)
 
 		for _, p := range packs {
 			submitCount := 0
@@ -299,16 +318,16 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 
 		pendingTasks := []report.PendingTask{}
 		recentLimit := 5
-		if len(allAttempts) < recentLimit {
-			recentLimit = len(allAttempts)
+		if len(teacherAttempts) < recentLimit {
+			recentLimit = len(teacherAttempts)
 		}
 		pendingExamIDs := []string{}
 		for i := 0; i < recentLimit; i++ {
-			pendingExamIDs = append(pendingExamIDs, allAttempts[i].ExamID)
+			pendingExamIDs = append(pendingExamIDs, teacherAttempts[i].ExamID)
 		}
 		pendingExams := s.examMap(pendingExamIDs)
 		for i := 0; i < recentLimit; i++ {
-			a := allAttempts[i]
+			a := teacherAttempts[i]
 			examName := "Exam"
 			if e, ok := pendingExams[a.ExamID]; ok && e.Name != "" {
 				examName = e.Name
@@ -324,7 +343,7 @@ func (s *ReportService) GetDashboardStats(userID int) (interface{}, error) {
 			ClassAverage:      avgStr,
 			ActivePacks:       len(packs),
 			QuestionsCount:    totalQuestions,
-			GradedScripts:     len(allAttempts),
+			GradedScripts:     len(teacherAttempts),
 			Rating:            rating,
 			ExamLimit:         examLimit,
 			CreatedExamsCount: createdExamsCount,

@@ -141,7 +141,7 @@ export const ExamRulesPolicySection: React.FC<ExamRulesPolicySectionProps> = ({
                 value={settings.privatePassword || ""}
                 onChange={(e) => onChange({ privatePassword: e.target.value })}
                 className={cn(
-                  "py-1",
+                  "py-2",
                   !settings.privatePassword?.trim()
                     ? "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10"
                     : ""
