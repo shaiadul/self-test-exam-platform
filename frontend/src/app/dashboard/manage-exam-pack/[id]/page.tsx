@@ -1,4 +1,4 @@
-import { getExamPackDetailsAction, getExamsAction } from "../../../../lib/actions";
+import { getExamPackDetailsAction, getTeacherExamsAction } from "../../../../lib/actions";
 import ManageExamPackDetailClientView from "./ManageExamPackDetailClientView";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export default async function ExamPackDetailPage({
 
   const [pack, liveExams] = await Promise.all([
     getExamPackDetailsAction(packId),
-    getExamsAction(packId),
+    getTeacherExamsAction(packId),
   ]);
 
   return (

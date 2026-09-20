@@ -8,6 +8,22 @@ export async function getExamsAction(packId: number, clientToken?: string) {
 	return data || [];
 }
 
+export async function getTeacherExamsAction(packId: number, clientToken?: string) {
+	const data = await fetcherWithAuth<any[]>(`/exam-packs/${packId}/exams`, {}, clientToken);
+	if (!Array.isArray(data)) return [];
+
+	try {
+		const profile = await fetcherWithAuth<any>("/auth/profile", {}, clientToken);
+		if (profile && String(profile.role).toLowerCase() === "teacher") {
+			return data.filter((e: any) => !e.createdBy || String(e.createdBy) === String(profile.id));
+		}
+	} catch {
+		// Fall back to server-filtered data
+	}
+
+	return data;
+}
+
 export async function getExamDetailsAction(examId: string, clientToken?: string) {
 	return await fetcherWithAuth<any>(`/exams/${examId}`, {}, clientToken);
 }

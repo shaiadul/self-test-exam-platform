@@ -117,7 +117,7 @@ func (s *ExamService) roleOf(userID int) string {
 }
 
 // assertPackAccess ensures the user may view the pack's contents. Teachers are
-// restricted to packs they created; admins and students are not.
+// restricted to packs they created or packs containing their exams; admins and students are not.
 func (s *ExamService) assertPackAccess(userID, packID int) error {
 	role := s.roleOf(userID)
 	if role != "teacher" {
@@ -130,10 +130,17 @@ func (s *ExamService) assertPackAccess(userID, packID int) error {
 	if pack == nil {
 		return ErrExamPackNotFound
 	}
-	if pack.CreatedBy == nil || *pack.CreatedBy != userID {
-		return ErrForbidden
+	if pack.CreatedBy != nil && *pack.CreatedBy == userID {
+		return nil
 	}
-	return nil
+	if exams, cerr := s.repo.GetExamsByPackID(packID); cerr == nil {
+		for _, e := range exams {
+			if e.CreatedBy != nil && *e.CreatedBy == userID {
+				return nil
+			}
+		}
+	}
+	return ErrForbidden
 }
 
 // assertExamView allows viewing when the user is an admin/student, the exam was
@@ -218,7 +225,20 @@ func (s *ExamService) ListExamsByPack(userID, packID int) ([]exam.Exam, error) {
 	if err := s.assertPackAccess(userID, packID); err != nil {
 		return nil, err
 	}
-	return s.repo.GetExamsByPackID(packID)
+	exams, err := s.repo.GetExamsByPackID(packID)
+	if err != nil {
+		return nil, err
+	}
+	if s.roleOf(userID) == "teacher" {
+		teacherExams := make([]exam.Exam, 0)
+		for _, e := range exams {
+			if e.CreatedBy != nil && *e.CreatedBy == userID {
+				teacherExams = append(teacherExams, e)
+			}
+		}
+		return teacherExams, nil
+	}
+	return exams, nil
 }
 
 func (s *ExamService) GetExam(userID int, id string) (*exam.Exam, error) {

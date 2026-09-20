@@ -9,7 +9,12 @@ import { MdOutlineEditNote } from "react-icons/md";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
-import { deleteExamAction, deleteExamPackAction } from "../../../../lib/actions";
+import {
+  deleteExamAction,
+  deleteExamPackAction,
+  getExamPackDetailsAction,
+  getTeacherExamsAction,
+} from "../../../../lib/actions";
 import { formatDate } from "@/lib/date";
 
 type Exam = {
@@ -33,24 +38,38 @@ export default function ManageExamPackDetailClientView({
 }: ManageExamPackDetailClientViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [loading, setLoading] = useState(false);
+  const [pack, setPack] = useState<any>(initialPack);
 
-  const [exams, setExams] = useState<Exam[]>(
-    (initialExams || []).map((e: any) => ({
+  const [exams, setExams] = useState<Exam[]>(() => {
+    const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userID") : null;
+    const currentUserRole = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+    let filtered = initialExams || [];
+    if (currentUserRole === "teacher" && currentUserId) {
+      filtered = filtered.filter((e: any) => !e.createdBy || String(e.createdBy) === String(currentUserId));
+    }
+    return filtered.map((e: any) => ({
       id: e.id,
       name: e.name,
       startDate: e.startDate,
       endDate: e.endDate,
       link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
-    }))
-  );
+    }));
+  });
 
-  const packTitle = initialPack?.title || "Exam Pack";
+  const packTitle = pack?.title || initialPack?.title || "Exam Pack";
 
-  // Sync state whenever SSR props change (e.g. after router.refresh())
+  // Sync state whenever SSR props change
   useEffect(() => {
-    if (initialExams) {
+    if (initialExams && initialExams.length > 0) {
+      const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userID") : null;
+      const currentUserRole = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+      let filtered = initialExams;
+      if (currentUserRole === "teacher" && currentUserId) {
+        filtered = initialExams.filter((e: any) => !e.createdBy || String(e.createdBy) === String(currentUserId));
+      }
       setExams(
-        initialExams.map((e: any) => ({
+        filtered.map((e: any) => ({
           id: e.id,
           name: e.name,
           startDate: e.startDate,
@@ -59,9 +78,12 @@ export default function ManageExamPackDetailClientView({
         }))
       );
     }
-  }, [initialExams]);
+    if (initialPack) {
+      setPack(initialPack);
+    }
+  }, [initialExams, initialPack]);
 
-  // Sync token to document.cookie & trigger router.refresh() if initial data was empty
+  // Fetch via server action with client token if initial SSR data is empty
   useEffect(() => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("token");
@@ -71,11 +93,40 @@ export default function ManageExamPackDetailClientView({
     }
 
     if (packId && (!initialExams || initialExams.length === 0 || !initialPack)) {
-      startTransition(() => {
-        router.refresh();
-      });
+      setLoading(true);
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
+      const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userID") : null;
+      const currentUserRole = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+
+      Promise.all([
+        getExamPackDetailsAction(packId, token),
+        getTeacherExamsAction(packId, token),
+      ])
+        .then(([fetchedPack, fetchedExams]) => {
+          if (fetchedPack) {
+            setPack(fetchedPack);
+          }
+          if (fetchedExams && Array.isArray(fetchedExams)) {
+            let filtered = fetchedExams;
+            if (currentUserRole === "teacher" && currentUserId) {
+              filtered = fetchedExams.filter((e: any) => !e.createdBy || String(e.createdBy) === String(currentUserId));
+            }
+            setExams(
+              filtered.map((e: any) => ({
+                id: e.id,
+                name: e.name,
+                startDate: e.startDate,
+                endDate: e.endDate,
+                link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
+              }))
+            );
+          }
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }
-  }, [packId, initialExams, initialPack, router]);
+  }, [packId, initialExams, initialPack]);
 
 
 
@@ -171,7 +222,7 @@ export default function ManageExamPackDetailClientView({
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 font-bold">
               {exams.length} ACTIVE
             </span>
-            {isPending && (
+            {(isPending || loading) && (
               <FaSpinner className="animate-spin text-xs text-primary ml-1" />
             )}
           </div>
@@ -298,7 +349,7 @@ export default function ManageExamPackDetailClientView({
               ))}
             </div>
           </>
-        ) : isPending ? (
+        ) : (isPending || loading) ? (
           <div className="py-16 flex flex-col items-center justify-center gap-2 text-slate-400 font-medium">
             <FaSpinner className="animate-spin text-2xl text-primary" />
             <span className="text-xs font-mono font-bold">SYNCHRONIZING REPOSITORY...</span>
@@ -309,7 +360,7 @@ export default function ManageExamPackDetailClientView({
               compact
               type="exam"
               title="No Exams Configured"
-              description="No exams have been configured in this curriculum container yet. Click '+ Add Exam' to initialize."
+              description="No exams created by you in this curriculum container yet. Click '+ Add Exam' to initialize."
             />
           </div>
         )}
