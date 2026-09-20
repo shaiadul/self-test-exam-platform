@@ -177,8 +177,7 @@ export default function SignIn() {
 
             <SocialAuthButtons mode="login" />
 
-            {/* Quick Demo Preset Credentials */}
-            <div className="border-t border-slate-100 pt-4 mt-4">
+            {/* <div className="border-t border-slate-100 pt-4 mt-4">
               <span className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider block text-center mb-2.5">
                 Quick Demo Accounts
               </span>
@@ -214,7 +213,7 @@ export default function SignIn() {
                   Admin
                 </button>
               </div>
-            </div>
+            </div> */}
 
             <div className="text-center pt-2">
               <p className="text-slate-500 text-xs font-medium">
