@@ -13,18 +13,26 @@ import (
 )
 
 var (
-	ErrExamNotFound       = errors.New("exam not found")
-	ErrExamNameRequired   = errors.New("exam name is required")
-	ErrInvalidStartDate   = errors.New("valid start date is required")
-	ErrInvalidEndDate     = errors.New("valid end date is required")
-	ErrEndDateBeforeStart = errors.New("end date must be after start date")
-	ErrQuestionTextReq    = errors.New("question text is required")
-	ErrMinOptionsReq      = errors.New("at least 2 options are required")
-	ErrExamLimitReached   = errors.New("exam creation limit reached")
-	ErrQuestionNotFound   = errors.New("question not found")
-	ErrInvalidPasscode    = errors.New("invalid exam passcode")
-	ErrExamNotStarted     = errors.New("exam has not started yet")
-	ErrExamEnded          = errors.New("exam has already ended")
+	ErrExamNotFound          = errors.New("exam not found")
+	ErrExamNameRequired      = errors.New("exam name is required (min 3 characters)")
+	ErrInvalidStartDate      = errors.New("valid start date is required")
+	ErrInvalidEndDate        = errors.New("valid end date is required")
+	ErrEndDateBeforeStart    = errors.New("end date must be after start date")
+	ErrPasscodeRequired      = errors.New("passcode is required for private exams (min 4 characters)")
+	ErrInvalidDuration       = errors.New("duration must be at least 1 minute")
+	ErrInvalidPassMark       = errors.New("pass mark percentage must be between 1 and 100")
+	ErrInvalidPerQMark       = errors.New("per question marks must be at least 1")
+	ErrInvalidNegativeMark   = errors.New("negative marking value must be greater than 0")
+	ErrQuestionTextReq       = errors.New("question text is required (min 3 characters)")
+	ErrMinOptionsReq         = errors.New("at least 2 non-empty options are required")
+	ErrCorrectAnswerRequired = errors.New("a valid correct answer matching one of the options is required")
+	ErrPassageTextReq        = errors.New("passage text is required for comprehension/passage questions")
+	ErrPictureURLReq         = errors.New("picture URL is required for image-based questions")
+	ErrExamLimitReached      = errors.New("exam creation limit reached")
+	ErrQuestionNotFound      = errors.New("question not found")
+	ErrInvalidPasscode       = errors.New("invalid exam passcode")
+	ErrExamNotStarted        = errors.New("exam has not started yet")
+	ErrExamEnded             = errors.New("exam has already ended")
 )
 
 type CreateExamInput struct {
@@ -266,7 +274,7 @@ func (s *ExamService) GetExam(userID int, id string) (*exam.Exam, error) {
 
 func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID int) (*exam.Exam, error) {
 	name := strings.TrimSpace(input.Name)
-	if name == "" {
+	if len(name) < 3 {
 		return nil, ErrExamNameRequired
 	}
 
@@ -383,7 +391,7 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 		e.NegativeMarks = 0.0
 	}
 
-	// Private Exam and Passcode
+	// Private Exam and Passcode validation
 	if input.IsPrivate != nil {
 		e.IsPrivate = *input.IsPrivate
 	} else if input.PrivateExam != nil {
@@ -394,11 +402,24 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 	} else if input.PrivatePassword != nil {
 		e.Passcode = strings.TrimSpace(*input.PrivatePassword)
 	}
+	if e.IsPrivate {
+		if e.Passcode == "" || len(e.Passcode) < 4 {
+			return nil, ErrPasscodeRequired
+		}
+	} else {
+		e.Passcode = ""
+	}
 
 	// Duration
-	if input.DurationMinutes != nil && *input.DurationMinutes > 0 {
+	if input.DurationMinutes != nil {
+		if *input.DurationMinutes < 1 {
+			return nil, ErrInvalidDuration
+		}
 		e.DurationMinutes = *input.DurationMinutes
-	} else if input.Duration != nil && *input.Duration > 0 {
+	} else if input.Duration != nil {
+		if *input.Duration < 1 {
+			return nil, ErrInvalidDuration
+		}
 		e.DurationMinutes = *input.Duration
 	} else {
 		e.DurationMinutes = 30
@@ -459,6 +480,9 @@ func (s *ExamService) UpdateExam(userID int, id string, input UpdateExamInput) (
 	}
 
 	if strings.TrimSpace(input.Name) != "" {
+		if len(strings.TrimSpace(input.Name)) < 3 {
+			return nil, ErrExamNameRequired
+		}
 		e.Name = strings.TrimSpace(input.Name)
 	}
 	if input.StartDate != nil {
@@ -531,11 +555,24 @@ func (s *ExamService) UpdateExam(userID int, id string, input UpdateExamInput) (
 	} else if input.PrivatePassword != nil {
 		e.Passcode = strings.TrimSpace(*input.PrivatePassword)
 	}
+	if e.IsPrivate {
+		if e.Passcode == "" || len(e.Passcode) < 4 {
+			return nil, ErrPasscodeRequired
+		}
+	} else {
+		e.Passcode = ""
+	}
 
 	// Duration
-	if input.DurationMinutes != nil && *input.DurationMinutes > 0 {
+	if input.DurationMinutes != nil {
+		if *input.DurationMinutes < 1 {
+			return nil, ErrInvalidDuration
+		}
 		e.DurationMinutes = *input.DurationMinutes
-	} else if input.Duration != nil && *input.Duration > 0 {
+	} else if input.Duration != nil {
+		if *input.Duration < 1 {
+			return nil, ErrInvalidDuration
+		}
 		e.DurationMinutes = *input.Duration
 	}
 
@@ -641,14 +678,16 @@ func (s *ExamService) CreateQuestion(userID int, examID string, input QuestionIn
 	if qText == "" {
 		qText = strings.TrimSpace(input.Text)
 	}
-	if qText == "" {
+	if len(qText) < 3 {
 		return nil, ErrQuestionTextReq
 	}
 
 	var cleanOptions []string
+	seenOpt := make(map[string]bool)
 	for _, opt := range input.Options {
 		trimmed := strings.TrimSpace(opt)
-		if trimmed != "" {
+		if trimmed != "" && !seenOpt[trimmed] {
+			seenOpt[trimmed] = true
 			cleanOptions = append(cleanOptions, trimmed)
 		}
 	}
@@ -660,8 +699,15 @@ func (s *ExamService) CreateQuestion(userID int, examID string, input QuestionIn
 	if correct == "" && input.CorrectIndex != nil && *input.CorrectIndex >= 0 && *input.CorrectIndex < len(cleanOptions) {
 		correct = cleanOptions[*input.CorrectIndex]
 	}
-	if correct == "" {
-		correct = cleanOptions[0]
+	matched := false
+	for _, opt := range cleanOptions {
+		if opt == correct {
+			matched = true
+			break
+		}
+	}
+	if !matched {
+		return nil, ErrCorrectAnswerRequired
 	}
 
 	qType := strings.TrimSpace(input.Type)
@@ -677,11 +723,17 @@ func (s *ExamService) CreateQuestion(userID int, examID string, input QuestionIn
 		p := strings.TrimSpace(*input.Explanation)
 		passage = &p
 	}
+	if qType == "passage" && (passage == nil || strings.TrimSpace(*passage) == "") {
+		return nil, ErrPassageTextReq
+	}
 
 	var pictureURL *string
 	if input.PictureURL != nil && strings.TrimSpace(*input.PictureURL) != "" {
 		pic := strings.TrimSpace(*input.PictureURL)
 		pictureURL = &pic
+	}
+	if qType == "picture" && (pictureURL == nil || strings.TrimSpace(*pictureURL) == "") {
+		return nil, ErrPictureURLReq
 	}
 
 	q := exam.Question{
@@ -722,14 +774,16 @@ func (s *ExamService) UpdateQuestion(userID int, examID string, questionID int, 
 	if qText == "" {
 		qText = strings.TrimSpace(input.Text)
 	}
-	if qText == "" {
+	if len(qText) < 3 {
 		return nil, ErrQuestionTextReq
 	}
 
 	var cleanOptions []string
+	seenOpt := make(map[string]bool)
 	for _, opt := range input.Options {
 		trimmed := strings.TrimSpace(opt)
-		if trimmed != "" {
+		if trimmed != "" && !seenOpt[trimmed] {
+			seenOpt[trimmed] = true
 			cleanOptions = append(cleanOptions, trimmed)
 		}
 	}
@@ -741,8 +795,15 @@ func (s *ExamService) UpdateQuestion(userID int, examID string, questionID int, 
 	if correct == "" && input.CorrectIndex != nil && *input.CorrectIndex >= 0 && *input.CorrectIndex < len(cleanOptions) {
 		correct = cleanOptions[*input.CorrectIndex]
 	}
-	if correct == "" {
-		correct = cleanOptions[0]
+	matched := false
+	for _, opt := range cleanOptions {
+		if opt == correct {
+			matched = true
+			break
+		}
+	}
+	if !matched {
+		return nil, ErrCorrectAnswerRequired
 	}
 
 	qType := strings.TrimSpace(input.Type)
@@ -758,11 +819,17 @@ func (s *ExamService) UpdateQuestion(userID int, examID string, questionID int, 
 		p := strings.TrimSpace(*input.Explanation)
 		passage = &p
 	}
+	if qType == "passage" && (passage == nil || strings.TrimSpace(*passage) == "") {
+		return nil, ErrPassageTextReq
+	}
 
 	var pictureURL *string
 	if input.PictureURL != nil && strings.TrimSpace(*input.PictureURL) != "" {
 		pic := strings.TrimSpace(*input.PictureURL)
 		pictureURL = &pic
+	}
+	if qType == "picture" && (pictureURL == nil || strings.TrimSpace(*pictureURL) == "") {
+		return nil, ErrPictureURLReq
 	}
 
 	existing.Type = qType

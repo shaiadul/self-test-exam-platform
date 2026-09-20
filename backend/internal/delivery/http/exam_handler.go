@@ -130,6 +130,9 @@ func (h *ExamHandler) UpdateExam(w http.ResponseWriter, r *http.Request, id stri
 	e, err := h.examService.UpdateExam(userID, id, input)
 	if err != nil {
 		switch err {
+		case service.ErrExamNameRequired, service.ErrInvalidStartDate, service.ErrInvalidEndDate, service.ErrEndDateBeforeStart, service.ErrPasscodeRequired, service.ErrInvalidDuration, service.ErrInvalidPassMark, service.ErrInvalidPerQMark, service.ErrInvalidNegativeMark:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusBadRequest)
+			return
 		case service.ErrExamNotFound:
 			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
 			return
@@ -236,7 +239,7 @@ func (h *ExamHandler) CreateQuestion(w http.ResponseWriter, r *http.Request, exa
 	q, err := h.examService.CreateQuestion(userID, examID, input)
 	if err != nil {
 		switch err {
-		case service.ErrQuestionTextReq, service.ErrMinOptionsReq:
+		case service.ErrQuestionTextReq, service.ErrMinOptionsReq, service.ErrCorrectAnswerRequired, service.ErrPassageTextReq, service.ErrPictureURLReq:
 			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusBadRequest)
 		case service.ErrForbidden:
 			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)
@@ -268,7 +271,7 @@ func (h *ExamHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request, exa
 			return
 		}
 		switch err {
-		case service.ErrQuestionTextReq, service.ErrMinOptionsReq:
+		case service.ErrQuestionTextReq, service.ErrMinOptionsReq, service.ErrCorrectAnswerRequired, service.ErrPassageTextReq, service.ErrPictureURLReq:
 			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusBadRequest)
 		case service.ErrForbidden:
 			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)

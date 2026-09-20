@@ -246,7 +246,7 @@ func (h *ExamPackHandler) CreateExam(w http.ResponseWriter, r *http.Request, pac
 			return
 		}
 		switch err {
-		case service.ErrExamNameRequired, service.ErrInvalidStartDate, service.ErrInvalidEndDate, service.ErrEndDateBeforeStart:
+		case service.ErrExamNameRequired, service.ErrInvalidStartDate, service.ErrInvalidEndDate, service.ErrEndDateBeforeStart, service.ErrPasscodeRequired, service.ErrInvalidDuration, service.ErrInvalidPassMark, service.ErrInvalidPerQMark, service.ErrInvalidNegativeMark:
 			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusBadRequest)
 		case service.ErrForbidden:
 			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusForbidden)

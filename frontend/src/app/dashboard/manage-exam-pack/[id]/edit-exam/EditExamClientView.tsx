@@ -93,6 +93,26 @@ export default function EditExamClientView({
       toast.error("Please enter an exam title.");
       return;
     }
+    if (examPackData.name.trim().length < 3) {
+      toast.error("Exam title must be at least 3 characters long.");
+      return;
+    }
+    if (!examPackData.perQuestionMark || Number(examPackData.perQuestionMark) < 1) {
+      toast.error("Marks per question must be at least 1.");
+      return;
+    }
+    if (
+      !examPackData.passMark ||
+      Number(examPackData.passMark) < 1 ||
+      Number(examPackData.passMark) > 100
+    ) {
+      toast.error("Pass mark percentage must be between 1 and 100.");
+      return;
+    }
+    if (!examPackData.durationMinutes || Number(examPackData.durationMinutes) < 1) {
+      toast.error("Exam duration must be at least 1 minute.");
+      return;
+    }
     if (!examPackData.startDate) {
       toast.error("Please select an exam start date & time.");
       return;
@@ -109,16 +129,28 @@ export default function EditExamClientView({
       return;
     }
     if (end <= start) {
-      toast.error("Exam end date must be after the start date.");
+      toast.error("Exam end date & time must be after the start date & time.");
       return;
     }
 
-    if (
-      Number(examPackData.passMark) <= 0 ||
-      Number(examPackData.passMark) > 100
-    ) {
-      toast.error("Pass mark percentage must be between 1 and 100.");
-      return;
+    if (examSettings.negativeMarking) {
+      const negVal = Number(examSettings.negativeValue);
+      if (!negVal || negVal <= 0) {
+        toast.error("Negative mark deduction must be greater than 0.");
+        return;
+      }
+    }
+
+    if (examSettings.privateExam) {
+      const passcode = examSettings.privatePassword?.trim();
+      if (!passcode) {
+        toast.error("Please enter an access passcode for the private exam.");
+        return;
+      }
+      if (passcode.length < 4) {
+        toast.error("Exam passcode must be at least 4 characters long.");
+        return;
+      }
     }
 
     setSaving(true);

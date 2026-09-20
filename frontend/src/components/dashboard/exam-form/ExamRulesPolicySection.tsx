@@ -120,20 +120,41 @@ export const ExamRulesPolicySection: React.FC<ExamRulesPolicySectionProps> = ({
 
       {/* Access Control */}
       <div className="pt-2 border-t border-slate-100">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-          <ToggleSwitch
-            label="Private Exam (Requires Passcode)"
-            checked={settings.privateExam}
-            onChange={(val) => onChange({ privateExam: val })}
-          />
-          {settings.privateExam && (
-            <Input
-              label="Exam Passcode"
-              type="password"
-              placeholder="Enter access passcode"
-              value={settings.privatePassword || ""}
-              onChange={(e) => onChange({ privatePassword: e.target.value })}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          <div className="space-y-1">
+            <ToggleSwitch
+              label="Private Exam (Requires Passcode)"
+              checked={settings.privateExam}
+              onChange={(val) => onChange({ privateExam: val })}
             />
+            <p className="text-[11px] text-slate-500 font-sans">
+              Restricts exam access to candidates with the designated secret passcode.
+            </p>
+          </div>
+          {settings.privateExam && (
+            <div className="space-y-1">
+              <Input
+                label="Exam Passcode *"
+                type="text"
+                placeholder="Enter access passcode (min 4 chars)"
+                value={settings.privatePassword || ""}
+                onChange={(e) => onChange({ privatePassword: e.target.value })}
+                className={!settings.privatePassword?.trim() ? "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10" : ""}
+              />
+              {!settings.privatePassword?.trim() ? (
+                <p className="text-[10px] text-amber-700 font-mono font-medium">
+                  ⚠️ Passcode is required when Private Exam is enabled.
+                </p>
+              ) : settings.privatePassword.trim().length < 4 ? (
+                <p className="text-[10px] text-amber-700 font-mono font-medium">
+                  ⚠️ Passcode must be at least 4 characters long ({settings.privatePassword.trim().length}/4).
+                </p>
+              ) : (
+                <p className="text-[10px] text-emerald-700 font-mono font-medium">
+                  ✓ Valid passcode configured.
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>

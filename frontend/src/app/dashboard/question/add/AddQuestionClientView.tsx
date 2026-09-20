@@ -133,15 +133,44 @@ export default function AddQuestionClientView({
       toast.error("Please enter the question text.");
       return;
     }
+    if (questionText.trim().length < 3) {
+      toast.error("Question text must be at least 3 characters long.");
+      return;
+    }
+
     const cleanOptions = options.map((o) => o.trim()).filter(Boolean);
     if (cleanOptions.length < 2) {
       toast.error("At least 2 non-empty options are required.");
       return;
     }
-    const targetCorrect =
-      correctIndex >= 0 && options[correctIndex] && options[correctIndex].trim()
-        ? options[correctIndex].trim()
-        : cleanOptions[0];
+
+    const uniqueOptions = new Set(cleanOptions);
+    if (uniqueOptions.size < cleanOptions.length) {
+      toast.error("Duplicate options are not allowed. Each option must be distinct.");
+      return;
+    }
+
+    if (correctIndex < 0 || !options[correctIndex]?.trim()) {
+      toast.error("Please select which option is the correct answer.");
+      return;
+    }
+
+    const targetCorrect = options[correctIndex].trim();
+    if (!cleanOptions.includes(targetCorrect)) {
+      toast.error("Selected correct answer must match one of the valid options.");
+      return;
+    }
+
+    if (type === "passage" && !passage.trim()) {
+      toast.error("Passage text is required for comprehension questions.");
+      return;
+    }
+
+    if (type === "picture" && !pictureUrl?.trim()) {
+      toast.error("Please upload or provide an image for picture questions.");
+      return;
+    }
+
     const correctPos = Math.max(0, cleanOptions.indexOf(targetCorrect));
 
     setSubmitting(true);

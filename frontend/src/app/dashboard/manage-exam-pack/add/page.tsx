@@ -29,6 +29,18 @@ export default function AddExamPackPage() {
       toast.error("Please provide an Exam Pack title.");
       return;
     }
+    if (examPackData.name.trim().length < 3) {
+      toast.error("Exam Pack title must be at least 3 characters long.");
+      return;
+    }
+    if (!examPackData.details.trim()) {
+      toast.error("Please provide an Exam Pack description.");
+      return;
+    }
+    if (examPackData.details.trim().length < 5) {
+      toast.error("Exam Pack description must be at least 5 characters long.");
+      return;
+    }
 
     setLoading(true);
     try {
