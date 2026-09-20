@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
-import Facebook from "next-auth/providers/facebook";
+import GitHub from "next-auth/providers/github";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
@@ -10,35 +10,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET || "",
     }),
-    Facebook({
-      clientId: process.env.AUTH_FACEBOOK_ID || process.env.FACEBOOK_CLIENT_ID || "",
-      clientSecret: process.env.AUTH_FACEBOOK_SECRET || process.env.FACEBOOK_CLIENT_SECRET || "",
-      authorization: {
-        url: "https://www.facebook.com/v19.0/dialog/oauth",
-        params: {
-          scope: process.env.FACEBOOK_SCOPE || "public_profile",
-        },
-      },
+    GitHub({
+      clientId: process.env.AUTH_GITHUB_ID || process.env.GITHUB_CLIENT_ID || "",
+      clientSecret: process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET || "",
     }),
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (!account || (account.provider !== "google" && account.provider !== "facebook")) {
+      if (!account || (account.provider !== "google" && account.provider !== "github")) {
         return true;
       }
 
       try {
         const fallbackEmail =
           user.email ||
-          (account.provider === "facebook"
-            ? `fb_${account.providerAccountId}@facebook.user`
+          (account.provider === "github"
+            ? `gh_${account.providerAccountId}@github.user`
             : "");
 
         const payload = {
           provider: account.provider,
           providerId: account.providerAccountId,
           email: fallbackEmail,
-          name: user.name || (account.provider === "facebook" ? "Facebook User" : "User"),
+          name: user.name || (account.provider === "github" ? "GitHub User" : "User"),
           image: user.image || undefined,
           accessToken: account.access_token,
           idToken: (account as any).id_token,

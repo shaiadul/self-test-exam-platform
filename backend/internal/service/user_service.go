@@ -89,7 +89,7 @@ func (s *UserService) Login(req user.LoginRequest) (*user.LoginResponse, error) 
 	}
 
 	if u.Password == nil || *u.Password == "" {
-		return nil, errors.New("this account was registered using social login (Google/Facebook). Please sign in using your social account")
+		return nil, errors.New("this account was registered using social login (Google/GitHub). Please sign in using your social account")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(req.Password)); err != nil {
@@ -113,8 +113,8 @@ func (s *UserService) SocialLogin(req user.SocialLoginRequest) (*user.LoginRespo
 	email := strings.ToLower(strings.TrimSpace(req.Email))
 	name := strings.TrimSpace(req.Name)
 
-	if provider != "google" && provider != "facebook" {
-		return nil, errors.New("unsupported social provider: must be google or facebook")
+	if provider != "google" && provider != "github" {
+		return nil, errors.New("unsupported social provider: must be google or github")
 	}
 	if providerID == "" || email == "" {
 		return nil, errors.New("providerId and email are required for social login")

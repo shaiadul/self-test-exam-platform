@@ -11,16 +11,16 @@ import (
 	"strings"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/facebook"
+	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 
 	"github.com/selftest/backend/internal/domain/user"
 )
 
 type OAuthService struct {
-	googleConfig   *oauth2.Config
-	facebookConfig *oauth2.Config
-	frontendURL    string
+	googleConfig *oauth2.Config
+	githubConfig *oauth2.Config
+	frontendURL  string
 }
 
 func NewOAuthService() *OAuthService {
@@ -51,17 +51,17 @@ func NewOAuthService() *OAuthService {
 		googleRedirectURL = fmt.Sprintf("%s/api/auth/oauth/google/callback", backendURL)
 	}
 
-	facebookClientID := os.Getenv("FACEBOOK_CLIENT_ID")
-	if facebookClientID == "" {
-		facebookClientID = os.Getenv("AUTH_FACEBOOK_ID")
+	githubClientID := os.Getenv("GITHUB_CLIENT_ID")
+	if githubClientID == "" {
+		githubClientID = os.Getenv("AUTH_GITHUB_ID")
 	}
-	facebookClientSecret := os.Getenv("FACEBOOK_CLIENT_SECRET")
-	if facebookClientSecret == "" {
-		facebookClientSecret = os.Getenv("AUTH_FACEBOOK_SECRET")
+	githubClientSecret := os.Getenv("GITHUB_CLIENT_SECRET")
+	if githubClientSecret == "" {
+		githubClientSecret = os.Getenv("AUTH_GITHUB_SECRET")
 	}
-	facebookRedirectURL := os.Getenv("FACEBOOK_REDIRECT_URI")
-	if facebookRedirectURL == "" {
-		facebookRedirectURL = fmt.Sprintf("%s/api/auth/oauth/facebook/callback", backendURL)
+	githubRedirectURL := os.Getenv("GITHUB_REDIRECT_URI")
+	if githubRedirectURL == "" {
+		githubRedirectURL = fmt.Sprintf("%s/api/auth/oauth/github/callback", backendURL)
 	}
 
 	googleConfig := &oauth2.Config{
@@ -76,32 +76,18 @@ func NewOAuthService() *OAuthService {
 		Endpoint: google.Endpoint,
 	}
 
-	fbScopes := []string{"public_profile"}
-	if envScope := os.Getenv("FACEBOOK_SCOPE"); envScope != "" {
-		parts := strings.Split(envScope, ",")
-		var cleaned []string
-		for _, p := range parts {
-			if s := strings.TrimSpace(p); s != "" {
-				cleaned = append(cleaned, s)
-			}
-		}
-		if len(cleaned) > 0 {
-			fbScopes = cleaned
-		}
-	}
-
-	facebookConfig := &oauth2.Config{
-		ClientID:     facebookClientID,
-		ClientSecret: facebookClientSecret,
-		RedirectURL:  facebookRedirectURL,
-		Scopes:       fbScopes,
-		Endpoint:     facebook.Endpoint,
+	githubConfig := &oauth2.Config{
+		ClientID:     githubClientID,
+		ClientSecret: githubClientSecret,
+		RedirectURL:  githubRedirectURL,
+		Scopes:       []string{"read:user", "user:email"},
+		Endpoint:     github.Endpoint,
 	}
 
 	return &OAuthService{
-		googleConfig:   googleConfig,
-		facebookConfig: facebookConfig,
-		frontendURL:    frontendURL,
+		googleConfig: googleConfig,
+		githubConfig: githubConfig,
+		frontendURL:  frontendURL,
 	}
 }
 
@@ -116,11 +102,11 @@ func (s *OAuthService) GetAuthURL(provider, state string) (string, error) {
 			return "", errors.New("google OAuth client id not configured")
 		}
 		return s.googleConfig.AuthCodeURL(state, oauth2.AccessTypeOffline), nil
-	case "facebook":
-		if s.facebookConfig.ClientID == "" {
-			return "", errors.New("facebook OAuth client id not configured")
+	case "github":
+		if s.githubConfig.ClientID == "" {
+			return "", errors.New("github OAuth client id not configured")
 		}
-		return s.facebookConfig.AuthCodeURL(state), nil
+		return s.githubConfig.AuthCodeURL(state), nil
 	default:
 		return "", fmt.Errorf("unsupported oauth provider: %s", provider)
 	}
@@ -130,8 +116,8 @@ func (s *OAuthService) ExchangeAndFetchUser(ctx context.Context, provider, code 
 	switch strings.ToLower(provider) {
 	case "google":
 		return s.fetchGoogleUser(ctx, code)
-	case "facebook":
-		return s.fetchFacebookUser(ctx, code)
+	case "github":
+		return s.fetchGitHubUser(ctx, code)
 	default:
 		return nil, fmt.Errorf("unsupported oauth provider: %s", provider)
 	}
@@ -186,61 +172,108 @@ func (s *OAuthService) fetchGoogleUser(ctx context.Context, code string) (*user.
 	}, nil
 }
 
-func (s *OAuthService) fetchFacebookUser(ctx context.Context, code string) (*user.SocialLoginRequest, error) {
-	token, err := s.facebookConfig.Exchange(ctx, code)
+func (s *OAuthService) fetchGitHubUser(ctx context.Context, code string) (*user.SocialLoginRequest, error) {
+	token, err := s.githubConfig.Exchange(ctx, code)
 	if err != nil {
-		return nil, fmt.Errorf("failed to exchange facebook auth code: %w", err)
+		return nil, fmt.Errorf("failed to exchange github auth code: %w", err)
 	}
 
-	client := s.facebookConfig.Client(ctx, token)
-	resp, err := client.Get("https://graph.facebook.com/me?fields=id,name,email,picture.type(large)")
+	client := s.githubConfig.Client(ctx, token)
+
+	// Fetch user profile
+	resp, err := client.Get("https://api.github.com/user")
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch facebook user info: %w", err)
+		return nil, fmt.Errorf("failed to fetch github user info: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("facebook graph returned %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("github user api returned %d: %s", resp.StatusCode, string(body))
 	}
 
 	var data struct {
-		ID      string `json:"id"`
-		Name    string `json:"name"`
-		Email   string `json:"email"`
-		Picture struct {
-			Data struct {
-				URL string `json:"url"`
-			} `json:"data"`
-		} `json:"picture"`
+		ID        int64  `json:"id"`
+		Login     string `json:"login"`
+		Name      string `json:"name"`
+		Email     string `json:"email"`
+		AvatarURL string `json:"avatar_url"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, fmt.Errorf("failed to decode facebook user info: %w", err)
+		return nil, fmt.Errorf("failed to decode github user info: %w", err)
 	}
 
-	if data.ID == "" {
-		return nil, errors.New("incomplete profile information received from Facebook")
+	if data.ID == 0 {
+		return nil, errors.New("incomplete profile information received from GitHub")
 	}
 
-	// Facebook occasionally might not return email if unverified or phone registered
+	// GitHub may not return email if it's private; fetch from emails endpoint
 	email := data.Email
 	if email == "" {
-		email = fmt.Sprintf("fb_%s@facebook.user", data.ID)
+		email = s.fetchGitHubPrimaryEmail(ctx, client)
+	}
+	if email == "" {
+		email = fmt.Sprintf("gh_%d@github.user", data.ID)
+	}
+
+	name := data.Name
+	if name == "" {
+		name = data.Login
 	}
 
 	var imgPtr *string
-	if data.Picture.Data.URL != "" {
-		imgPtr = &data.Picture.Data.URL
+	if data.AvatarURL != "" {
+		imgPtr = &data.AvatarURL
 	}
 	tokStr := token.AccessToken
 
+	providerID := fmt.Sprintf("%d", data.ID)
+
 	return &user.SocialLoginRequest{
-		Provider:    "facebook",
-		ProviderID:  data.ID,
+		Provider:    "github",
+		ProviderID:  providerID,
 		Email:       email,
-		Name:        data.Name,
+		Name:        name,
 		Image:       imgPtr,
 		AccessToken: &tokStr,
 	}, nil
+}
+
+// fetchGitHubPrimaryEmail fetches the user's primary verified email from GitHub
+func (s *OAuthService) fetchGitHubPrimaryEmail(ctx context.Context, client *http.Client) string {
+	resp, err := client.Get("https://api.github.com/user/emails")
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+
+	var emails []struct {
+		Email    string `json:"email"`
+		Primary  bool   `json:"primary"`
+		Verified bool   `json:"verified"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&emails); err != nil {
+		return ""
+	}
+
+	// Prefer primary + verified email
+	for _, e := range emails {
+		if e.Primary && e.Verified {
+			return e.Email
+		}
+	}
+	// Fallback to any verified email
+	for _, e := range emails {
+		if e.Verified {
+			return e.Email
+		}
+	}
+
+	return ""
 }

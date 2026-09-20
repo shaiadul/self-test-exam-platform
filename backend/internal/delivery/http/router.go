@@ -42,8 +42,8 @@ func NewRouter(h Handlers) http.Handler {
 	mux.HandleFunc("/api/auth/oauth/social", h.AuthHandler.HandleSocialLogin)
 	mux.HandleFunc("/api/auth/oauth/google", h.AuthHandler.HandleOAuthRedirect)
 	mux.HandleFunc("/api/auth/oauth/google/callback", h.AuthHandler.HandleOAuthCallback)
-	mux.HandleFunc("/api/auth/oauth/facebook", h.AuthHandler.HandleOAuthRedirect)
-	mux.HandleFunc("/api/auth/oauth/facebook/callback", h.AuthHandler.HandleOAuthCallback)
+	mux.HandleFunc("/api/auth/oauth/github", h.AuthHandler.HandleOAuthRedirect)
+	mux.HandleFunc("/api/auth/oauth/github/callback", h.AuthHandler.HandleOAuthCallback)
 
 	// Protected routes using auth middleware
 	mux.Handle("/api/auth/profile", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.GetProfile)))

@@ -127,17 +127,17 @@ func TestSocialLogin_AccountLinking(t *testing.T) {
 		t.Fatalf("failed to register initial user: %v", err)
 	}
 
-	// Now logs in with Facebook with same email
-	fbImg := "https://graph.facebook.com/123/picture"
-	fbReq := user.SocialLoginRequest{
-		Provider:   "facebook",
-		ProviderID: "fb-998877",
+	// Now logs in with GitHub with same email
+	ghImg := "https://avatars.githubusercontent.com/u/123"
+	ghReq := user.SocialLoginRequest{
+		Provider:   "github",
+		ProviderID: "gh-998877",
 		Email:      "existing@gmail.com",
 		Name:       "Existing User",
-		Image:      &fbImg,
+		Image:      &ghImg,
 	}
 
-	socialRes, err := svc.SocialLogin(fbReq)
+	socialRes, err := svc.SocialLogin(ghReq)
 	if err != nil {
 		t.Fatalf("unexpected error during social link: %v", err)
 	}
@@ -145,8 +145,8 @@ func TestSocialLogin_AccountLinking(t *testing.T) {
 	if socialRes.User.ID != regRes.User.ID {
 		t.Errorf("expected linked user ID %d, got %d", regRes.User.ID, socialRes.User.ID)
 	}
-	if socialRes.User.Provider == nil || *socialRes.User.Provider != "facebook" {
-		t.Errorf("expected provider facebook after link")
+	if socialRes.User.Provider == nil || *socialRes.User.Provider != "github" {
+		t.Errorf("expected provider github after link")
 	}
 }
 
@@ -155,9 +155,9 @@ func TestSocialLogin_UnsupportedProvider(t *testing.T) {
 	svc := NewUserService(repo)
 
 	req := user.SocialLoginRequest{
-		Provider:   "github",
-		ProviderID: "gh-1",
-		Email:      "dev@github.com",
+		Provider:   "twitter",
+		ProviderID: "tw-1",
+		Email:      "dev@twitter.com",
 		Name:       "Dev",
 	}
 
