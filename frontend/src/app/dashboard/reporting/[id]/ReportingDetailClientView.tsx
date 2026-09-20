@@ -161,22 +161,24 @@ export default function ReportingDetailClientView({
   return (
     <PageContainer className="space-y-8 animate-fadeIn">
       {/* Print Certificate View (Hidden on screen, visible during print) */}
-      <div className="hidden print:block">
-        <CertificatePrintLayout
-          candidateName={candidateDisplayName}
-          examName={attempt.examName || "Mock Exam"}
-          examDate={formatDate(attempt.createdAt, DATE_FORMATS.DATETIME_FULL, "Recent")}
-          result={{
-            total: (attempt.correct || 0) + (attempt.wrong || 0),
-            correct: attempt.correct || 0,
-            wrong: attempt.wrong || 0,
-            negative: attempt.negative || 0,
-            finalScore: attempt.finalScore || 0,
-            passed: attempt.passed || false,
-          }}
-          totalMarks={attempt.total || 100}
-        />
-      </div>
+      {attempt.feedback !== false && (
+        <div className="hidden print:block">
+          <CertificatePrintLayout
+            candidateName={candidateDisplayName}
+            examName={attempt.examName || "Mock Exam"}
+            examDate={formatDate(attempt.createdAt, DATE_FORMATS.DATETIME_FULL, "Recent")}
+            result={{
+              total: (attempt.correct || 0) + (attempt.wrong || 0),
+              correct: attempt.correct || 0,
+              wrong: attempt.wrong || 0,
+              negative: attempt.negative || 0,
+              finalScore: attempt.finalScore || 0,
+              passed: attempt.passed || false,
+            }}
+            totalMarks={attempt.total || 100}
+          />
+        </div>
+      )}
 
       {/* Screen View (Hidden when printing) */}
       <div className="print:hidden space-y-8">

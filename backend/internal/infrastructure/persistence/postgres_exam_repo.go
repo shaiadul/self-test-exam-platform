@@ -113,7 +113,7 @@ func (r *PostgresExamRepository) createExamWithinLimit(e *exam.Exam, scope strin
 			}
 		}
 
-		if err := tx.Create(e).Error; err != nil {
+		if err := tx.Select("*").Omit("created_at", "updated_at").Create(e).Error; err != nil {
 			return err
 		}
 		created = true
@@ -132,7 +132,7 @@ func (r *PostgresExamRepository) UpdateExam(e *exam.Exam) error {
 		Select(
 			"name", "start_date", "end_date", "level", "batch", "total_marks",
 			"passing_marks", "per_question_marks", "negative_marks", "is_private",
-			"passcode", "duration_minutes", "updated_at",
+			"passcode", "duration_minutes", "randomization", "feedback", "updated_at",
 		).
 		Updates(e).Error
 }

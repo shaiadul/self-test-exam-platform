@@ -17,8 +17,8 @@ type Exam struct {
 	IsPrivate        bool      `json:"isPrivate" db:"is_private" gorm:"default:false"`
 	Passcode         string    `json:"passcode" db:"passcode" gorm:"type:varchar(100);default:''"`
 	DurationMinutes  int       `json:"durationMinutes" db:"duration_minutes" gorm:"default:30"`
-	Randomization    bool      `json:"randomization" db:"randomization" gorm:"default:false"`
-	Feedback         bool      `json:"feedback" db:"feedback" gorm:"default:true"`
+	Randomization    bool      `json:"randomization" db:"randomization"`
+	Feedback         bool      `json:"feedback" db:"feedback"`
 	CreatedBy        *int      `json:"createdBy,omitempty" db:"created_by"`
 	CreatedAt        time.Time `json:"created_at" db:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt        time.Time `json:"updated_at" db:"updated_at" gorm:"autoUpdateTime"`

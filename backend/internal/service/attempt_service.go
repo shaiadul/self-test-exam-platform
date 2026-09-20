@@ -261,7 +261,10 @@ func (s *AttemptService) GetAttemptQuestions(userID, attemptID int) ([]exam.Ques
 	}
 
 	targetExam, err := s.examRepo.GetExamByID(a.ExamID)
-	if err == nil && targetExam != nil && !targetExam.Feedback && !s.isStaff(userID) {
+	if err != nil || targetExam == nil {
+		return nil, ErrExamNotFound
+	}
+	if !targetExam.Feedback && !s.isStaff(userID) {
 		return []exam.Question{}, nil
 	}
 
