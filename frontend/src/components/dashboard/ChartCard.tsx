@@ -13,6 +13,8 @@ import {
   ReferenceLine,
 } from "recharts";
 
+import EmptyState from "../common/EmptyState";
+
 interface ChartCardProps {
   data?: Array<{ name: string; value: number }>;
   color?: string;
@@ -20,21 +22,26 @@ interface ChartCardProps {
   avgLabel?: string;
 }
 
-const defaultData = [
-  { name: "Mock 1", value: 45 },
-  { name: "Mock 2", value: 65 },
-  { name: "Mock 3", value: 55 },
-  { name: "Mock 4", value: 82 },
-  { name: "Mock 5", value: 74 },
-];
-
 export default function ChartCard({
-  data = defaultData,
+  data = [],
   color = "#f97a00",
   strokeColor = "#f97a00",
   avgLabel = "Average Score",
 }: ChartCardProps) {
-  const chartData = data && data.length > 0 ? data : defaultData;
+  if (!data || data.length === 0) {
+    return (
+      <div className="w-full flex items-center justify-center min-h-[220px] sm:min-h-[240px]">
+        <EmptyState
+          compact
+          type="exam"
+          title="No Evaluation Activity"
+          description="Evaluation and scoring telemetry will appear here once exam attempts are completed."
+        />
+      </div>
+    );
+  }
+
+  const chartData = data;
 
   // Resolve CSS variables or fall back to primary orange (#f97a00)
   const resolvedColor =
