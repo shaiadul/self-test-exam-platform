@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { IoMdLogOut, IoMdSettings } from "react-icons/io";
 import { FaHome, FaBoxOpen, FaChartBar, FaUserCog, FaClipboardList, FaPoll, FaShieldAlt } from "react-icons/fa";
@@ -11,6 +11,7 @@ import { MdQuestionAnswer } from "react-icons/md";
 import { TbMessageReportFilled } from "react-icons/tb";
 import { MenuItem } from "../../lib/types";
 import { cn } from "../../lib/utils";
+import { logoutAction } from "../../lib/actions";
 
 interface NavGroup {
   title: string;
@@ -65,8 +66,10 @@ const isItemActive = (currentPath: string, itemHref: string) => {
 
 export const Sidebar = ({ role = "student" }: { role?: string }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const [userRole, setUserRole] = useState<string>(role);
   const [userName, setUserName] = useState<string>("Candidate");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole") || role;
@@ -74,6 +77,23 @@ export const Sidebar = ({ role = "student" }: { role?: string }) => {
     setUserRole(storedRole);
     setUserName(storedName);
   }, [role]);
+
+  const handleLogout = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logoutAction();
+    } catch {
+      // Proceed even if network request fails
+    } finally {
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      router.push("/auth/login");
+    }
+  };
 
   const roleLabel =
     userRole === "admin"
@@ -178,16 +198,16 @@ export const Sidebar = ({ role = "student" }: { role?: string }) => {
           </div>
         </Link>
 
-        <Link
-          href="/auth/login"
-          onClick={() => {
-            localStorage.clear();
-          }}
-          className="flex items-center justify-center w-full gap-2 px-3 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all duration-150 shadow-2xs group cursor-pointer"
-        >
-          <IoMdLogOut className="text-base text-slate-400 group-hover:text-rose-500 transition-colors" />
-          <span>Sign Out</span>
-        </Link>
+        <form onSubmit={handleLogout} className="w-full">
+          <button
+            type="submit"
+            disabled={isLoggingOut}
+            className="flex items-center justify-center w-full gap-2 px-3 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all duration-150 shadow-2xs group cursor-pointer disabled:opacity-50"
+          >
+            <IoMdLogOut className="text-base text-slate-400 group-hover:text-rose-500 transition-colors" />
+            <span>{isLoggingOut ? "Signing Out..." : "Sign Out"}</span>
+          </button>
+        </form>
       </div>
     </aside>
   );

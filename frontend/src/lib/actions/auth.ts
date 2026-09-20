@@ -65,9 +65,22 @@ export async function registerAction(name: string, email: string, password: stri
 }
 
 export async function logoutAction() {
+	try {
+		await fetcherWithAuth<any>("/auth/logout", {
+			method: "POST",
+		});
+	} catch {
+		// Proceed with local cookie cleanup even if backend is offline
+	}
+
 	const cookieStore = await cookies();
 	cookieStore.delete("token");
-	revalidatePath("/");
+	cookieStore.delete("authjs.session-token");
+	cookieStore.delete("__Secure-authjs.session-token");
+	cookieStore.delete("next-auth.session-token");
+	cookieStore.delete("__Secure-next-auth.session-token");
+
+	revalidatePath("/", "layout");
 	return { success: true };
 }
 

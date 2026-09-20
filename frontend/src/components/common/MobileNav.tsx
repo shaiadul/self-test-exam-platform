@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { HiMenuAlt3, HiX } from "react-icons/hi";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { FaHome, FaBoxOpen, FaChartBar, FaUserCog, FaClipboardList, FaPoll, FaBars } from "react-icons/fa";
 import { IoMdLogOut, IoMdSettings } from "react-icons/io";
 import { SiGoogletagmanager } from "react-icons/si";
@@ -12,6 +12,7 @@ import { MdQuestionAnswer } from "react-icons/md";
 import { TbMessageReportFilled } from "react-icons/tb";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../lib/utils";
+import { logoutAction } from "../../lib/actions";
 
 const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: <FaHome className="text-lg" /> },
@@ -47,7 +48,9 @@ export const MobileNav = ({ role = "student" }: { role?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [userRole, setUserRole] = useState<string>(role);
   const [userName, setUserName] = useState<string>("Candidate");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const storedRole = localStorage.getItem("userRole") || role;
@@ -55,6 +58,24 @@ export const MobileNav = ({ role = "student" }: { role?: string }) => {
     setUserRole(storedRole);
     setUserName(storedName);
   }, [role]);
+
+  const handleLogout = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    setIsOpen(false);
+    try {
+      await logoutAction();
+    } catch {
+      // Proceed even if network request fails
+    } finally {
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      router.push("/auth/login");
+    }
+  };
 
   const visibleMenuItems = menuItems.filter((item) => {
     const allowed = roleAccess[item.name];
@@ -149,16 +170,16 @@ export const MobileNav = ({ role = "student" }: { role?: string }) => {
               </nav>
 
               <div className="p-4 border-t border-slate-100 bg-slate-50">
-                <Link
-                  href="/auth/login"
-                  onClick={() => {
-                    localStorage.clear();
-                    setIsOpen(false);
-                  }}
-                  className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl font-bold transition-all hover:bg-rose-100"
-                >
-                  <IoMdLogOut className="text-base" /> Sign Out
-                </Link>
+                <form onSubmit={handleLogout} className="w-full">
+                  <button
+                    type="submit"
+                    disabled={isLoggingOut}
+                    className="flex items-center justify-center w-full gap-2 px-4 py-2.5 text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl font-bold transition-all hover:bg-rose-100 cursor-pointer disabled:opacity-50"
+                  >
+                    <IoMdLogOut className="text-base" />
+                    <span>{isLoggingOut ? "Signing Out..." : "Sign Out"}</span>
+                  </button>
+                </form>
               </div>
             </motion.aside>
           </>

@@ -3,6 +3,7 @@ import { FaExclamationTriangle } from "react-icons/fa";
 import { Input } from "../../ui/Input";
 import ToggleSwitch from "../../ui/ToggleSwitch";
 import { ExamSettingsData } from "./types";
+import { cn } from "@/lib/utils";
 
 interface ExamRulesPolicySectionProps {
   settings: ExamSettingsData;
@@ -139,11 +140,12 @@ export const ExamRulesPolicySection: React.FC<ExamRulesPolicySectionProps> = ({
                 placeholder="Enter access passcode (min 4 chars)"
                 value={settings.privatePassword || ""}
                 onChange={(e) => onChange({ privatePassword: e.target.value })}
-                className={
+                className={cn(
+                  "py-1",
                   !settings.privatePassword?.trim()
                     ? "border-amber-400 focus:border-amber-500 focus:ring-amber-500/10"
                     : ""
-                }
+                )}
               />
               {!settings.privatePassword?.trim() ? (
                 <p className="text-[10px] text-amber-700 font-mono font-medium">
