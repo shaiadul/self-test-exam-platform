@@ -129,12 +129,7 @@ export default function ReportingClientView({
         </div>
       )}
 
-      {/* Pagination Controls */}
-      {initialMeta && initialMeta.total_items > 0 && (
-        <div className="bg-white border border-slate-200/80 rounded px-4 py-2 shadow-2xs">
-          <DynamicPagination meta={initialMeta} />
-        </div>
-      )}
+      <DynamicPagination meta={initialMeta} />
     </PageContainer>
   );
 }

@@ -7,7 +7,11 @@ import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
 import { PageContainer } from "../../../components/common/PageContainer";
 import EmptyState from "../../../components/common/EmptyState";
 import DynamicPagination from "../../../components/common/DynamicPagination";
-import { getExamPacksAction, getExamPacksPaginatedAction, PaginationMeta } from "../../../lib/actions";
+import {
+  getExamPacksAction,
+  getExamPacksPaginatedAction,
+  PaginationMeta,
+} from "../../../lib/actions";
 
 interface ManageExamPackClientViewProps {
   initialPacks: any[];
@@ -151,12 +155,7 @@ export default function ManageExamPackClientView({
         </div>
       )}
 
-      {/* Pagination Controls */}
-      {meta && meta.total_items > 0 && (
-        <div className="bg-white border border-slate-200/80 rounded px-4 py-2 shadow-2xs">
-          <DynamicPagination meta={meta} />
-        </div>
-      )}
+      <DynamicPagination meta={meta} />
     </PageContainer>
   );
 }

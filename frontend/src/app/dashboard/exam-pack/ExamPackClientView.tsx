@@ -17,7 +17,10 @@ interface ExamPackClientViewProps {
   initialMeta?: PaginationMeta;
 }
 
-export default function ExamPackClientView({ initialPacks, initialMeta }: ExamPackClientViewProps) {
+export default function ExamPackClientView({
+  initialPacks,
+  initialMeta,
+}: ExamPackClientViewProps) {
   const [examPacks, setExamPacks] = useState<any[]>(initialPacks || []);
 
   useEffect(() => {
@@ -36,9 +39,9 @@ export default function ExamPackClientView({ initialPacks, initialMeta }: ExamPa
 
   // ---- Derived Data (Filtered + Sorted) ----
   const filteredAndSorted = useMemo(() => {
-    let data = [...examPacks].map(item => ({
+    let data = [...examPacks].map((item) => ({
       ...item,
-      link: `/dashboard/exam-pack/exam-pack-details?packId=${item.id}`
+      link: `/dashboard/exam-pack/exam-pack-details?packId=${item.id}`,
     }));
 
     // Filter by Category
@@ -94,7 +97,8 @@ export default function ExamPackClientView({ initialPacks, initialMeta }: ExamPa
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold">
           <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700">
-            Total Available: <strong className="text-slate-900">{examPacks.length}</strong>
+            Total Available:{" "}
+            <strong className="text-slate-900">{examPacks.length}</strong>
           </span>
         </div>
       </div>
@@ -122,7 +126,10 @@ export default function ExamPackClientView({ initialPacks, initialMeta }: ExamPa
             >
               <span className="flex items-center gap-1.5 truncate">
                 <FaTags className="text-slate-400 text-[10px]" />
-                <span className="text-slate-600">Category:</span> <strong className="text-primary font-bold truncate">{filterCategory}</strong>
+                <span className="text-slate-600">Category:</span>{" "}
+                <strong className="text-primary font-bold truncate">
+                  {filterCategory}
+                </strong>
               </span>
               <span className="text-[10px] text-slate-400">▼</span>
             </button>
@@ -226,12 +233,7 @@ export default function ExamPackClientView({ initialPacks, initialMeta }: ExamPa
         )}
       </div>
 
-      {/* Pagination Controls */}
-      {initialMeta && initialMeta.total_items > 0 && (
-        <div className="bg-white border border-slate-200/80 rounded px-4 py-2 shadow-2xs">
-          <DynamicPagination meta={initialMeta} />
-        </div>
-      )}
+        <DynamicPagination meta={initialMeta} />
     </PageContainer>
   );
 }

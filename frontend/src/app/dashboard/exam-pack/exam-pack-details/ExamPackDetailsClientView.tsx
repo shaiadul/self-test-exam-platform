@@ -90,7 +90,8 @@ export default function ExamPackDetailsClientView({
     const start = new Date(e.startDate);
     const end = new Date(e.endDate);
     const userAttempt = attemptMap.get(e.id);
-    let status: "Start Exam" | "Complete" | "Expire" | "Upcoming" = "Start Exam";
+    let status: "Start Exam" | "Complete" | "Expire" | "Upcoming" =
+      "Start Exam";
 
     if (userAttempt) {
       status = "Complete";
@@ -360,12 +361,7 @@ export default function ExamPackDetailsClientView({
         )}
       </div>
 
-      {/* Dynamic Pagination Controls */}
-      {initialMeta && initialMeta.total_items > 0 && (
-        <div className="bg-white border border-slate-200/80 rounded px-4 py-2 shadow-2xs">
-          <DynamicPagination meta={initialMeta} />
-        </div>
-      )}
+      <DynamicPagination meta={initialMeta} />
     </PageContainer>
   );
 }

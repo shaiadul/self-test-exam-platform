@@ -4,7 +4,11 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { FaUserPlus } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
-import { adminUpdateUserAction, adminDeleteUserAction, registerAction } from "../../../../lib/actions";
+import {
+  adminUpdateUserAction,
+  adminDeleteUserAction,
+  registerAction,
+} from "../../../../lib/actions";
 import { User } from "./types";
 import { UserManagementTable } from "./components/UserManagementTable";
 import { UserManagementMobileCards } from "./components/UserManagementMobileCards";
@@ -54,7 +58,7 @@ export default function UserManagementClientView({
       const res = await adminUpdateUserAction(userId, { role });
       if (res.success) {
         setUsers((prev) =>
-          prev.map((u) => (u.id === userId ? { ...u, role } : u))
+          prev.map((u) => (u.id === userId ? { ...u, role } : u)),
         );
         setEditingUserId(null);
         toast.success("Role updated successfully.");
@@ -73,12 +77,18 @@ export default function UserManagementClientView({
 
     setSavingLimit(true);
     try {
-      const res = await adminUpdateUserAction(limitModalUser.id, { examLimit: limitValue });
+      const res = await adminUpdateUserAction(limitModalUser.id, {
+        examLimit: limitValue,
+      });
       if (res.success) {
         setUsers((prev) =>
-          prev.map((u) => (u.id === limitModalUser.id ? { ...u, examLimit: limitValue } : u))
+          prev.map((u) =>
+            u.id === limitModalUser.id ? { ...u, examLimit: limitValue } : u,
+          ),
         );
-        toast.success(`Exam creation limit updated to ${limitValue === -1 ? "Unlimited" : limitValue}.`);
+        toast.success(
+          `Exam creation limit updated to ${limitValue === -1 ? "Unlimited" : limitValue}.`,
+        );
         setLimitModalUser(null);
       } else {
         toast.error(res.error || "Failed to update exam limit");
@@ -91,7 +101,9 @@ export default function UserManagementClientView({
   }
 
   async function handleDeleteUser(userId: number, name: string) {
-    if (!confirm(`Are you sure you want to permanently delete user "${name}"?`)) {
+    if (
+      !confirm(`Are you sure you want to permanently delete user "${name}"?`)
+    ) {
       return;
     }
 
@@ -118,7 +130,9 @@ export default function UserManagementClientView({
       const res = await registerAction(newName, newEmail, newPassword);
       if (res.success && res.user) {
         if (newRole !== "student" && res.user.id) {
-          const updateData: { role: string; examLimit?: number } = { role: newRole };
+          const updateData: { role: string; examLimit?: number } = {
+            role: newRole,
+          };
           if (newRole === "teacher") {
             updateData.examLimit = newExamLimit;
           }
@@ -211,15 +225,9 @@ export default function UserManagementClientView({
           onDeleteUser={handleDeleteUser}
         />
 
-        {/* Dynamic Pagination Controls */}
-        {initialMeta && initialMeta.total_items > 0 && (
-          <div className="bg-white border-t border-slate-200/80 px-4 py-2">
-            <DynamicPagination meta={initialMeta} />
-          </div>
-        )}
+        <DynamicPagination meta={initialMeta} />
       </div>
 
-      {/* Exam Limit Edit Modal */}
       {limitModalUser && (
         <EditExamLimitModal
           user={limitModalUser}
@@ -231,7 +239,6 @@ export default function UserManagementClientView({
         />
       )}
 
-      {/* Add User Modal */}
       <AddUserModal
         isOpen={addUserOpen}
         onClose={() => setAddUserOpen(false)}
