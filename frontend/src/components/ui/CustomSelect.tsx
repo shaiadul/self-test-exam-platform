@@ -11,6 +11,8 @@ interface CustomSelectProps {
   value: string;
   onChange: (val: string) => void;
   disabled?: boolean;
+  alwaysShowOptions?: string[];
+  onSelectOptionWithSearch?: (option: string, currentSearch: string) => void;
 }
 
 export default function CustomSelect({
@@ -20,6 +22,8 @@ export default function CustomSelect({
   value,
   onChange,
   disabled = false,
+  alwaysShowOptions,
+  onSelectOptionWithSearch,
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
   const [openUp, setOpenUp] = useState(false);
@@ -29,8 +33,10 @@ export default function CustomSelect({
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
-  const filteredOptions = options.filter((opt) =>
-    opt.toLowerCase().includes(search.toLowerCase())
+  const filteredOptions = options.filter(
+    (opt) =>
+      opt.toLowerCase().includes(search.toLowerCase()) ||
+      alwaysShowOptions?.includes(opt)
   );
 
   // Close when clicking outside
@@ -117,7 +123,9 @@ export default function CustomSelect({
         case "Enter":
           e.preventDefault();
           if (highlightIdx >= 0 && highlightIdx < filteredOptions.length) {
-            onChange(filteredOptions[highlightIdx]);
+            const selectedOpt = filteredOptions[highlightIdx];
+            onChange(selectedOpt);
+            onSelectOptionWithSearch?.(selectedOpt, search);
             setOpen(false);
           }
           break;
@@ -126,7 +134,7 @@ export default function CustomSelect({
           break;
       }
     },
-    [open, filteredOptions, highlightIdx, onChange]
+    [open, filteredOptions, highlightIdx, onChange, onSelectOptionWithSearch, search]
   );
 
   // Scroll highlighted item into view
@@ -220,6 +228,7 @@ export default function CustomSelect({
                       }`}
                       onClick={() => {
                         onChange(opt);
+                        onSelectOptionWithSearch?.(opt, search);
                         setOpen(false);
                       }}
                       onMouseEnter={() => setHighlightIdx(idx)}

@@ -1,8 +1,19 @@
-import { getSystemAssetsAction } from "../../../../lib/actions";
+import { getSystemAssetsAction, getInstitutionSuggestionsAction } from "../../../../lib/actions";
 import AssetsSetupClientView from "./AssetsSetupClientView";
 
-export default async function AssetsSetupPage() {
-  const assets = await getSystemAssetsAction();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-  return <AssetsSetupClientView initialAssets={assets || []} />;
+export default async function AssetsSetupPage() {
+  const [assets, suggestions] = await Promise.all([
+    getSystemAssetsAction(),
+    getInstitutionSuggestionsAction(), // all statuses visible to admin
+  ]);
+
+  return (
+    <AssetsSetupClientView
+      initialAssets={assets || []}
+      initialSuggestions={suggestions || []}
+    />
+  );
 }

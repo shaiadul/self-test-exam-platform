@@ -15,6 +15,18 @@ type SystemAsset struct {
 	Value string `json:"value" db:"value" gorm:"uniqueIndex;not null"`
 }
 
+// InstitutionSuggestion holds a user-proposed custom institution name.
+// Status: "pending" | "approved" | "rejected"
+// When approved, the value is promoted to system_assets (type=institution).
+type InstitutionSuggestion struct {
+	ID        int       `json:"id" gorm:"primaryKey;autoIncrement"`
+	UserID    int       `json:"userId" gorm:"not null;index"`
+	UserName  string    `json:"userName" gorm:"-"`
+	Value     string    `json:"value" gorm:"not null"`
+	Status    string    `json:"status" gorm:"not null;default:'pending'"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+}
+
 type Transaction struct {
 	ID          int       `json:"id" db:"id" gorm:"primaryKey;autoIncrement"`
 	Type        string    `json:"type" db:"type" gorm:"not null"`
@@ -28,3 +40,4 @@ type FinancialSummary struct {
 	TotalExpenditure float64 `json:"totalExpenditure"`
 	NetIncome        float64 `json:"netIncome"`
 }
+

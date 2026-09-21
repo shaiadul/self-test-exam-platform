@@ -39,6 +39,7 @@ func models() []interface{} {
 		&system.Permission{},
 		&system.SystemAsset{},
 		&system.Transaction{},
+		&system.InstitutionSuggestion{},
 		&examrequest.ExamRequest{},
 	}
 }

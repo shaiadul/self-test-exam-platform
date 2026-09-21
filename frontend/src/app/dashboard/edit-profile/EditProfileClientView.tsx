@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
@@ -14,7 +14,7 @@ import {
   FaSave,
 } from "react-icons/fa";
 import { PageContainer } from "../../../components/common/PageContainer";
-import { updateProfileAction } from "../../../lib/actions";
+import { updateProfileAction, submitInstitutionSuggestionAction } from "../../../lib/actions";
 import { ProfileFormData, RoleBadgeConfig } from "./types";
 import { ProfileIdentityCard } from "./components/ProfileIdentityCard";
 import { ProfileGeneralForm } from "./components/ProfileGeneralForm";
@@ -44,6 +44,16 @@ export default function EditProfileClientView({
   const boardOptions = (initialAssets || [])
     .filter((a: any) => a.type === "board")
     .map((a: any) => a.value);
+  const institutionOptions = (initialAssets || [])
+    .filter((a: any) => a.type === "institution")
+    .map((a: any) => a.value);
+
+  // Tracks a custom institution value that should be submitted as a suggestion on save
+  const pendingSuggestionRef = useRef<string | null>(null);
+
+  function handleInstitutionSuggestion(value: string) {
+    pendingSuggestionRef.current = value || null;
+  }
 
   // Core profile state
   const [profileData, setProfileData] = useState<ProfileFormData>({
@@ -137,6 +147,15 @@ export default function EditProfileClientView({
 
       const res = await updateProfileAction(payload);
       if (res.success) {
+        // Fire institution suggestion in background if user typed a custom value
+        const customInst =
+          profileData.institution?.trim() ||
+          pendingSuggestionRef.current?.trim();
+        if (customInst && !institutionOptions.includes(customInst)) {
+          submitInstitutionSuggestionAction(customInst).catch(() => {});
+          pendingSuggestionRef.current = null;
+        }
+
         if (typeof window !== "undefined") {
           localStorage.setItem("userName", payload.name || "");
           if (payload.image) {
@@ -252,6 +271,8 @@ export default function EditProfileClientView({
               levelOptions={levelOptions}
               batchOptions={batchOptions}
               boardOptions={boardOptions}
+              institutionOptions={institutionOptions}
+              onInstitutionSuggestion={handleInstitutionSuggestion}
               onChange={handleChange}
             />
 

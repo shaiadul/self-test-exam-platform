@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	ErrAssetTypeAndValueReq   = errors.New("type and value are required")
-	ErrTransactionRequired    = errors.New("type, positive amount, and description are required")
+	ErrAssetTypeAndValueReq = errors.New("type and value are required")
+	ErrTransactionRequired  = errors.New("type, positive amount, and description are required")
+	ErrSuggestionValueReq   = errors.New("institution value is required")
 )
 
 type SystemService struct {
@@ -53,6 +54,14 @@ func (s *SystemService) CreateSystemAsset(asset *system.SystemAsset) error {
 	return s.repo.CreateSystemAsset(asset)
 }
 
+func (s *SystemService) UpdateSystemAsset(id int, value string) error {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return ErrAssetTypeAndValueReq
+	}
+	return s.repo.UpdateSystemAsset(id, trimmed)
+}
+
 func (s *SystemService) DeleteSystemAsset(id int) error {
 	return s.repo.DeleteSystemAsset(id)
 }
@@ -71,3 +80,41 @@ func (s *SystemService) CreateTransaction(tx *system.Transaction) error {
 	}
 	return s.repo.CreateTransaction(tx)
 }
+
+// ---- Institution Suggestions ----
+
+func (s *SystemService) SubmitInstitutionSuggestion(userID int, value string) (*system.InstitutionSuggestion, error) {
+	if strings.TrimSpace(value) == "" {
+		return nil, ErrSuggestionValueReq
+	}
+	suggestion := &system.InstitutionSuggestion{
+		UserID: userID,
+		Value:  strings.TrimSpace(value),
+		Status: "pending",
+	}
+	if err := s.repo.CreateInstitutionSuggestion(suggestion); err != nil {
+		return nil, err
+	}
+	return suggestion, nil
+}
+
+func (s *SystemService) GetInstitutionSuggestions(status string) ([]system.InstitutionSuggestion, error) {
+	return s.repo.GetInstitutionSuggestions(status)
+}
+
+func (s *SystemService) UpdateInstitutionSuggestion(id int, value string) (*system.InstitutionSuggestion, error) {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil, ErrSuggestionValueReq
+	}
+	return s.repo.UpdateInstitutionSuggestion(id, trimmed)
+}
+
+func (s *SystemService) ApproveInstitutionSuggestion(id int, optionalValue string) (*system.InstitutionSuggestion, error) {
+	return s.repo.ApproveInstitutionSuggestion(id, strings.TrimSpace(optionalValue))
+}
+
+func (s *SystemService) RejectInstitutionSuggestion(id int) error {
+	return s.repo.RejectInstitutionSuggestion(id)
+}
+

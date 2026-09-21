@@ -92,5 +92,10 @@ func NewRouter(h Handlers) http.Handler {
 	mux.Handle("/api/transactions", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleTransactions)))
 	mux.Handle("/api/transactions/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleTransactions)))
 
+	// Institution suggestions (user submit + admin approve/reject)
+	mux.Handle("/api/institutions/suggest", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
+	mux.Handle("/api/admin/institutions/suggestions", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
+	mux.Handle("/api/admin/institutions/suggestions/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
+
 	return middleware.LoggerMiddleware(CorsMiddleware(mux))
 }

@@ -1,6 +1,9 @@
 package persistence
 
 import (
+	"errors"
+	"strings"
+
 	"gorm.io/gorm"
 
 	"github.com/selftest/backend/internal/domain/system"
@@ -38,6 +41,10 @@ func (r *PostgresSystemRepository) GetSystemAssets() ([]system.SystemAsset, erro
 
 func (r *PostgresSystemRepository) CreateSystemAsset(asset *system.SystemAsset) error {
 	return r.db.Create(asset).Error
+}
+
+func (r *PostgresSystemRepository) UpdateSystemAsset(id int, value string) error {
+	return r.db.Model(&system.SystemAsset{}).Where("id = ?", id).Update("value", value).Error
 }
 
 func (r *PostgresSystemRepository) DeleteSystemAsset(id int) error {
@@ -78,3 +85,74 @@ func (r *PostgresSystemRepository) GetFinancialSummary() (*system.FinancialSumma
 func (r *PostgresSystemRepository) CreateTransaction(tx *system.Transaction) error {
 	return r.db.Create(tx).Error
 }
+
+// ---- Institution Suggestions ----
+
+func (r *PostgresSystemRepository) CreateInstitutionSuggestion(s *system.InstitutionSuggestion) error {
+	return r.db.Create(s).Error
+}
+
+func (r *PostgresSystemRepository) GetInstitutionSuggestions(status string) ([]system.InstitutionSuggestion, error) {
+	var suggestions []system.InstitutionSuggestion
+	q := r.db.Table("institution_suggestions").
+		Select("institution_suggestions.*, users.name AS user_name").
+		Joins("LEFT JOIN users ON users.id = institution_suggestions.user_id").
+		Order("institution_suggestions.created_at DESC")
+	if status != "" {
+		q = q.Where("institution_suggestions.status = ?", status)
+	}
+	if err := q.Scan(&suggestions).Error; err != nil {
+		return nil, err
+	}
+	return suggestions, nil
+}
+
+func (r *PostgresSystemRepository) UpdateInstitutionSuggestion(id int, value string) (*system.InstitutionSuggestion, error) {
+	var s system.InstitutionSuggestion
+	if err := r.db.First(&s, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("suggestion not found")
+		}
+		return nil, err
+	}
+	cleanValue := strings.TrimSpace(value)
+	if err := r.db.Model(&s).Update("value", cleanValue).Error; err != nil {
+		return nil, err
+	}
+	s.Value = cleanValue
+	return &s, nil
+}
+
+func (r *PostgresSystemRepository) ApproveInstitutionSuggestion(id int, optionalValue string) (*system.InstitutionSuggestion, error) {
+	var s system.InstitutionSuggestion
+	if err := r.db.First(&s, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("suggestion not found")
+		}
+		return nil, err
+	}
+
+	if strings.TrimSpace(optionalValue) != "" {
+		s.Value = strings.TrimSpace(optionalValue)
+		if err := r.db.Model(&s).Update("value", s.Value).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	// Promote to system_assets (ignore duplicate if already promoted)
+	asset := &system.SystemAsset{Type: "institution", Value: s.Value}
+	r.db.Where("type = ? AND value = ?", "institution", s.Value).FirstOrCreate(asset)
+
+	// Mark as approved
+	if err := r.db.Model(&s).Update("status", "approved").Error; err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+
+func (r *PostgresSystemRepository) RejectInstitutionSuggestion(id int) error {
+	return r.db.Model(&system.InstitutionSuggestion{}).
+		Where("id = ?", id).
+		Update("status", "rejected").Error
+}
+

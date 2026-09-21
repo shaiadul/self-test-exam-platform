@@ -1,5 +1,5 @@
-import React from "react";
-import { FaBuilding, FaBriefcase, FaGlobe } from "react-icons/fa";
+import React, { useState } from "react";
+import { FaBuilding, FaBriefcase, FaGlobe, FaInfoCircle } from "react-icons/fa";
 import { Input } from "../../../../components/ui/Input";
 import CustomSelect from "../../../../components/ui/CustomSelect";
 import { ProfileFormData } from "../types";
@@ -10,7 +10,104 @@ interface ProfileRoleSpecificFormProps {
   levelOptions: string[];
   batchOptions: string[];
   boardOptions: string[];
+  institutionOptions: string[];
+  onInstitutionSuggestion?: (value: string) => void;
   onChange: (field: string, value: string) => void;
+}
+
+const OTHER_LABEL = "Other (type your institution)";
+
+/** Shared institution searchable select + "Other" text input used by both student and teacher forms. */
+function InstitutionField({
+  value,
+  options,
+  onChange,
+  onSuggestion,
+  label = "Institution Name",
+  placeholder = "e.g. Dhaka College",
+  colSpan2 = false,
+}: {
+  value: string;
+  options: string[];
+  onChange: (val: string) => void;
+  onSuggestion?: (val: string) => void;
+  label?: string;
+  placeholder?: string;
+  colSpan2?: boolean;
+}) {
+  // Determine if the current value is a known option
+  const isKnownOption = options.includes(value) || value === "";
+  const [isOther, setIsOther] = useState(!isKnownOption && value !== "");
+  const [customValue, setCustomValue] = useState(isOther ? value : "");
+
+  // Options including "Other"
+  const selectOptions = options.includes(OTHER_LABEL)
+    ? options
+    : [...options, OTHER_LABEL];
+
+  const selectValue = isOther ? OTHER_LABEL : value;
+
+  function handleSelectChange(val: string) {
+    if (val === OTHER_LABEL) {
+      setIsOther(true);
+      onChange(customValue);
+      onSuggestion?.(customValue);
+    } else {
+      setIsOther(false);
+      setCustomValue("");
+      onChange(val);
+      onSuggestion?.("");
+    }
+  }
+
+  function handleSelectOptionWithSearch(opt: string, currentSearch: string) {
+    if (opt === OTHER_LABEL && currentSearch.trim() && !customValue.trim()) {
+      const typed = currentSearch.trim();
+      setCustomValue(typed);
+      onChange(typed);
+      onSuggestion?.(typed);
+    }
+  }
+
+  function handleCustomChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    setCustomValue(v);
+    onChange(v);
+    onSuggestion?.(v);
+  }
+
+  const wrapper = colSpan2 ? "sm:col-span-2" : "";
+
+  return (
+    <div className={`flex flex-col gap-2 ${wrapper}`}>
+      <CustomSelect
+        label={label}
+        placeholder="Search or select institution..."
+        options={selectOptions}
+        alwaysShowOptions={[OTHER_LABEL]}
+        value={selectValue}
+        onChange={handleSelectChange}
+        onSelectOptionWithSearch={handleSelectOptionWithSearch}
+      />
+
+      {/* Custom value text input (shown only when "Other" selected) */}
+      {isOther && (
+        <div className="flex flex-col gap-1">
+          <Input
+            icon={<FaBuilding className="text-slate-400 text-xs" />}
+            value={customValue}
+            onChange={handleCustomChange}
+            placeholder={placeholder}
+            autoFocus
+          />
+          <p className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+            <FaInfoCircle className="text-[9px] shrink-0" />
+            Your suggestion will be sent to admins for review. Your profile saves immediately.
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = ({
@@ -19,6 +116,8 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
   levelOptions,
   batchOptions,
   boardOptions,
+  institutionOptions,
+  onInstitutionSuggestion,
   onChange,
 }) => {
   if (normRole === "student") {
@@ -27,7 +126,7 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
         <div className="px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-              Academic Level & Institution Allocation
+              Academic Level &amp; Institution Allocation
             </h3>
           </div>
           <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
@@ -65,24 +164,19 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
             options={
               boardOptions.length
                 ? boardOptions
-                : [
-                    "Dhaka",
-                    "Rajshahi",
-                    "Chittagong",
-                    "Cambridge",
-                    "Edexcel",
-                  ]
+                : ["Dhaka", "Rajshahi", "Chittagong", "Cambridge", "Edexcel"]
             }
             value={profileData.board}
             onChange={(val) => onChange("board", val)}
             placeholder="Select Board"
           />
 
-          <Input
+          <InstitutionField
             label="College / School Institution"
-            icon={<FaBuilding className="text-slate-400 text-xs" />}
             value={profileData.institution}
-            onChange={(e) => onChange("institution", e.target.value)}
+            options={institutionOptions}
+            onChange={(val) => onChange("institution", val)}
+            onSuggestion={onInstitutionSuggestion}
             placeholder="e.g. Dhaka College"
           />
         </div>
@@ -92,11 +186,11 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
 
   if (normRole === "teacher") {
     return (
-      <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
+      <div className="relative rounded bg-white border border-slate-200/80 shadow-2xs">
         <div className="px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-              Department & Teaching Specialization
+              Department &amp; Teaching Specialization
             </h3>
           </div>
           <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -121,15 +215,15 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
             placeholder="e.g. Senior Lecturer"
           />
 
-          <div className="sm:col-span-2">
-            <Input
-              label="Institution / University Name"
-              icon={<FaBuilding className="text-slate-400 text-xs" />}
-              value={profileData.institution}
-              onChange={(e) => onChange("institution", e.target.value)}
-              placeholder="e.g. Dhaka University"
-            />
-          </div>
+          <InstitutionField
+            label="Institution / University Name"
+            value={profileData.institution}
+            options={institutionOptions}
+            onChange={(val) => onChange("institution", val)}
+            onSuggestion={onInstitutionSuggestion}
+            placeholder="e.g. Dhaka University"
+            colSpan2
+          />
         </div>
       </div>
     );
@@ -137,7 +231,7 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
 
   if (normRole === "admin") {
     return (
-      <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
+      <div className="relative rounded bg-white border border-slate-200/80 shadow-2xs">
         <div className="px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
