@@ -12,9 +12,9 @@ Act as a **Senior Frontend Engineer**. Write clean, reusable, production-ready, 
 * Avoid hardcoded colors like `bg-red-500` when semantic tokens exist.
 * Always use `cn()` for conditional or merged Tailwind classes.
 * Follow **mobile-first responsive design**. Prefer Tailwind/CSS over JavaScript viewport detection.
-
   * Mobile only: `block md:hidden`
   * Desktop only: `hidden md:block`
+  * Reference: Read `docs/COMPONENT_GUIDELINES.md` for spacing scales (`p-3.5 sm:p-5`), form submit/cancel HUD patterns, and mobile UX best practices.
 * Keep **SSR-safe**. Avoid unnecessary `"use client"` and browser APIs such as `window`, `document`, and `localStorage` during SSR.
 * Use **Server Components by default** when using Next.js.
 * Use TypeScript and avoid unnecessary `any`.
