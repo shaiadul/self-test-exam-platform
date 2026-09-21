@@ -50,18 +50,18 @@ export const ExamSubmitConfirmModal: React.FC<ExamSubmitConfirmModalProps> = ({
               </p>
             </div>
 
-            <div className="flex gap-2.5 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5 pt-2">
               <OutlineBtn
                 type="button"
                 onClick={onCancel}
-                className="flex-1 !text-xs !py-2 !rounded"
+                className="w-full sm:flex-1 !text-xs !py-2.5 !rounded"
               >
                 Keep Reviewing
               </OutlineBtn>
               <PrimaryBtn
                 onClick={onConfirm}
                 disabled={isSubmitting}
-                className="flex-1 !text-xs !py-2 !rounded gap-1.5"
+                className="w-full sm:flex-1 !text-xs !py-2.5 !rounded gap-1.5"
               >
                 {isSubmitting ? "Submitting..." : "Confirm & Submit"}
               </PrimaryBtn>

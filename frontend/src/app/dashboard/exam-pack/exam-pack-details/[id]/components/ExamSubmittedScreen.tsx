@@ -23,7 +23,7 @@ export const ExamSubmittedScreen: React.FC<ExamSubmittedScreenProps> = ({
       : (examMeta?.feedback ?? true);
 
   return (
-    <PageContainer className="max-w-4xl mx-auto py-10 px-4">
+    <PageContainer className="max-w-4xl mx-auto py-6 sm:py-10 px-3 sm:px-4">
       {allowFeedback && (
         <div className="hidden print:block">
           <CertificatePrintLayout
@@ -44,12 +44,12 @@ export const ExamSubmittedScreen: React.FC<ExamSubmittedScreenProps> = ({
       )}
 
       <div className="print:hidden space-y-6">
-        <div className="bg-white rounded p-4 sm:p-8 border border-slate-200/80 shadow-xs text-center space-y-5">
-          <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center text-3xl mx-auto border-2 border-emerald-200">
+        <div className="bg-white rounded-lg sm:rounded p-3.5 sm:p-8 border border-slate-200/80 shadow-xs text-center space-y-5">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center text-2xl sm:text-3xl mx-auto border-2 border-emerald-200">
             <FaCheckCircle />
           </div>
           <div className="space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            <h1 className="text-xl sm:text-3xl font-bold text-slate-900">
               Exam Successfully Submitted!
             </h1>
             {examResult.securityMessage && (
@@ -86,11 +86,11 @@ export const ExamSubmittedScreen: React.FC<ExamSubmittedScreenProps> = ({
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 pt-2">
             {allowFeedback && examResult.id && (
               <PrimaryBtn
                 link={`/dashboard/reporting/${examResult.id}`}
-                className="flex-1 !text-xs !py-2.5 !rounded shadow-xs gap-2"
+                className="w-full sm:flex-1 !text-xs !py-3 sm:!py-2.5 !rounded shadow-xs gap-2"
               >
                 <FaEye className="text-xs" />
                 <span>Review Solutions & Report</span>
@@ -99,12 +99,12 @@ export const ExamSubmittedScreen: React.FC<ExamSubmittedScreenProps> = ({
             {allowFeedback && (
               <PrimaryBtn
                 onClick={() => window.print()}
-                className="flex-1 !text-xs !py-2.5 !rounded !bg-purple-600 hover:!bg-purple-500 !text-white shadow-xs"
+                className="w-full sm:flex-1 !text-xs !py-3 sm:!py-2.5 !rounded !bg-purple-600 hover:!bg-purple-500 !text-white shadow-xs"
               >
                 Print Official Certificate
               </PrimaryBtn>
             )}
-            <OutlineBtn link="/dashboard" className="flex-1 !text-xs !py-2.5 !rounded">
+            <OutlineBtn link="/dashboard" className="w-full sm:flex-1 !text-xs !py-3 sm:!py-2.5 !rounded">
               Back to Dashboard
             </OutlineBtn>
           </div>

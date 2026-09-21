@@ -48,7 +48,7 @@ const Timer: React.FC<TimerProps> = ({ duration, onTimeUp, isRunning }) => {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 px-3 py-1.5 rounded border transition-all select-none",
+        "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded border transition-all select-none shrink-0",
         isCriticalTime
           ? "bg-rose-50 border-rose-300 text-rose-700 animate-pulse"
           : isLowTime
@@ -56,12 +56,12 @@ const Timer: React.FC<TimerProps> = ({ duration, onTimeUp, isRunning }) => {
           : "bg-slate-50 border-slate-200/90 text-slate-800"
       )}
     >
-      <span className="text-sm">⏱️</span>
+      <span className="text-xs sm:text-sm">⏱️</span>
       <div>
-        <p className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none">
+        <p className="hidden sm:block text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none mb-0.5">
           {isCriticalTime ? "Critical Time" : "Time Left"}
         </p>
-        <p className="text-sm sm:text-base font-black font-mono leading-tight tracking-tight">
+        <p className="text-xs sm:text-base font-black font-mono leading-none tracking-tight">
           {formatTime(timeLeft)}
         </p>
       </div>
@@ -105,27 +105,29 @@ export const ExamTopBar: React.FC<ExamTopBarProps> = ({
   }, [examMeta.durationMinutes, examMeta.endDate]);
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs px-3 sm:px-6 py-2.5">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs px-2.5 sm:px-6 py-2 sm:py-2.5">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
         {/* Left: Exam title & Proctor status */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[10px] font-bold rounded border border-emerald-200 shrink-0">
-            <span className="w-1.5 h-1.5 rounded bg-emerald-500 animate-ping" />
-            <span className="hidden sm:inline">PROCTORED ACTIVE</span>
-            <span className="sm:hidden">LIVE</span>
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+          <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[9px] sm:text-[10px] font-bold rounded border border-emerald-200 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+            <span className="hidden sm:inline">PROCTORED</span>
+            <span>LIVE</span>
           </span>
 
           <span
             className={cn(
-              "inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono text-[10px] font-bold border shrink-0",
+              "inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded font-mono text-[9px] sm:text-[10px] font-bold border shrink-0",
               warnings === 0
-                ? "bg-slate-50 text-slate-600 border-slate-200"
+                ? "bg-slate-50 text-slate-500 border-slate-200"
                 : warnings === 1
                 ? "bg-amber-50 text-amber-700 border-amber-300"
                 : "bg-rose-50 text-rose-700 border-rose-300 animate-pulse"
             )}
+            title="Security warnings strike counter"
           >
-            Strikes: {warnings}/3
+            <span className="hidden sm:inline">Strikes: </span>
+            <span>{warnings}/3</span>
           </span>
 
           <div className="hidden md:block min-w-0">
@@ -135,23 +137,22 @@ export const ExamTopBar: React.FC<ExamTopBarProps> = ({
         </div>
 
         {/* Center: Countdown Timer */}
-        <div className="shrink-0">
-          <Timer
-            duration={effectiveDurationSeconds}
-            onTimeUp={onTimeUp}
-            isRunning={true}
-          />
-        </div>
+        <Timer
+          duration={effectiveDurationSeconds}
+          onTimeUp={onTimeUp}
+          isRunning={true}
+        />
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Mobile Matrix Drawer Button */}
           <button
+            type="button"
             onClick={onOpenMobileDrawer}
-            className="lg:hidden px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded flex items-center gap-1.5 transition cursor-pointer"
+            className="lg:hidden px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] rounded flex items-center gap-1 transition cursor-pointer border border-slate-200"
             title="Open Question Palette"
           >
-            <FaThLarge className="text-xs text-primary" />
+            <FaThLarge className="text-[10px] text-primary" />
             <span className="font-mono">
               {currentQuestionIdx + 1}/{totalQuestions}
             </span>
@@ -159,6 +160,7 @@ export const ExamTopBar: React.FC<ExamTopBarProps> = ({
 
           {/* Fullscreen Toggle */}
           <button
+            type="button"
             onClick={onToggleFullscreen}
             className="hidden sm:flex p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded transition cursor-pointer"
             title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
@@ -168,9 +170,10 @@ export const ExamTopBar: React.FC<ExamTopBarProps> = ({
 
           {/* Submit Button */}
           <button
+            type="button"
             onClick={onOpenSubmitConfirm}
             disabled={isSubmitting}
-            className="px-3 sm:px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs transition cursor-pointer disabled:opacity-50 shrink-0"
+            className="px-2.5 sm:px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded shadow-xs transition cursor-pointer disabled:opacity-50 shrink-0"
           >
             {isSubmitting ? "..." : "Submit"}
           </button>

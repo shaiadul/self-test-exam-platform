@@ -53,18 +53,18 @@ export const ExamPasscodeModal: React.FC<ExamPasscodeModalProps> = ({
             autoFocus
           />
 
-          <div className="flex gap-2.5 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row gap-2.5 pt-2">
             <OutlineBtn
               type="button"
               onClick={onCancel}
-              className="flex-1 !text-xs !py-2.5 !rounded"
+              className="w-full sm:flex-1 !text-xs !py-2.5 !rounded"
             >
               Cancel
             </OutlineBtn>
             <PrimaryBtn
               type="submit"
               disabled={verifyingPasscode}
-              className="flex-1 !text-xs !py-2.5 !rounded shadow-xs disabled:opacity-50"
+              className="w-full sm:flex-1 !text-xs !py-2.5 !rounded shadow-xs disabled:opacity-50"
             >
               {verifyingPasscode ? "Verifying..." : "Unlock Exam"}
             </PrimaryBtn>

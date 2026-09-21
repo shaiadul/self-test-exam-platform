@@ -17,7 +17,7 @@ import { ExamSecurityModal } from "./components/ExamSecurityModal";
 import { ExamSubmitConfirmModal } from "./components/ExamSubmitConfirmModal";
 import { ExamTopBar } from "./components/ExamTopBar";
 import { ExamQuestionCard } from "./components/ExamQuestionCard";
-import { ExamQuestionMatrix } from "./components/ExamQuestionMatrix";
+import { ExamQuestionMatrix, MobileQuestionNavStrip } from "./components/ExamQuestionMatrix";
 import { formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 interface TakeExamClientViewProps {
@@ -608,10 +608,10 @@ export default function TakeExamClientView({
       />
 
       {/* MAIN EXAM STAGE: DUAL PANE LAYOUT */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 py-4 flex flex-col justify-between">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-2 sm:px-6 py-2 sm:py-4 flex flex-col justify-between">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 sm:gap-4 items-start">
           {/* LEFT COLUMN: MAIN QUESTION CONSOLE */}
-          <div className="lg:col-span-8 xl:col-span-9 space-y-3">
+          <div className="lg:col-span-8 xl:col-span-9 space-y-2 sm:space-y-3">
             {currentQ ? (
               <ExamQuestionCard
                 currentQ={currentQ}
@@ -639,6 +639,14 @@ export default function TakeExamClientView({
                 <p className="text-xs text-slate-500 font-bold">Question not found.</p>
               </div>
             )}
+
+            {/* Mobile Horizontal Quick-Nav Strip (< lg only, directly below exam question) */}
+            <MobileQuestionNavStrip
+              questions={questions}
+              currentQuestionIdx={currentQuestionIdx}
+              getQuestionStatus={getQuestionStatus}
+              onSelectQuestion={setCurrentQuestionIdx}
+            />
           </div>
 
           {/* RIGHT COLUMN: DESKTOP QUESTION MATRIX SIDEBAR & MOBILE DRAWER */}
