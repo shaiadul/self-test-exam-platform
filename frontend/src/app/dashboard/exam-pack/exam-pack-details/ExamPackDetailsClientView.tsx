@@ -137,7 +137,6 @@ export default function ExamPackDetailsClientView({
           <thead>
             <tr className="bg-slate-50/90 border-b border-slate-200/80 text-slate-500 font-extrabold text-[11px] uppercase tracking-wider">
               <th className="px-5 py-3.5 text-left">Exam Name</th>
-              <th className="px-5 py-3.5 text-left">Exam Code</th>
               <th className="px-5 py-3.5 text-left">Start Date</th>
               <th className="px-5 py-3.5 text-left">End Date</th>
               <th className="px-5 py-3.5 text-center">
@@ -153,9 +152,6 @@ export default function ExamPackDetailsClientView({
               >
                 <td className="px-5 py-3.5 font-bold text-slate-900 text-xs sm:text-sm">
                   {exam.name}
-                </td>
-                <td className="px-5 py-3.5 font-mono text-xs text-slate-500">
-                  #{exam.id}
                 </td>
                 <td className="px-5 py-3.5 text-xs text-slate-600 font-semibold">
                   {exam.startDate}

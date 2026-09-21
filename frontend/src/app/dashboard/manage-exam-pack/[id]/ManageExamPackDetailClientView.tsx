@@ -168,7 +168,6 @@ export default function ManageExamPackDetailClientView({
 
   return (
     <PageContainer className="space-y-6 animate-fadeIn pb-12">
-      {/* --- Page Header Command Strip --- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
           <OutlineBtn
@@ -179,11 +178,6 @@ export default function ManageExamPackDetailClientView({
             <FaArrowLeft className="text-xs" />
           </OutlineBtn>
           <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200 font-bold">
-                Pack #{packId}
-              </span>
-            </div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               {packTitle}
             </h1>
@@ -212,7 +206,6 @@ export default function ManageExamPackDetailClientView({
         </div>
       </div>
 
-      {/* --- Exams Table Data Grid --- */}
       <div className="bg-white rounded-none border border-slate-200/80 shadow-2xs overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2">
