@@ -224,7 +224,7 @@ export default function EditProfileClientView({
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
           <div className="lg:col-span-4">
             <ProfileIdentityCard
               profileData={profileData}
@@ -237,7 +237,7 @@ export default function EditProfileClientView({
             />
           </div>
 
-          <div className="lg:col-span-8 space-y-5">
+          <div className="lg:col-span-8 space-y-4 sm:space-y-5">
             <ProfileGeneralForm
               name={profileData.name}
               email={profileData.email}
@@ -255,7 +255,7 @@ export default function EditProfileClientView({
               onChange={handleChange}
             />
 
-            <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
+            <div className="rounded bg-white border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
               <div className="text-xs text-slate-500">
                 Ready to save your profile changes
               </div>

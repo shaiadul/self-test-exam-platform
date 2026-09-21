@@ -24,7 +24,7 @@ export const ExamSecurityModal: React.FC<ExamSecurityModalProps> = ({
             initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.92, opacity: 0 }}
-            className="bg-white max-w-md w-full rounded p-6 sm:p-7 border-2 border-rose-500 shadow-2xl text-center space-y-4"
+            className="bg-white max-w-md w-full rounded p-4 sm:p-6 border-2 border-rose-500 shadow-2xl text-center space-y-4"
           >
             <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded flex items-center justify-center text-xl mx-auto border border-rose-200 animate-bounce">
               <FaExclamationTriangle />

@@ -15,7 +15,7 @@ export const QuestionBankList: React.FC<QuestionBankListProps> = ({
   onDelete,
 }) => {
   return (
-    <div className="lg:col-span-5 bg-white p-4 rounded border border-slate-200/80 shadow-2xs space-y-3">
+    <div className="lg:col-span-5 bg-white p-3.5 sm:p-4 rounded border border-slate-200/80 shadow-2xs space-y-3">
       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
         <div>
           <h3 className="text-xs sm:text-sm font-bold text-slate-900">

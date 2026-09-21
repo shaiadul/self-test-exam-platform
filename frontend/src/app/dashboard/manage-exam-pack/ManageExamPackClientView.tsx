@@ -128,7 +128,7 @@ export default function ManageExamPackClientView({
           ))}
         </div>
       ) : (
-        <div className="bg-white border border-slate-200/80 rounded p-6 shadow-2xs max-w-xl mx-auto">
+        <div className="bg-white border border-slate-200/80 rounded p-4 sm:p-6 shadow-2xs max-w-xl mx-auto">
           <EmptyState
             type="exam"
             title={search ? "No Matching Packs" : "No Exam Packs Configured"}

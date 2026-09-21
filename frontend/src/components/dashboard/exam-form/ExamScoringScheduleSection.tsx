@@ -24,7 +24,7 @@ export const ExamScoringScheduleSection: React.FC<ExamScoringScheduleSectionProp
   const passingScore = calculatedTotalMarks > 0 ? ((calculatedTotalMarks * passPercent) / 100).toFixed(1) : "0";
 
   return (
-    <div className="bg-white p-5 rounded border border-slate-200/80 shadow-2xs space-y-4">
+    <div className="bg-white p-3.5 sm:p-5 rounded border border-slate-200/80 shadow-2xs space-y-4">
       <div className="border-b border-slate-100 pb-2.5 flex items-center justify-between">
         <div>
           <h2 className="text-xs sm:text-sm font-bold text-slate-900">

@@ -96,8 +96,8 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
       </div>
 
       {/* Overview Metric HUD */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
+        <div className="bg-white p-3.5 sm:p-4 rounded border border-slate-200/80 shadow-2xs">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
             Total Revenue
           </span>
@@ -106,7 +106,7 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs">
+        <div className="bg-white p-3.5 sm:p-4 rounded border border-slate-200/80 shadow-2xs">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
             Total Expenditures
           </span>
@@ -115,7 +115,7 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs">
+        <div className="bg-white p-3.5 sm:p-4 rounded border border-slate-200/80 shadow-2xs">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
             Net Fiscal Balance
           </span>
@@ -126,9 +126,9 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
       </div>
 
       {/* Main Grid: Form & Ledger Table */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
         {/* Form Card */}
-        <div className="lg:col-span-4 bg-white p-5 rounded border border-slate-200/80 shadow-2xs space-y-4">
+        <div className="lg:col-span-4 bg-white p-3.5 sm:p-5 rounded border border-slate-200/80 shadow-2xs space-y-4">
           <div className="border-b border-slate-100 pb-3">
             <h3 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
               <FaPlus className="text-primary text-xs" /> Record Journal Entry
@@ -180,7 +180,7 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
 
         {/* Ledger Table */}
         <div className="lg:col-span-8 bg-white rounded-none border border-slate-200/80 shadow-2xs overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="p-3.5 sm:p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600">
                 AUDITED TRANSACTION LOG

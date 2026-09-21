@@ -64,7 +64,7 @@ export default function AddExamPackPage() {
   };
 
   return (
-    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+    <PageContainer className="space-y-4 sm:space-y-6 animate-fadeIn pb-12">
       {/* Top Header Command Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
@@ -88,11 +88,11 @@ export default function AddExamPackPage() {
         </span>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
           {/* Cover Media Column */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 p-4 shadow-2xs">
+            <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs">
               <span className="text-xs font-bold text-slate-700 block mb-2">
                 Pack Cover Image
               </span>
@@ -107,7 +107,7 @@ export default function AddExamPackPage() {
               />
             </div>
 
-            <div className="relative overflow-hidden rounded bg-slate-50 border border-slate-200/80 p-4 text-[11px] leading-relaxed text-slate-600 space-y-2">
+            <div className="relative overflow-hidden rounded bg-slate-50 border border-slate-200/80 p-3 sm:p-4 text-[11px] leading-relaxed text-slate-600 space-y-2">
               <div className="flex items-center gap-1.5 text-slate-900 font-bold text-xs">
                 <FaInfoCircle className="text-primary" />
                 <span>Container Structure Guidelines</span>
@@ -125,7 +125,7 @@ export default function AddExamPackPage() {
           </div>
 
           <div className="lg:col-span-8 space-y-4">
-            <div className="relative rounded bg-white border border-slate-200/80 p-5 shadow-2xs space-y-4">
+            <div className="relative rounded bg-white border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs space-y-4">
               <Input
                 label="Exam Pack Title *"
                 placeholder="e.g. Higher Secondary Physics Board Prep"
@@ -187,7 +187,7 @@ export default function AddExamPackPage() {
             </div>
 
             {/* Submit HUD */}
-            <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
+            <div className="rounded bg-white border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
               <div className="text-xs text-slate-500">
                 Ready to save your exam pack
               </div>

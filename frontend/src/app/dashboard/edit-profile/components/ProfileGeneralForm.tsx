@@ -21,7 +21,7 @@ export const ProfileGeneralForm: React.FC<ProfileGeneralFormProps> = ({
     <>
       {/* Primary Identity & Access Keys */}
       <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
-        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+        <div className="px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
               Primary Identity & Access Keys
@@ -32,7 +32,7 @@ export const ProfileGeneralForm: React.FC<ProfileGeneralFormProps> = ({
           </span>
         </div>
 
-        <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Input
               label="Full Name *"
@@ -65,7 +65,7 @@ export const ProfileGeneralForm: React.FC<ProfileGeneralFormProps> = ({
 
       {/* Communication & Geographic Node */}
       <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
-        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+        <div className="px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
               Communication & Geographic Node
@@ -76,7 +76,7 @@ export const ProfileGeneralForm: React.FC<ProfileGeneralFormProps> = ({
           </span>
         </div>
 
-        <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Contact Phone Number"
             icon={<FaPhoneAlt className="text-slate-400 text-xs" />}

@@ -24,7 +24,7 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
   if (normRole === "student") {
     return (
       <div className="relative rounded bg-white border border-slate-200/80 shadow-2xs">
-        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+        <div className="px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
               Academic Level & Institution Allocation
@@ -35,7 +35,7 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
           </span>
         </div>
 
-        <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <CustomSelect
             label="Academic Curriculum Level"
             options={
@@ -93,7 +93,7 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
   if (normRole === "teacher") {
     return (
       <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
-        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+        <div className="px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
               Department & Teaching Specialization
@@ -104,7 +104,7 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
           </span>
         </div>
 
-        <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Subject / Academic Department"
             icon={<FaBriefcase className="text-slate-400 text-xs" />}
@@ -138,7 +138,7 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
   if (normRole === "admin") {
     return (
       <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 shadow-2xs">
-        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+        <div className="px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
           <div>
             <h3 className="text-xs sm:text-sm font-bold text-slate-900">
               System Administration Parameters
@@ -149,7 +149,7 @@ export const ProfileRoleSpecificForm: React.FC<ProfileRoleSpecificFormProps> = (
           </span>
         </div>
 
-        <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="p-3.5 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             label="Admin Tier Clearance"
             value={profileData.adminTier}

@@ -44,7 +44,7 @@ export const ExamSubmittedScreen: React.FC<ExamSubmittedScreenProps> = ({
       )}
 
       <div className="print:hidden space-y-6">
-        <div className="bg-white rounded p-6 sm:p-8 border border-slate-200/80 shadow-xs text-center space-y-5">
+        <div className="bg-white rounded p-4 sm:p-8 border border-slate-200/80 shadow-xs text-center space-y-5">
           <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center text-3xl mx-auto border-2 border-emerald-200">
             <FaCheckCircle />
           </div>
@@ -73,7 +73,7 @@ export const ExamSubmittedScreen: React.FC<ExamSubmittedScreenProps> = ({
               passingPercent={examMeta.passMarks}
             />
           ) : (
-            <div className="p-6 rounded bg-slate-50 border border-slate-200 text-center space-y-2.5">
+            <div className="p-3.5 sm:p-6 rounded bg-slate-50 border border-slate-200 text-center space-y-2.5">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200 text-xs font-mono font-bold">
                 INSTANT FEEDBACK DISABLED
               </div>

@@ -30,8 +30,8 @@ export const ExamInstructionsScreen: React.FC<ExamInstructionsScreenProps> = ({
   const isExpired = endDate ? now > endDate : false;
 
   return (
-    <PageContainer className="max-w-3xl mx-auto py-10 px-4">
-      <div className="bg-white rounded p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+    <PageContainer className="max-w-3xl mx-auto py-6 sm:py-10 px-2 sm:px-4">
+      <div className="bg-white rounded p-4 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
         {/* Header */}
         <div className="border-b border-slate-100 pb-5 text-center space-y-2">
           <span className="px-2.5 py-0.5 bg-primary/10 text-primary font-mono font-bold text-[10px] rounded uppercase tracking-wider border border-primary/20">
@@ -121,7 +121,7 @@ export const ExamInstructionsScreen: React.FC<ExamInstructionsScreenProps> = ({
         </div>
 
         {/* Psychological Guidelines */}
-        <div className="space-y-3 bg-slate-50/70 border border-slate-200/80 rounded p-4 sm:p-5">
+        <div className="space-y-3 bg-slate-50/70 border border-slate-200/80 rounded p-3.5 sm:p-5">
           <div className="flex items-center gap-2 text-rose-600 font-mono font-bold text-xs uppercase tracking-wider">
             <FaShieldAlt className="text-sm" />
             <span>Strict Proctored Examination Rules:</span>

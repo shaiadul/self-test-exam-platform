@@ -21,7 +21,7 @@ export const EditExamLimitModal: React.FC<EditExamLimitModalProps> = ({
 }) => {
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded border border-slate-200/80 max-w-sm w-full p-5 shadow-2xl animate-fadeIn">
+      <div className="bg-white rounded border border-slate-200/80 max-w-sm w-full p-3.5 sm:p-5 shadow-2xl animate-fadeIn">
         <div className="flex justify-between items-center pb-3 mb-4 border-b border-slate-100">
           <div>
             <h3 className="text-base font-black text-slate-900">Set Exam Creation Limit</h3>

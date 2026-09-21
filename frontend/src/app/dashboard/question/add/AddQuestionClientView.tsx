@@ -208,7 +208,7 @@ export default function AddQuestionClientView({
   };
 
   return (
-    <PageContainer className="space-y-6 animate-fadeIn pb-20 sm:pb-6">
+    <PageContainer className="space-y-4 sm:space-y-6 animate-fadeIn pb-20 sm:pb-6">
       {/* Top Header Command Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
@@ -228,7 +228,7 @@ export default function AddQuestionClientView({
               )}
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Question Bank Authoring Console
+              Question Bank
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
               {examName ? `Configuring question items for: ${examName} (${examPackTitle})` : "Select an exam pack and exam to author question items."}
@@ -243,7 +243,7 @@ export default function AddQuestionClientView({
 
       {/* Selector controls if exam not pre-selected */}
       {!examIdParam && (
-        <div className="bg-white p-4 rounded border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white p-3.5 sm:p-4 rounded border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-bold text-slate-700 block mb-1">Select Exam Pack</label>
             <CustomSelect
@@ -268,7 +268,7 @@ export default function AddQuestionClientView({
       )}
 
       {/* Main Content Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
         {/* Left 7 Cols: Question Creator Form */}
         <QuestionComposerForm
           type={type}

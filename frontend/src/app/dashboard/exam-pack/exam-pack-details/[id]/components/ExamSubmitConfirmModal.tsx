@@ -31,7 +31,7 @@ export const ExamSubmitConfirmModal: React.FC<ExamSubmitConfirmModalProps> = ({
             initial={{ scale: 0.94, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.94, opacity: 0 }}
-            className="bg-white max-w-md w-full rounded p-6 border border-slate-200/80 shadow-2xl text-center space-y-4"
+            className="bg-white max-w-md w-full rounded p-4 sm:p-6 border border-slate-200/80 shadow-2xl text-center space-y-4"
           >
             <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded flex items-center justify-center text-xl mx-auto border border-emerald-200">
               <FaCheckCircle />

@@ -21,7 +21,7 @@ const InfoItem: React.FC<{ label: string; value: string }> = ({ label, value }) 
 
 export const ReportingDetailInfoGrid: React.FC<ReportingDetailInfoGridProps> = ({ attempt }) => {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-5 rounded border border-slate-200/80 shadow-2xs">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3.5 sm:p-5 rounded border border-slate-200/80 shadow-2xs">
       <InfoItem label="Exam Title" value={attempt.examName || "N/A"} />
       <InfoItem label="Exam Pack" value={attempt.packName || "General Pack"} />
       <InfoItem label="Exam Code" value={`#${attempt.examId || "N/A"}`} />

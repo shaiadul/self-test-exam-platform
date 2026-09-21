@@ -171,7 +171,7 @@ export const DashboardHeader = () => {
 
   return (
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 fixed top-0 left-0 lg:left-72 right-0 z-40 transition-all select-none">
-      <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-3.5 sm:px-6">
         
         {/* Functional Search Bar */}
         <div ref={searchRef} className="flex items-center gap-4 w-full max-w-sm sm:max-w-md relative">

@@ -199,7 +199,7 @@ export default function EditExamClientView({
   };
 
   return (
-    <PageContainer className="space-y-6 animate-fadeIn pb-12">
+    <PageContainer className="space-y-4 sm:space-y-6 animate-fadeIn pb-12">
       {/* Top Header Command Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
@@ -222,7 +222,7 @@ export default function EditExamClientView({
         </span>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         {/* Section 1: Exam Basic Information */}
         <ExamBasicDetailsSection
           data={examPackData}
@@ -247,7 +247,7 @@ export default function EditExamClientView({
         />
 
         {/* Action Buttons HUD */}
-        <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
+        <div className="rounded bg-white border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
           <div className="text-xs text-slate-500">
             Ready to commit exam updates
           </div>

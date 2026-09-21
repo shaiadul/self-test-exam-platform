@@ -66,7 +66,7 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({
         </div>
 
         {/* Main Card Content */}
-        <div className="p-5 pt-0 -mt-12 sm:-mt-14 relative z-10 flex flex-col items-center text-center">
+        <div className="p-3.5 sm:p-5 pt-0 -mt-12 sm:-mt-14 relative z-10 flex flex-col items-center text-center">
           {/* Avatar with Crisp High-Tech Ring */}
           <div className="p-1 rounded bg-transparent mb-2">
             <ImageUploader

@@ -56,7 +56,7 @@ export const QuestionComposerForm: React.FC<QuestionComposerFormProps> = ({
   };
 
   return (
-    <div className="lg:col-span-7 bg-white p-5 rounded border border-slate-200/80 shadow-2xs space-y-5">
+    <div className="lg:col-span-7 bg-white p-3.5 sm:p-5 rounded border border-slate-200/80 shadow-2xs space-y-4 sm:space-y-5">
       <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
         <div>
           <h2 className="text-xs sm:text-sm font-bold text-slate-900">
@@ -228,7 +228,7 @@ export const QuestionComposerForm: React.FC<QuestionComposerFormProps> = ({
           />
         </div>
 
-        <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
+        <div className="rounded bg-white border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
           <div className="text-xs text-slate-500">
             {editingId !== null ? "Ready to save question changes" : "Ready to save question to bank"}
           </div>
