@@ -14,6 +14,7 @@ import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
+import { ShareBtn } from "../../../../components/ui/ShareBtn";
 import DynamicPagination from "../../../../components/common/DynamicPagination";
 import { PaginationMeta } from "../../../../lib/actions";
 import { formatDateTime, DATE_FORMATS } from "@/lib/date";
@@ -129,6 +130,20 @@ export default function ExamPackDetailsClientView({
             </h1>
           </div>
         </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <ShareBtn
+            metadata={{
+              title: packTitle,
+              text: `Check out the ${packTitle} examination pack on Self Test!`,
+              path: `/dashboard/exam-pack/exam-pack-details?id=${packId}`,
+            }}
+            variant="pill"
+            size="sm"
+            showLabel
+            label="Share Pack"
+          />
+        </div>
       </div>
 
       {/* Desktop Table View (100% untouched) */}
@@ -161,13 +176,25 @@ export default function ExamPackDetailsClientView({
                 </td>
                 <td className="px-5 py-3.5 text-center">
                   {exam.status === "Start Exam" && (
-                    <PrimaryBtn
-                      link={exam.link}
-                      className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded"
-                    >
-                      <FaPlay className="text-[9px]" />
-                      <span>Start Exam</span>
-                    </PrimaryBtn>
+                    <div className="inline-flex items-center gap-1.5 justify-center">
+                      <PrimaryBtn
+                        link={exam.link}
+                        className="!text-xs !py-1.5 !px-3.5 gap-1.5 shadow-xs !rounded font-bold"
+                      >
+                        <FaPlay className="text-[9px]" />
+                        <span>Start Exam</span>
+                      </PrimaryBtn>
+                      <ShareBtn
+                        metadata={{
+                          title: `${exam.name} - Online Exam`,
+                          text: `Take the ${exam.name} examination on Self Test!`,
+                          path: exam.link,
+                        }}
+                        variant="action"
+                        size="sm"
+                        title={`Share ${exam.name}`}
+                      />
+                    </div>
                   )}
                   {exam.status === "Complete" && (
                     <div className="flex items-center justify-center gap-2">
@@ -293,13 +320,25 @@ export default function ExamPackDetailsClientView({
 
             {/* Action Button */}
             {exam.status === "Start Exam" && (
-              <PrimaryBtn
-                link={exam.link}
-                className="w-full !text-xs !py-2.5 gap-1.5 shadow-xs !rounded justify-center"
-              >
-                <FaPlay className="text-[10px]" />
-                <span>Start Assessment Exam</span>
-              </PrimaryBtn>
+              <div className="flex items-center gap-2">
+                <PrimaryBtn
+                  link={exam.link}
+                  className="flex-1 !text-xs !py-2.5 gap-1.5 shadow-xs !rounded justify-center font-bold"
+                >
+                  <FaPlay className="text-[10px]" />
+                  <span>Start Assessment Exam</span>
+                </PrimaryBtn>
+                <ShareBtn
+                  metadata={{
+                    title: `${exam.name} - Online Exam`,
+                    text: `Take the ${exam.name} examination on Self Test!`,
+                    path: exam.link,
+                  }}
+                  variant="action"
+                  size="md"
+                  title={`Share ${exam.name}`}
+                />
+              </div>
             )}
 
             {exam.status === "Complete" && (
