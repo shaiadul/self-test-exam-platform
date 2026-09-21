@@ -281,7 +281,7 @@ export default function AssetsSetupClientView({
       </div>
 
       {/* 4-column asset panels */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {/* Levels */}
         <AssetPanel
           title="Academic Levels"
