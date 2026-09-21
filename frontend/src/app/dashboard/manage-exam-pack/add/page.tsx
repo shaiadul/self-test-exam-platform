@@ -187,12 +187,12 @@ export default function AddExamPackPage() {
             </div>
 
             {/* Submit HUD */}
-            <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex items-center justify-between gap-3">
-              <span className="text-[11px] font-mono text-slate-400">
-                PARAMS_VERIFIED: READY
-              </span>
+            <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
+              <div className="text-xs text-slate-500">
+                Ready to save your exam pack
+              </div>
 
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end">
                 <OutlineBtn
                   type="button"
                   onClick={() => router.back()}
@@ -204,16 +204,16 @@ export default function AddExamPackPage() {
                 <PrimaryBtn
                   type="submit"
                   disabled={loading}
-                  className="!text-xs !py-1.5 !px-4 gap-1.5 !rounded shadow-2xs font-bold"
+                  className="!text-xs !py-1.5 !px-4 gap-1.5 !rounded shadow-2xs"
                 >
                   {loading ? (
                     <>
-                      <span className="animate-spin inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full" />
-                      <span>Initializing…</span>
+                      <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full" />
+                      <span>Saving Exam Pack…</span>
                     </>
                   ) : (
                     <>
-                      <FaSave className="text-[10px]" />
+                      <FaSave className="text-[11px]" />
                       <span>Save Exam Pack</span>
                     </>
                   )}

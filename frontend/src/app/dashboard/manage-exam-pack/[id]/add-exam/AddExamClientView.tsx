@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { toast } from "sonner";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaSave } from "react-icons/fa";
 import { PrimaryBtn } from "../../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../../components/ui/OutlineBtn";
 import { PageContainer } from "../../../../../components/common/PageContainer";
@@ -216,12 +216,12 @@ export default function AddExamClientView({
         />
 
         {/* Action Buttons HUD */}
-        <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex items-center justify-between gap-3">
-          <span className="text-[11px] font-mono text-slate-400">
-            DEPLOY_STATE: VERIFIED
-          </span>
+        <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
+          <div className="text-xs text-slate-500">
+            Ready to deploy this exam paper
+          </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end">
             <OutlineBtn
               type="button"
               onClick={() => router.back()}
@@ -229,12 +229,23 @@ export default function AddExamClientView({
             >
               Cancel
             </OutlineBtn>
+
             <PrimaryBtn
               type="submit"
               disabled={loading}
-              className="!text-xs !py-1.5 !px-4 gap-1.5 !rounded shadow-2xs font-bold"
+              className="!text-xs !py-1.5 !px-4 gap-1.5 !rounded shadow-2xs"
             >
-              {loading ? "Creating Exam..." : "Deploy Exam Paper"}
+              {loading ? (
+                <>
+                  <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full" />
+                  <span>Creating Exam…</span>
+                </>
+              ) : (
+                <>
+                  <FaSave className="text-[11px]" />
+                  <span>Deploy Exam Paper</span>
+                </>
+              )}
             </PrimaryBtn>
           </div>
         </div>

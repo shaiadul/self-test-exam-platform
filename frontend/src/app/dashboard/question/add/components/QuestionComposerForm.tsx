@@ -1,8 +1,9 @@
 import React from "react";
-import { FaBookOpen, FaImage, FaListUl, FaPlusCircle, FaCheckCircle } from "react-icons/fa";
+import { FaBookOpen, FaImage, FaListUl, FaPlusCircle, FaCheckCircle, FaSave } from "react-icons/fa";
 import CustomSelect from "../../../../../components/ui/CustomSelect";
 import ImageUploader from "../../../../../components/ui/ImageUploader";
 import { PrimaryBtn } from "../../../../../components/ui/PrimaryBtn";
+import { OutlineBtn } from "../../../../../components/ui/OutlineBtn";
 import { QuestionType } from "../types";
 
 interface QuestionComposerFormProps {
@@ -227,31 +228,39 @@ export const QuestionComposerForm: React.FC<QuestionComposerFormProps> = ({
           />
         </div>
 
-        <div className="pt-2 flex items-center gap-2">
-          <PrimaryBtn
-            type="submit"
-            disabled={!examId || submitting}
-            className="w-full !py-2 !rounded !text-xs shadow-2xs font-bold gap-1.5"
-          >
-            {submitting
-              ? editingId !== null
-                ? "Updating Question..."
-                : "Writing to Bank..."
-              : editingId !== null
-              ? "Update Question Specification"
-              : "+ Commit Question to Bank"}
-          </PrimaryBtn>
-        </div>
+        <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
+          <div className="text-xs text-slate-500">
+            {editingId !== null ? "Ready to save question changes" : "Ready to save question to bank"}
+          </div>
 
-        {editingId !== null && (
-          <button
-            type="button"
-            onClick={onReset}
-            className="w-full text-xs font-mono font-bold text-slate-500 hover:text-slate-800 cursor-pointer pt-1"
-          >
-            CANCEL EDITING
-          </button>
-        )}
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end">
+            <OutlineBtn
+              type="button"
+              onClick={onReset}
+              className="!text-xs !py-1.5 !px-3.5 !rounded"
+            >
+              {editingId !== null ? "Cancel Edit" : "Reset Form"}
+            </OutlineBtn>
+
+            <PrimaryBtn
+              type="submit"
+              disabled={!examId || submitting}
+              className="!text-xs !py-1.5 !px-4 gap-1.5 !rounded shadow-2xs"
+            >
+              {submitting ? (
+                <>
+                  <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full" />
+                  <span>{editingId !== null ? "Updating Question…" : "Writing to Bank…"}</span>
+                </>
+              ) : (
+                <>
+                  <FaSave className="text-[11px]" />
+                  <span>{editingId !== null ? "Update Question" : "Commit Question"}</span>
+                </>
+              )}
+            </PrimaryBtn>
+          </div>
+        </div>
       </form>
     </div>
   );

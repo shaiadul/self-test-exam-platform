@@ -247,12 +247,12 @@ export default function EditExamClientView({
         />
 
         {/* Action Buttons HUD */}
-        <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex items-center justify-between gap-3">
-          <span className="text-[11px] font-mono text-slate-400">
-            RECORD_PERSISTENCE: ATOMIC
-          </span>
+        <div className="rounded bg-white border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
+          <div className="text-xs text-slate-500">
+            Ready to commit exam updates
+          </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end">
             <OutlineBtn
               type="button"
               onClick={() => router.back()}
@@ -260,13 +260,23 @@ export default function EditExamClientView({
             >
               Cancel
             </OutlineBtn>
+
             <PrimaryBtn
               type="submit"
               disabled={saving}
-              className="!text-xs !py-1.5 !px-4 gap-1.5 !rounded shadow-2xs font-bold"
+              className="!text-xs !py-1.5 !px-4 gap-1.5 !rounded shadow-2xs"
             >
-              <FaSave className="text-xs" />
-              <span>{saving ? "Saving Changes..." : "Commit Exam Updates"}</span>
+              {saving ? (
+                <>
+                  <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full" />
+                  <span>Saving Changes…</span>
+                </>
+              ) : (
+                <>
+                  <FaSave className="text-[11px]" />
+                  <span>Commit Exam Updates</span>
+                </>
+              )}
             </PrimaryBtn>
           </div>
         </div>
