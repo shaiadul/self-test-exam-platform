@@ -7,8 +7,12 @@ export async function getDashboardStatsAction(clientToken?: string) {
 }
 
 export async function getTeacherReportsAction(clientToken?: string) {
-	const data = await fetcherWithAuth<any[]>("/teacher/reports", {}, clientToken);
-	return data || [];
+	const res = await fetcherWithAuth<any>("/teacher/reports", {}, clientToken);
+	// Backend returns a paginated envelope { data, meta }
+	if (res && typeof res === "object" && Array.isArray(res.data)) {
+		return res.data as any[];
+	}
+	return Array.isArray(res) ? res : [];
 }
 
 export async function getTeacherReportDetailsAction(examId: string, clientToken?: string) {
