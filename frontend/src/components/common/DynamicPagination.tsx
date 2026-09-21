@@ -2,7 +2,13 @@
 
 import React from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { FaChevronLeft, FaChevronRight, FaAngleDoubleLeft, FaAngleDoubleRight } from "react-icons/fa";
+import {
+  FaChevronLeft,
+  FaChevronRight,
+  FaAngleDoubleLeft,
+  FaAngleDoubleRight,
+  FaChevronDown,
+} from "react-icons/fa";
 import { PaginationMeta } from "../../lib/actions/pagination";
 
 export interface DynamicPaginationProps {
@@ -30,7 +36,7 @@ export default function DynamicPagination({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  if (!meta || meta.total_items === 0) {
+  if (!meta || meta.total_items === 0 || (meta.total_pages ?? 1) <= 1) {
     return null;
   }
 
@@ -50,7 +56,9 @@ export default function DynamicPagination({
     }
 
     if (syncWithUrl && (!onPageChange || syncWithUrl === true)) {
-      const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+      const params = new URLSearchParams(
+        searchParams ? searchParams.toString() : "",
+      );
       params.set("page", String(newPage));
       router.push(`${pathname}?${params.toString()}`);
     }
@@ -64,7 +72,9 @@ export default function DynamicPagination({
     }
 
     if (syncWithUrl && (!onPerPageChange || syncWithUrl === true)) {
-      const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+      const params = new URLSearchParams(
+        searchParams ? searchParams.toString() : "",
+      );
       params.set("per_page", String(newPerPage));
       params.set("page", "1");
       router.push(`${pathname}?${params.toString()}`);
@@ -115,7 +125,7 @@ export default function DynamicPagination({
         <div className="text-xs text-slate-500 font-medium text-center sm:text-left order-2 sm:order-1">
           Showing <span className="font-bold text-slate-800">{from}</span> to{" "}
           <span className="font-bold text-slate-800">{to}</span> of{" "}
-          <span className="font-bold text-slate-800">{totalItems}</span> entries
+          <span className="font-bold text-slate-800">{totalItems}</span> items
         </div>
       )}
 
@@ -123,21 +133,33 @@ export default function DynamicPagination({
       <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3 order-1 sm:order-2 w-full sm:w-auto">
         {/* Per-Page Selector */}
         {showPerPage && perPageOptions.length > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 mr-1 sm:mr-2">
-            <span className="hidden md:inline text-[11px] font-semibold text-slate-400">Rows:</span>
-            <select
-              value={perPage}
-              onChange={(e) => handlePerPageChange(Number(e.target.value))}
-              aria-label="Rows per page"
-              className="bg-white border border-slate-200/80 rounded px-2 py-1 text-xs font-semibold text-slate-700 hover:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs transition-colors cursor-pointer"
-            >
-              {perPageOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt} / page
-                </option>
-              ))}
-            </select>
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <span className="hidden md:inline text-[11px] font-semibold text-slate-400">
+              Rows:
+            </span>
+            <div className="relative">
+              <select
+                value={perPage}
+                onChange={(e) => handlePerPageChange(Number(e.target.value))}
+                aria-label="Rows per page"
+                className="appearance-none bg-white border border-slate-200/80 rounded pl-2 pr-7 py-1 text-xs font-semibold text-slate-700 hover:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs transition-colors cursor-pointer"
+              >
+                {perPageOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt} / page
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
+                <FaChevronDown className="text-[9px]" />
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Vertical Divider on Desktop */}
+        {showPerPage && perPageOptions.length > 0 && (
+          <div className="hidden sm:block h-4 w-[1px] bg-slate-200 mx-0.5" />
         )}
 
         {/* Page Nav Buttons */}
@@ -148,7 +170,7 @@ export default function DynamicPagination({
             onClick={() => handlePageChange(1)}
             disabled={currentPage <= 1}
             aria-label="First page"
-            className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs"
+            className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
           >
             <FaAngleDoubleLeft className="text-[11px]" />
           </button>
@@ -159,7 +181,7 @@ export default function DynamicPagination({
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage <= 1}
             aria-label="Previous page"
-            className="inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs"
+            className="inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-600 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
           >
             <FaChevronLeft className="text-[10px]" />
           </button>
@@ -185,10 +207,10 @@ export default function DynamicPagination({
                   type="button"
                   onClick={() => handlePageChange(p)}
                   aria-current={isActive ? "page" : undefined}
-                  className={`inline-flex items-center justify-center min-w-[32px] h-8 px-2 rounded text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                  className={`inline-flex items-center justify-center min-w-[32px] h-8 px-2 rounded text-xs font-bold transition-all cursor-pointer shadow-2xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 ${
                     isActive
-                      ? "bg-primary text-white border border-primary shadow-xs ring-2 ring-primary/20"
-                      : "bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300"
+                      ? "bg-orange-500 text-white border border-orange-500 shadow-xs ring-2 ring-orange-500/20"
+                      : "bg-white border border-slate-200/80 text-slate-700 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300"
                   }`}
                 >
                   {p}
@@ -203,7 +225,7 @@ export default function DynamicPagination({
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
             aria-label="Next page"
-            className="inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs"
+            className="inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-600 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
           >
             <FaChevronRight className="text-[10px]" />
           </button>
@@ -214,7 +236,7 @@ export default function DynamicPagination({
             onClick={() => handlePageChange(totalPages)}
             disabled={currentPage >= totalPages}
             aria-label="Last page"
-            className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs"
+            className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-500 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
           >
             <FaAngleDoubleRight className="text-[11px]" />
           </button>
