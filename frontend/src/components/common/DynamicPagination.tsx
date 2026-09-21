@@ -1,0 +1,225 @@
+"use client";
+
+import React from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { FaChevronLeft, FaChevronRight, FaAngleDoubleLeft, FaAngleDoubleRight } from "react-icons/fa";
+import { PaginationMeta } from "../../lib/actions/pagination";
+
+export interface DynamicPaginationProps {
+  meta?: PaginationMeta | null;
+  onPageChange?: (page: number) => void;
+  onPerPageChange?: (perPage: number) => void;
+  perPageOptions?: number[];
+  showPerPage?: boolean;
+  showInfo?: boolean;
+  syncWithUrl?: boolean;
+  className?: string;
+}
+
+export default function DynamicPagination({
+  meta,
+  onPageChange,
+  onPerPageChange,
+  perPageOptions = [10, 20, 50, 100],
+  showPerPage = true,
+  showInfo = true,
+  syncWithUrl = true,
+  className = "",
+}: DynamicPaginationProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  if (!meta || meta.total_items === 0) {
+    return null;
+  }
+
+  const currentPage = Math.max(1, meta.current_page || 1);
+  const totalPages = Math.max(1, meta.total_pages || 1);
+  const perPage = meta.per_page || 10;
+  const totalItems = meta.total_items || 0;
+
+  const from = Math.min((currentPage - 1) * perPage + 1, totalItems);
+  const to = Math.min(currentPage * perPage, totalItems);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+
+    if (onPageChange) {
+      onPageChange(newPage);
+    }
+
+    if (syncWithUrl && (!onPageChange || syncWithUrl === true)) {
+      const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+      params.set("page", String(newPage));
+      router.push(`${pathname}?${params.toString()}`);
+    }
+  };
+
+  const handlePerPageChange = (newPerPage: number) => {
+    if (newPerPage === perPage) return;
+
+    if (onPerPageChange) {
+      onPerPageChange(newPerPage);
+    }
+
+    if (syncWithUrl && (!onPerPageChange || syncWithUrl === true)) {
+      const params = new URLSearchParams(searchParams ? searchParams.toString() : "");
+      params.set("per_page", String(newPerPage));
+      params.set("page", "1");
+      router.push(`${pathname}?${params.toString()}`);
+    }
+  };
+
+  // Generate smart pagination numbers with ellipsis
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible + 2) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      if (currentPage <= 3) {
+        pages.push(2, 3, 4);
+        pages.push("...");
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push("...");
+        pages.push(totalPages - 3, totalPages - 2, totalPages - 1);
+        pages.push(totalPages);
+      } else {
+        pages.push("...");
+        pages.push(currentPage - 1, currentPage, currentPage + 1);
+        pages.push("...");
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
+  return (
+    <div
+      className={`flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 py-3 sm:py-4 px-1 select-none ${className}`}
+      role="navigation"
+      aria-label="Pagination Navigation"
+    >
+      {/* Left: Summary Info */}
+      {showInfo && (
+        <div className="text-xs text-slate-500 font-medium text-center sm:text-left order-2 sm:order-1">
+          Showing <span className="font-bold text-slate-800">{from}</span> to{" "}
+          <span className="font-bold text-slate-800">{to}</span> of{" "}
+          <span className="font-bold text-slate-800">{totalItems}</span> entries
+        </div>
+      )}
+
+      {/* Right: Controls & Page Buttons */}
+      <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3 order-1 sm:order-2 w-full sm:w-auto">
+        {/* Per-Page Selector */}
+        {showPerPage && perPageOptions.length > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 mr-1 sm:mr-2">
+            <span className="hidden md:inline text-[11px] font-semibold text-slate-400">Rows:</span>
+            <select
+              value={perPage}
+              onChange={(e) => handlePerPageChange(Number(e.target.value))}
+              aria-label="Rows per page"
+              className="bg-white border border-slate-200/80 rounded px-2 py-1 text-xs font-semibold text-slate-700 hover:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary shadow-2xs transition-colors cursor-pointer"
+            >
+              {perPageOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt} / page
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Page Nav Buttons */}
+        <div className="flex items-center gap-1">
+          {/* First Page */}
+          <button
+            type="button"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage <= 1}
+            aria-label="First page"
+            className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs"
+          >
+            <FaAngleDoubleLeft className="text-[11px]" />
+          </button>
+
+          {/* Previous Page */}
+          <button
+            type="button"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+            aria-label="Previous page"
+            className="inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs"
+          >
+            <FaChevronLeft className="text-[10px]" />
+          </button>
+
+          {/* Page Numbers */}
+          <div className="flex items-center gap-1">
+            {pageNumbers.map((p, idx) => {
+              if (typeof p === "string") {
+                return (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="inline-flex items-center justify-center w-6 h-8 text-xs font-bold text-slate-400 select-none cursor-default"
+                  >
+                    …
+                  </span>
+                );
+              }
+
+              const isActive = p === currentPage;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => handlePageChange(p)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`inline-flex items-center justify-center min-w-[32px] h-8 px-2 rounded text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                    isActive
+                      ? "bg-primary text-white border border-primary shadow-xs ring-2 ring-primary/20"
+                      : "bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300"
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Next Page */}
+          <button
+            type="button"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            aria-label="Next page"
+            className="inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs"
+          >
+            <FaChevronRight className="text-[10px]" />
+          </button>
+
+          {/* Last Page */}
+          <button
+            type="button"
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage >= totalPages}
+            aria-label="Last page"
+            className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded border border-slate-200/80 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-40 disabled:pointer-events-none transition-all shadow-2xs cursor-pointer text-xs"
+          >
+            <FaAngleDoubleRight className="text-[11px]" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

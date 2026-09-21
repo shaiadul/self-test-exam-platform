@@ -1,10 +1,31 @@
 "use server";
 
 import { fetcherWithAuth } from "./fetcher";
+import { PaginationParams, PaginatedResponse, normalizePaginatedResponse } from "./pagination";
 
 export async function adminGetUsersAction(clientToken?: string) {
-	const data = await fetcherWithAuth<any[]>("/admin/users", {}, clientToken);
-	return data || [];
+	const res = await fetcherWithAuth<any>("/admin/users?per_page=100", {}, clientToken);
+	if (Array.isArray(res)) return res;
+	if (res && Array.isArray(res.data)) return res.data;
+	return [];
+}
+
+export async function adminGetUsersPaginatedAction(
+	params?: PaginationParams,
+	clientToken?: string
+): Promise<PaginatedResponse<any>> {
+	const queryParams: Record<string, string | number | boolean | undefined> = {};
+	if (params?.page) queryParams.page = params.page;
+	if (params?.per_page) queryParams.per_page = params.per_page;
+	if (params?.search) queryParams.search = params.search;
+
+	const res = await fetcherWithAuth<any>(
+		"/admin/users",
+		{ params: queryParams },
+		clientToken
+	);
+
+	return normalizePaginatedResponse(res, params?.page || 1, params?.per_page || 10);
 }
 
 export async function adminUpdateUserAction(

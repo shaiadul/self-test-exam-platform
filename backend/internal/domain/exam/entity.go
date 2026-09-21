@@ -36,3 +36,20 @@ type Question struct {
 	CreatedBy     *int      `json:"createdBy,omitempty" db:"created_by"`
 	CreatedAt     time.Time `json:"created_at" db:"created_at" gorm:"autoCreateTime"`
 }
+
+type PaginationMeta struct {
+	TotalItems  int64 `json:"total_items"`
+	TotalPages  int   `json:"total_pages"`
+	CurrentPage int   `json:"current_page"`
+	PerPage     int   `json:"per_page"`
+}
+
+type ExamFilter struct {
+	Search    string
+	PackID    *int
+	Level     string
+	Batch     string
+	Page      int
+	PerPage   int
+	TeacherID *int
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { FaUserPlus } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
@@ -10,13 +10,25 @@ import { UserManagementTable } from "./components/UserManagementTable";
 import { UserManagementMobileCards } from "./components/UserManagementMobileCards";
 import { EditExamLimitModal } from "./components/EditExamLimitModal";
 import { AddUserModal } from "./components/AddUserModal";
+import DynamicPagination from "../../../../components/common/DynamicPagination";
+import { PaginationMeta } from "../../../../lib/actions";
 
 interface UserManagementClientViewProps {
   initialUsers: User[];
+  initialMeta?: PaginationMeta;
 }
 
-export default function UserManagementClientView({ initialUsers }: UserManagementClientViewProps) {
+export default function UserManagementClientView({
+  initialUsers,
+  initialMeta,
+}: UserManagementClientViewProps) {
   const [users, setUsers] = useState<User[]>(initialUsers || []);
+
+  useEffect(() => {
+    if (initialUsers) {
+      setUsers(initialUsers);
+    }
+  }, [initialUsers]);
 
   // Edit role states
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
@@ -198,6 +210,13 @@ export default function UserManagementClientView({ initialUsers }: UserManagemen
           }}
           onDeleteUser={handleDeleteUser}
         />
+
+        {/* Dynamic Pagination Controls */}
+        {initialMeta && initialMeta.total_items > 0 && (
+          <div className="bg-white border-t border-slate-200/80 px-4 py-2">
+            <DynamicPagination meta={initialMeta} />
+          </div>
+        )}
       </div>
 
       {/* Exam Limit Edit Modal */}

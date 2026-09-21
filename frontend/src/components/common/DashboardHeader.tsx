@@ -5,21 +5,7 @@ import { FaBell, FaSearch, FaTimes, FaBookOpen, FaCheckCircle, FaExclamationCirc
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-// --- SEARCH MOCK DATA ---
-interface SearchItem {
-  id: string;
-  title: string;
-  category: string;
-  desc: string;
-  href: string;
-}
-
-const searchData: SearchItem[] = [
-  { id: "1", title: "Science Explorer", category: "Exam Pack", desc: "HSC level evaluation pack", href: "/dashboard/exam-pack/exam-pack-details/1" },
-  { id: "2", title: "Physics Mechanics Prep", category: "Physics", desc: "Core mechanics evaluation pack", href: "/dashboard/exam-pack/exam-pack-details/2" },
-  { id: "3", title: "HSC Chemistry Prep", category: "Chemistry", desc: "Inorganic & organic chemistry pack", href: "/dashboard/exam-pack/exam-pack-details/3" },
-  { id: "4", title: "Math Olympiad Challenge", category: "Mathematics", desc: "Advanced mathematical puzzles", href: "/dashboard/exam-pack/exam-pack-details/4" },
-];
+import { getAllExamsAction, PaginationMeta } from "../../lib/actions";
 
 // --- NOTIFICATION MOCK DATA ---
 interface NotifItem {
@@ -43,6 +29,9 @@ export const DashboardHeader = () => {
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchMeta, setSearchMeta] = useState<PaginationMeta | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   
   // Notifications state
   const [notifications, setNotifications] = useState<NotifItem[]>(initialNotifications);
@@ -58,11 +47,6 @@ export const DashboardHeader = () => {
   const notifRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => n.unread).length;
-
-  const matchingItems = searchQuery.trim() === "" ? [] : searchData.filter(item => 
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const syncUserData = (userData?: any) => {
     if (typeof window === "undefined") return;
@@ -139,15 +123,47 @@ export const DashboardHeader = () => {
   }, []);
 
 
+  // Fetch real exams from server based on search query / on focus
+  useEffect(() => {
+    if (!showSearchDropdown) return;
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
+        const res = await getAllExamsAction(
+          {
+            search: searchQuery.trim() || undefined,
+            page: 1,
+            per_page: 8,
+          },
+          token
+        );
+        setSearchResults(res?.data || []);
+        setSearchMeta(res?.meta || null);
+      } catch (err) {
+        console.error("Failed to search exams:", err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, showSearchDropdown]);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcut Ctrl+K / Cmd+K to focus search
+  // Keyboard shortcut Ctrl+K / Cmd+K to focus search, ESC to close
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         inputRef.current?.focus();
         setShowSearchDropdown(true);
+      }
+      if (e.key === "Escape") {
+        setShowSearchDropdown(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -163,10 +179,10 @@ export const DashboardHeader = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const handleSearchSelect = (href: string) => {
+  const handleSearchSelect = (examId: string) => {
     setSearchQuery("");
     setShowSearchDropdown(false);
-    router.push(href);
+    router.push(`/dashboard/exam-pack/exam-pack-details/${examId}`);
   };
 
   return (
@@ -176,11 +192,11 @@ export const DashboardHeader = () => {
         {/* Functional Search Bar */}
         <div ref={searchRef} className="flex items-center gap-4 w-full max-w-sm sm:max-w-md relative">
           <div className="relative w-full">
-            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none" />
             <input 
               ref={inputRef}
               type="text" 
-              placeholder="Search exams, packs..." 
+              placeholder="Search all exams..." 
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -189,40 +205,105 @@ export const DashboardHeader = () => {
               onFocus={() => setShowSearchDropdown(true)}
               className="w-full pl-9 pr-14 py-2 bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 rounded focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-xs font-medium text-slate-800 placeholder:text-slate-400 shadow-2xs"
             />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  inputRef.current?.focus();
+                }}
+                className="absolute right-9 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                aria-label="Clear search"
+              >
+                <FaTimes className="text-[10px]" />
+              </button>
+            ) : null}
             <kbd className="hidden sm:inline-flex absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 bg-white border border-slate-200 rounded shadow-2xs pointer-events-none">
               ⌘K
             </kbd>
           </div>
 
           {/* Search Dropdown Overlay */}
-          {showSearchDropdown && searchQuery.trim() !== "" && (
-            <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200/80 rounded shadow-lg z-50 p-2 text-left font-sans max-h-80 overflow-y-auto custom-scrollbar">
-              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider px-3 py-1.5 block">Search Results</span>
-              {matchingItems.length > 0 ? (
-                <div className="space-y-1 mt-1">
-                  {matchingItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => handleSearchSelect(item.href)}
-                      className="w-full flex items-start gap-3 p-2.5 rounded hover:bg-primary/5 hover:text-primary text-left transition-all group cursor-pointer"
-                    >
-                      <div className="w-8 h-8 rounded bg-primary/10 text-primary flex items-center justify-center text-xs shrink-0">
-                        <FaBookOpen />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-xs font-bold text-slate-800 truncate group-hover:text-primary">{item.title}</p>
-                          <span className="text-[9px] bg-primary/10 text-primary font-extrabold px-1.5 py-0.5 rounded border border-primary/20 uppercase leading-none shrink-0">{item.category}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-400 truncate mt-0.5">{item.desc}</p>
-                      </div>
-                    </button>
-                  ))}
+          {showSearchDropdown && (
+            <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200/80 rounded shadow-xl z-50 p-2 text-left font-sans max-h-96 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100">
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
+                  {searchQuery.trim() ? "Search Results" : "All Exams"}
+                </span>
+                {searchMeta && searchMeta.total_items > 0 && (
+                  <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                    {searchMeta.total_items} total
+                  </span>
+                )}
+              </div>
+
+              {isSearching ? (
+                <div className="py-8 text-center text-slate-400">
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-xs font-medium">Searching exams...</p>
                 </div>
+              ) : searchResults.length > 0 ? (
+                <>
+                  <div className="space-y-1 mt-1.5">
+                    {searchResults.map((exam) => (
+                      <button
+                        key={exam.id}
+                        type="button"
+                        onClick={() => handleSearchSelect(exam.id)}
+                        className="w-full flex items-start gap-3 p-2.5 rounded hover:bg-primary/5 hover:text-primary text-left transition-all group cursor-pointer border border-transparent hover:border-primary/20"
+                      >
+                        <div className="w-8 h-8 rounded bg-primary/10 text-primary flex items-center justify-center text-xs shrink-0 mt-0.5 group-hover:bg-primary group-hover:text-white transition-colors">
+                          <FaBookOpen />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-bold text-slate-800 truncate group-hover:text-primary">
+                              {exam.name}
+                            </p>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {exam.level && (
+                                <span className="text-[9px] bg-slate-100 text-slate-600 font-semibold px-1.5 py-0.5 rounded border border-slate-200 uppercase leading-none">
+                                  {exam.level}
+                                </span>
+                              )}
+                              {exam.batch && (
+                                <span className="text-[9px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded border border-primary/20 uppercase leading-none">
+                                  {exam.batch}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1">
+                            <span>{exam.durationMinutes || 30} mins</span>
+                            <span>•</span>
+                            <span>{exam.totalMarks || 10} marks</span>
+                            {exam.isPrivate && (
+                              <>
+                                <span>•</span>
+                                <span className="text-amber-600 font-semibold text-[10px]">Private</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {searchMeta && searchMeta.total_pages > 1 && (
+                    <div className="mt-2 pt-2 border-t border-slate-100 px-3 py-1 text-center">
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        Showing {searchResults.length} of {searchMeta.total_items} exams (Page {searchMeta.current_page} of {searchMeta.total_pages})
+                      </p>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="py-6 text-center text-slate-400">
-                  <FaSearch className="mx-auto text-lg mb-1.5 opacity-40" />
-                  <p className="text-xs font-semibold">No results found for &quot;{searchQuery}&quot;</p>
+                <div className="py-8 text-center text-slate-400">
+                  <FaSearch className="mx-auto text-lg mb-1.5 opacity-30" />
+                  <p className="text-xs font-semibold text-slate-600">
+                    {searchQuery.trim() ? `No exams found for "${searchQuery}"` : "No exams currently available"}
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Try searching with a different keyword</p>
                 </div>
               )}
             </div>

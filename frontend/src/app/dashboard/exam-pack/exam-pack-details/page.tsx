@@ -1,6 +1,6 @@
 import {
   getExamPackDetailsAction,
-  getExamsAction,
+  getExamsPaginatedAction,
   getDashboardStatsAction,
   getUserAttemptsAction,
 } from "../../../../lib/actions";
@@ -12,14 +12,17 @@ export const revalidate = 0;
 export default async function ExamPackDetailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ packId?: string }>;
+  searchParams: Promise<{ packId?: string; page?: string; per_page?: string; search?: string }>;
 }) {
-  const { packId: packIdVal } = await searchParams;
-  const packId = packIdVal ? parseInt(packIdVal) : 2;
+  const params = await searchParams;
+  const packId = params.packId ? parseInt(params.packId) : 2;
+  const page = params.page ? parseInt(params.page) : 1;
+  const perPage = params.per_page ? parseInt(params.per_page) : 10;
+  const search = params.search || undefined;
 
-  const [pack, liveExams, stats, attempts] = await Promise.all([
+  const [pack, examsRes, stats, attempts] = await Promise.all([
     getExamPackDetailsAction(packId),
-    getExamsAction(packId),
+    getExamsPaginatedAction(packId, { page, per_page: perPage, search }),
     getDashboardStatsAction(),
     getUserAttemptsAction(),
   ]);
@@ -28,7 +31,8 @@ export default async function ExamPackDetailPage({
     <ExamPackDetailsClientView
       packId={packId}
       initialPack={pack}
-      initialExams={liveExams || []}
+      initialExams={examsRes.data || []}
+      initialMeta={examsRes.meta}
       initialStats={stats}
       initialAttempts={attempts || []}
     />

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   FaSearch,
   FaSortAmountDown,
@@ -9,13 +9,22 @@ import {
 } from "react-icons/fa";
 import ExamPackCard from "../../../components/dashboard/ExamPackCard";
 import { PageContainer } from "../../../components/common/PageContainer";
+import DynamicPagination from "../../../components/common/DynamicPagination";
+import { PaginationMeta } from "../../../lib/actions";
 
 interface ExamPackClientViewProps {
   initialPacks: any[];
+  initialMeta?: PaginationMeta;
 }
 
-export default function ExamPackClientView({ initialPacks }: ExamPackClientViewProps) {
-  const [examPacks] = useState<any[]>(initialPacks || []);
+export default function ExamPackClientView({ initialPacks, initialMeta }: ExamPackClientViewProps) {
+  const [examPacks, setExamPacks] = useState<any[]>(initialPacks || []);
+
+  useEffect(() => {
+    if (initialPacks) {
+      setExamPacks(initialPacks);
+    }
+  }, [initialPacks]);
 
   // ---- State Management ----
   const [searchTerm, setSearchTerm] = useState("");
@@ -216,6 +225,13 @@ export default function ExamPackClientView({ initialPacks }: ExamPackClientViewP
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {initialMeta && initialMeta.total_items > 0 && (
+        <div className="bg-white border border-slate-200/80 rounded px-4 py-2 shadow-2xs">
+          <DynamicPagination meta={initialMeta} />
+        </div>
+      )}
     </PageContainer>
   );
 }

@@ -61,6 +61,7 @@ func NewRouter(h Handlers) http.Handler {
 	mux.Handle("/api/exam-packs/", middleware.AuthMiddleware(http.HandlerFunc(h.ExamPackHandler.HandleExamPacks)))
 
 	// Exam routes
+	mux.Handle("/api/exams", middleware.AuthMiddleware(http.HandlerFunc(h.ExamHandler.HandleExams)))
 	mux.Handle("/api/exams/", middleware.AuthMiddleware(http.HandlerFunc(h.ExamHandler.HandleExams)))
 
 	// Dashboard stats

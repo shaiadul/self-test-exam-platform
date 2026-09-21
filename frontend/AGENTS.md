@@ -21,6 +21,8 @@ Act as a **Senior Frontend Engineer**. Write clean, reusable, production-ready, 
 * Handle relevant `loading`, `error`, `empty`, and `disabled` states.
 * Follow existing project architecture and patterns. Avoid unnecessary dependencies or abstractions.
 * Prefer **composition over duplication**.
+* No unnecessary comment should be added to the code. If there is a need for enum or types they should be well documented.
+
 
 ### Next.js
 

@@ -6,24 +6,31 @@ import ExamPackCard from "../../../components/dashboard/ExamPackCard";
 import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
 import { PageContainer } from "../../../components/common/PageContainer";
 import EmptyState from "../../../components/common/EmptyState";
-import { getExamPacksAction } from "../../../lib/actions";
+import DynamicPagination from "../../../components/common/DynamicPagination";
+import { getExamPacksAction, getExamPacksPaginatedAction, PaginationMeta } from "../../../lib/actions";
 
 interface ManageExamPackClientViewProps {
   initialPacks: any[];
+  initialMeta?: PaginationMeta;
 }
 
 export default function ManageExamPackClientView({
   initialPacks,
+  initialMeta,
 }: ManageExamPackClientViewProps) {
   const [examPacks, setExamPacks] = useState<any[]>(initialPacks || []);
+  const [meta, setMeta] = useState<PaginationMeta | undefined>(initialMeta);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    if (initialPacks && initialPacks.length > 0) {
+    if (initialPacks) {
       setExamPacks(initialPacks);
     }
-  }, [initialPacks]);
+    if (initialMeta) {
+      setMeta(initialMeta);
+    }
+  }, [initialPacks, initialMeta]);
 
   useEffect(() => {
     if (!initialPacks || initialPacks.length === 0) {
@@ -141,6 +148,13 @@ export default function ManageExamPackClientView({
             actionHref={search ? undefined : "/dashboard/manage-exam-pack/add"}
             onAction={search ? () => setSearch("") : undefined}
           />
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {meta && meta.total_items > 0 && (
+        <div className="bg-white border border-slate-200/80 rounded px-4 py-2 shadow-2xs">
+          <DynamicPagination meta={meta} />
         </div>
       )}
     </PageContainer>

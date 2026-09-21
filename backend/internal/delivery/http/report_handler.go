@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/selftest/backend/internal/domain/report"
 	"github.com/selftest/backend/internal/service"
 	"github.com/selftest/backend/middleware"
+	"github.com/selftest/backend/pkg/pagination"
 )
 
 type ReportHandler struct {
@@ -86,8 +88,22 @@ func (h *ReportHandler) GetTeacherReports(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	params := pagination.Parse(r)
+	if params.Search != "" {
+		lowerSearch := strings.ToLower(params.Search)
+		filtered := make([]report.TeacherReport, 0)
+		for _, rep := range reports {
+			if strings.Contains(strings.ToLower(rep.ExamName), lowerSearch) ||
+				strings.Contains(strings.ToLower(rep.PackName), lowerSearch) {
+				filtered = append(filtered, rep)
+			}
+		}
+		reports = filtered
+	}
+
+	resp := pagination.PaginateSlice(reports, params)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(reports)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *ReportHandler) GetTeacherReportDetails(w http.ResponseWriter, r *http.Request, examID string) {

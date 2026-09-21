@@ -14,6 +14,8 @@ import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
+import DynamicPagination from "../../../../components/common/DynamicPagination";
+import { PaginationMeta } from "../../../../lib/actions";
 import { formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 type Exam = {
@@ -30,6 +32,7 @@ interface ExamPackDetailsClientViewProps {
   packId?: number;
   initialPack: any;
   initialExams: any[];
+  initialMeta?: PaginationMeta;
   initialStats: any;
   initialAttempts?: any[];
 }
@@ -38,6 +41,7 @@ export default function ExamPackDetailsClientView({
   packId,
   initialPack,
   initialExams = [],
+  initialMeta,
   initialStats,
   initialAttempts = [],
 }: ExamPackDetailsClientViewProps) {
@@ -355,6 +359,13 @@ export default function ExamPackDetailsClientView({
           </div>
         )}
       </div>
+
+      {/* Dynamic Pagination Controls */}
+      {initialMeta && initialMeta.total_items > 0 && (
+        <div className="bg-white border border-slate-200/80 rounded px-4 py-2 shadow-2xs">
+          <DynamicPagination meta={initialMeta} />
+        </div>
+      )}
     </PageContainer>
   );
 }

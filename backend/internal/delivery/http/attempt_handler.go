@@ -9,6 +9,7 @@ import (
 
 	"github.com/selftest/backend/internal/service"
 	"github.com/selftest/backend/middleware"
+	"github.com/selftest/backend/pkg/pagination"
 )
 
 type AttemptHandler struct {
@@ -73,8 +74,11 @@ func (h *AttemptHandler) GetUserAttempts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	params := pagination.Parse(r)
+	resp := pagination.PaginateSlice(results, params)
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(results)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *AttemptHandler) GetAttemptDetails(w http.ResponseWriter, r *http.Request, id int) {

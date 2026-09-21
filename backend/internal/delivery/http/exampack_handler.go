@@ -7,9 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/selftest/backend/internal/domain/exam"
 	"github.com/selftest/backend/internal/domain/exampack"
 	"github.com/selftest/backend/internal/service"
 	"github.com/selftest/backend/middleware"
+	"github.com/selftest/backend/pkg/pagination"
 )
 
 type ExamPackHandler struct {
@@ -91,8 +93,33 @@ func (h *ExamPackHandler) ListExamPacks(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	params := pagination.Parse(r)
+	if params.Search != "" {
+		lowerSearch := strings.ToLower(params.Search)
+		filtered := make([]exampack.ExamPack, 0)
+		for _, p := range packs {
+			if strings.Contains(strings.ToLower(p.Title), lowerSearch) ||
+				strings.Contains(strings.ToLower(p.Description), lowerSearch) ||
+				strings.Contains(strings.ToLower(p.Category), lowerSearch) {
+				filtered = append(filtered, p)
+			}
+		}
+		packs = filtered
+	}
+	if params.Category != "" && params.Category != "All" {
+		lowerCat := strings.ToLower(params.Category)
+		filtered := make([]exampack.ExamPack, 0)
+		for _, p := range packs {
+			if strings.ToLower(p.Category) == lowerCat {
+				filtered = append(filtered, p)
+			}
+		}
+		packs = filtered
+	}
+
+	resp := pagination.PaginateSlice(packs, params)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(packs)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *ExamPackHandler) GetExamPack(w http.ResponseWriter, r *http.Request, id int) {
@@ -226,8 +253,23 @@ func (h *ExamPackHandler) ListExams(w http.ResponseWriter, r *http.Request, pack
 		return
 	}
 
+	params := pagination.Parse(r)
+	if params.Search != "" {
+		lowerSearch := strings.ToLower(params.Search)
+		filtered := make([]exam.Exam, 0)
+		for _, e := range exams {
+			if strings.Contains(strings.ToLower(e.Name), lowerSearch) ||
+				strings.Contains(strings.ToLower(e.Level), lowerSearch) ||
+				strings.Contains(strings.ToLower(e.Batch), lowerSearch) {
+				filtered = append(filtered, e)
+			}
+		}
+		exams = filtered
+	}
+
+	resp := pagination.PaginateSlice(exams, params)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(exams)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *ExamPackHandler) CreateExam(w http.ResponseWriter, r *http.Request, packID int) {

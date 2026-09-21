@@ -15,6 +15,7 @@ import (
 	"github.com/selftest/backend/internal/infrastructure/oauth"
 	"github.com/selftest/backend/internal/service"
 	"github.com/selftest/backend/middleware"
+	"github.com/selftest/backend/pkg/pagination"
 )
 
 type AuthHandler struct {
@@ -152,8 +153,24 @@ func (h *AuthHandler) HandleAdminUsers(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, fmt.Sprintf(`{"error": "Failed to fetch users: %v"}`, err), http.StatusInternalServerError)
 				return
 			}
+
+			params := pagination.Parse(r)
+			if params.Search != "" {
+				lowerSearch := strings.ToLower(params.Search)
+				filtered := make([]user.User, 0)
+				for _, u := range users {
+					if strings.Contains(strings.ToLower(u.Name), lowerSearch) ||
+						strings.Contains(strings.ToLower(u.Email), lowerSearch) ||
+						strings.Contains(strings.ToLower(u.Role), lowerSearch) {
+						filtered = append(filtered, u)
+					}
+				}
+				users = filtered
+			}
+
+			resp := pagination.PaginateSlice(users, params)
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(users)
+			json.NewEncoder(w).Encode(resp)
 		} else {
 			http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
 		}

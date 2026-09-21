@@ -233,6 +233,26 @@ func (s *ExamService) assertQuestionEdit(userID int, examID string, q *exam.Ques
 	return ErrForbidden
 }
 
+func (s *ExamService) ListExams(userID int, filter exam.ExamFilter) ([]exam.Exam, exam.PaginationMeta, error) {
+	role := s.roleOf(userID)
+	if role == "teacher" {
+		filter.TeacherID = &userID
+	}
+
+	exams, meta, err := s.repo.ListExams(filter)
+	if err != nil {
+		return nil, exam.PaginationMeta{}, err
+	}
+
+	if role == "student" {
+		for i := range exams {
+			exams[i].Passcode = ""
+		}
+	}
+
+	return exams, meta, nil
+}
+
 func (s *ExamService) ListExamsByPack(userID, packID int) ([]exam.Exam, error) {
 	if err := s.assertPackAccess(userID, packID); err != nil {
 		return nil, err

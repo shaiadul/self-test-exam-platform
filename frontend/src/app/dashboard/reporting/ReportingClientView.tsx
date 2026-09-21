@@ -10,13 +10,17 @@ import { ReportingSummaryCards } from "./components/ReportingSummaryCards";
 import { ReportingFilterBar } from "./components/ReportingFilterBar";
 import { ReportingTable } from "./components/ReportingTable";
 import { ReportingMobileCards } from "./components/ReportingMobileCards";
+import DynamicPagination from "../../../components/common/DynamicPagination";
+import { PaginationMeta } from "../../../lib/actions";
 
 interface ReportingClientViewProps {
   initialReports: Report[];
+  initialMeta?: PaginationMeta;
 }
 
 export default function ReportingClientView({
   initialReports,
+  initialMeta,
 }: ReportingClientViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"score" | "date">("date");
@@ -122,6 +126,13 @@ export default function ReportingClientView({
             actionLabel="Explore Exam Packs"
             actionHref="/dashboard/exam-pack"
           />
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {initialMeta && initialMeta.total_items > 0 && (
+        <div className="bg-white border border-slate-200/80 rounded px-4 py-2 shadow-2xs">
+          <DynamicPagination meta={initialMeta} />
         </div>
       )}
     </PageContainer>

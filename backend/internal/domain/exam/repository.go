@@ -3,6 +3,7 @@ package exam
 import "time"
 
 type ExamRepository interface {
+	ListExams(filter ExamFilter) ([]Exam, PaginationMeta, error)
 	GetExamsByPackID(packID int) ([]Exam, error)
 	GetExamByID(id string) (*Exam, error)
 	GetExamsByIDs(ids []string) ([]Exam, error)

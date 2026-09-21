@@ -2,6 +2,8 @@ package persistence
 
 import (
 	"errors"
+	"math"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -20,6 +22,73 @@ func NewPostgresExamRepository(db *gorm.DB) *PostgresExamRepository {
 const examColumns = `id, exam_pack_id, name, start_date, end_date, level, batch, total_marks, passing_marks, per_question_marks, negative_marks, COALESCE(is_private, false) AS is_private, COALESCE(passcode, '') AS passcode, COALESCE(duration_minutes, 30) AS duration_minutes, COALESCE(randomization, false) AS randomization, COALESCE(feedback, true) AS feedback, created_by, created_at, updated_at`
 
 const examColumnsE = `e.id, e.exam_pack_id, e.name, e.start_date, e.end_date, e.level, e.batch, e.total_marks, e.passing_marks, e.per_question_marks, e.negative_marks, COALESCE(e.is_private, false) AS is_private, COALESCE(e.passcode, '') AS passcode, COALESCE(e.duration_minutes, 30) AS duration_minutes, COALESCE(e.randomization, false) AS randomization, COALESCE(e.feedback, true) AS feedback, e.created_by, e.created_at, e.updated_at`
+
+func (r *PostgresExamRepository) ListExams(filter exam.ExamFilter) ([]exam.Exam, exam.PaginationMeta, error) {
+	page := filter.Page
+	if page < 1 {
+		page = 1
+	}
+	perPage := filter.PerPage
+	if perPage < 1 {
+		perPage = 10
+	} else if perPage > 100 {
+		perPage = 100
+	}
+
+	query := r.db.Model(&exam.Exam{})
+
+	if filter.Search != "" {
+		searchTerm := "%" + strings.TrimSpace(filter.Search) + "%"
+		query = query.Where("name ILIKE ? OR level ILIKE ? OR batch ILIKE ?", searchTerm, searchTerm, searchTerm)
+	}
+
+	if filter.PackID != nil {
+		query = query.Where("exam_pack_id = ?", *filter.PackID)
+	}
+
+	if filter.Level != "" {
+		query = query.Where("level ILIKE ?", filter.Level)
+	}
+
+	if filter.Batch != "" {
+		query = query.Where("batch ILIKE ?", filter.Batch)
+	}
+
+	if filter.TeacherID != nil {
+		query = query.Where("created_by = ?", *filter.TeacherID)
+	}
+
+	var totalItems int64
+	if err := query.Count(&totalItems).Error; err != nil {
+		return nil, exam.PaginationMeta{}, err
+	}
+
+	totalPages := 0
+	if totalItems > 0 {
+		totalPages = int(math.Ceil(float64(totalItems) / float64(perPage)))
+	}
+
+	offset := (page - 1) * perPage
+	exams := []exam.Exam{}
+	err := query.
+		Select(examColumns).
+		Order("start_date DESC").
+		Offset(offset).
+		Limit(perPage).
+		Find(&exams).Error
+	if err != nil {
+		return nil, exam.PaginationMeta{}, err
+	}
+
+	meta := exam.PaginationMeta{
+		TotalItems:  totalItems,
+		TotalPages:  totalPages,
+		CurrentPage: page,
+		PerPage:     perPage,
+	}
+
+	return exams, meta, nil
+}
 
 func (r *PostgresExamRepository) GetExamsByPackID(packID int) ([]exam.Exam, error) {
 	exams := []exam.Exam{}

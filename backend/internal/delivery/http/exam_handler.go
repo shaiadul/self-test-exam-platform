@@ -8,8 +8,10 @@ import (
 	"strings"
 
 	"github.com/selftest/backend/internal/domain/attempt"
+	"github.com/selftest/backend/internal/domain/exam"
 	"github.com/selftest/backend/internal/service"
 	"github.com/selftest/backend/middleware"
+	"github.com/selftest/backend/pkg/pagination"
 )
 
 type ExamHandler struct {
@@ -26,7 +28,26 @@ func NewExamHandler(examService *service.ExamService, attemptService *service.At
 
 func (h *ExamHandler) HandleExams(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
+	if path == "/api/exams" || path == "/api/exams/" {
+		switch r.Method {
+		case http.MethodGet:
+			h.ListExams(w, r)
+		default:
+			http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		}
+		return
+	}
+
 	trimmed := strings.TrimPrefix(path, "/api/exams/")
+	if trimmed == "" {
+		switch r.Method {
+		case http.MethodGet:
+			h.ListExams(w, r)
+		default:
+			http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		}
+		return
+	}
 	parts := strings.Split(trimmed, "/")
 
 	if len(parts) == 3 && parts[1] == "questions" {
@@ -96,6 +117,52 @@ func (h *ExamHandler) HandleExams(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, `{"error": "Page not found"}`, http.StatusNotFound)
+}
+
+func (h *ExamHandler) ListExams(w http.ResponseWriter, r *http.Request) {
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+
+	params := pagination.Parse(r)
+	q := r.URL.Query()
+
+	var packID *int
+	if pidStr := q.Get("pack_id"); pidStr != "" {
+		if pid, err := strconv.Atoi(pidStr); err == nil {
+			packID = &pid
+		}
+	} else if pidStr := q.Get("exam_pack_id"); pidStr != "" {
+		if pid, err := strconv.Atoi(pidStr); err == nil {
+			packID = &pid
+		}
+	}
+
+	filter := exam.ExamFilter{
+		Search:  params.Search,
+		PackID:  packID,
+		Level:   strings.TrimSpace(q.Get("level")),
+		Batch:   strings.TrimSpace(q.Get("batch")),
+		Page:    params.Page,
+		PerPage: params.PerPage,
+	}
+
+	exams, meta, err := h.examService.ListExams(userID, filter)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	resp := pagination.Response[exam.Exam]{
+		Data: exams,
+		Meta: pagination.Meta{
+			TotalItems:  meta.TotalItems,
+			TotalPages:  meta.TotalPages,
+			CurrentPage: meta.CurrentPage,
+			PerPage:     meta.PerPage,
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *ExamHandler) GetExam(w http.ResponseWriter, r *http.Request, id string) {
