@@ -34,7 +34,7 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
             <th className="py-3 px-4">Name</th>
             <th className="py-3 px-4">Email Address</th>
             <th className="py-3 px-4">Assigned Role</th>
-            <th className="py-3 px-4">Exam Quota</th>
+            <th className="py-3 px-4">Quotas (Packs / Exams)</th>
             <th className="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
@@ -84,61 +84,58 @@ export const UserManagementTable: React.FC<UserManagementTableProps> = ({
                 )}
               </td>
 
-              {/* Exam Quota column */}
+              {/* Quotas column (both Packs and Exams) */}
               <td className="py-3.5 px-4">
                 {u.role === "teacher" ? (
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5 font-mono">
-                      <span className="text-xs font-bold text-slate-800">
-                        {u.createdExamsCount ?? 0}
-                      </span>
-                      <span className="text-xs text-slate-400">/</span>
-                      <span
-                        className={`text-xs font-bold ${
-                          u.examLimit === -1
-                            ? "text-emerald-600"
-                            : (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
-                            ? "text-rose-600"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        {u.examLimit === -1 ? "∞" : u.examLimit ?? 5}
-                      </span>
-                      {u.examLimit !== -1 && (
+                  <div className="flex flex-col gap-1.5 min-w-[140px]">
+                    {/* Pack Quota */}
+                    <div className="flex items-center justify-between text-[11px] font-mono">
+                      <span className="text-slate-500 font-semibold">Packs:</span>
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-slate-900">{u.createdPacksCount ?? 0}</span>
+                        <span className="text-slate-400">/</span>
                         <span
-                          className={`ml-1 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border uppercase ${
-                            (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
-                              ? "bg-rose-50 text-rose-600 border-rose-200"
-                              : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          className={`font-bold ${
+                            u.examPackLimit === -1
+                              ? "text-emerald-600"
+                              : (u.createdPacksCount ?? 0) >= (u.examPackLimit ?? 3)
+                              ? "text-rose-600"
+                              : "text-slate-700"
                           }`}
                         >
-                          {(u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
-                            ? "Limit Reached"
-                            : "Available"}
+                          {u.examPackLimit === -1 ? "∞" : u.examPackLimit ?? 3}
                         </span>
-                      )}
+                        {u.examPackLimit !== -1 && (u.createdPacksCount ?? 0) >= (u.examPackLimit ?? 3) && (
+                          <span className="text-[8px] font-bold px-1 py-0.2 bg-rose-50 text-rose-600 border border-rose-200 rounded">
+                            FULL
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="w-24 h-1 bg-slate-100 rounded overflow-hidden">
-                      {u.examLimit !== -1 && (
-                        <div
-                          className={`h-full rounded transition-all ${
-                            (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
-                              ? "bg-rose-500"
-                              : (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) * 0.8
-                              ? "bg-amber-400"
-                              : "bg-emerald-500"
+
+                    {/* Exam Quota */}
+                    <div className="flex items-center justify-between text-[11px] font-mono">
+                      <span className="text-slate-500 font-semibold">Exams:</span>
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-slate-900">{u.createdExamsCount ?? 0}</span>
+                        <span className="text-slate-400">/</span>
+                        <span
+                          className={`font-bold ${
+                            u.examLimit === -1
+                              ? "text-emerald-600"
+                              : (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
+                              ? "text-rose-600"
+                              : "text-slate-700"
                           }`}
-                          style={{
-                            width: `${Math.min(
-                              100,
-                              ((u.createdExamsCount ?? 0) / (u.examLimit ?? 5)) * 100
-                            )}%`,
-                          }}
-                        />
-                      )}
-                      {u.examLimit === -1 && (
-                        <div className="h-full w-full bg-emerald-400 rounded" />
-                      )}
+                        >
+                          {u.examLimit === -1 ? "∞" : u.examLimit ?? 5}
+                        </span>
+                        {u.examLimit !== -1 && (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) && (
+                          <span className="text-[8px] font-bold px-1 py-0.2 bg-rose-50 text-rose-600 border border-rose-200 rounded">
+                            FULL
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : (

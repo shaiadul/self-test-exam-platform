@@ -78,33 +78,18 @@ export const UserManagementMobileCards: React.FC<UserManagementMobileCardsProps>
           )}
 
           {u.role === "teacher" && (
-            <div className="bg-slate-50 p-2 rounded border border-slate-100 space-y-1">
+            <div className="bg-slate-50 p-2.5 rounded border border-slate-100 space-y-2">
               <div className="flex items-center justify-between text-[10px] font-mono">
-                <span className="font-bold text-slate-400 uppercase">Exam Quota</span>
-                <span className="font-bold text-slate-700">
-                  {u.createdExamsCount ?? 0} / {u.examLimit === -1 ? "∞" : u.examLimit ?? 5}
+                <span className="font-bold text-slate-500 uppercase">Pack Quota:</span>
+                <span className="font-bold text-slate-800">
+                  {u.createdPacksCount ?? 0} / {u.examPackLimit === -1 ? "∞" : u.examPackLimit ?? 3}
                 </span>
               </div>
-              <div className="w-full h-1 bg-slate-200 rounded overflow-hidden">
-                {u.examLimit !== -1 ? (
-                  <div
-                    className={`h-full rounded transition-all ${
-                      (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5)
-                        ? "bg-rose-500"
-                        : (u.createdExamsCount ?? 0) >= (u.examLimit ?? 5) * 0.8
-                        ? "bg-amber-400"
-                        : "bg-emerald-500"
-                    }`}
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        ((u.createdExamsCount ?? 0) / (u.examLimit ?? 5)) * 100
-                      )}%`,
-                    }}
-                  />
-                ) : (
-                  <div className="h-full w-full bg-emerald-400 rounded" />
-                )}
+              <div className="flex items-center justify-between text-[10px] font-mono pt-1 border-t border-slate-200/50">
+                <span className="font-bold text-slate-500 uppercase">Exam Quota:</span>
+                <span className="font-bold text-slate-800">
+                  {u.createdExamsCount ?? 0} / {u.examLimit === -1 ? "∞" : u.examLimit ?? 5}
+                </span>
               </div>
             </div>
           )}

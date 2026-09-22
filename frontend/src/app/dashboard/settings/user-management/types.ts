@@ -6,4 +6,7 @@ export interface User {
   status?: string;
   examLimit?: number;
   createdExamsCount?: number;
+  examPackLimit?: number;
+  createdPacksCount?: number;
 }
+

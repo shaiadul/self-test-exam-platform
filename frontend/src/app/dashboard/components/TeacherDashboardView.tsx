@@ -154,10 +154,12 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({
         </div>
       </div>
 
-      {/* Teacher Exam Creation Quota */}
+      {/* Teacher Resource Quotas (Packs & Exams) */}
       <ExamQuotaCard
-        created={stats?.createdPacksCount}
-        limit={stats?.examPackLimit}
+        createdPacks={stats?.createdPacksCount}
+        packLimit={stats?.examPackLimit}
+        createdExams={stats?.createdExamsCount}
+        examLimit={stats?.examLimit}
       />
 
       {/* Teacher Activity & Curriculum Table */}

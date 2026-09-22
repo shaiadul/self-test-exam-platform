@@ -16,6 +16,7 @@ interface ManageExamPackClientViewProps {
   initialMeta?: PaginationMeta;
   currentUserId?: number;
   currentUserRole?: string;
+  packLimit?: number;
 }
 
 export default function ManageExamPackClientView({
@@ -23,6 +24,7 @@ export default function ManageExamPackClientView({
   initialMeta,
   currentUserId,
   currentUserRole,
+  packLimit,
 }: ManageExamPackClientViewProps) {
   const [examPacks, setExamPacks] = useState<any[]>(initialPacks || []);
   const [meta, setMeta] = useState<PaginationMeta | undefined>(initialMeta);
@@ -49,6 +51,9 @@ export default function ManageExamPackClientView({
     return list;
   }, [examPacks, userRole, userId]);
 
+  const isTeacher = userRole && String(userRole).toLowerCase() === "teacher";
+  const quotaReached = isTeacher && packLimit !== undefined && packLimit !== -1 && ownedPacks.length >= packLimit;
+
   const filteredPacks = useMemo(() => {
     if (!search.trim()) return ownedPacks;
     const query = search.toLowerCase();
@@ -67,8 +72,13 @@ export default function ManageExamPackClientView({
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
-              {ownedPacks.length} ACTIVE PACKS
+              {ownedPacks.length} {isTeacher && packLimit !== undefined ? `/ ${packLimit === -1 ? "∞" : packLimit}` : ""} ACTIVE PACKS
             </span>
+            {quotaReached && (
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-rose-50 text-rose-600 border border-rose-200">
+                QUOTA REACHED
+              </span>
+            )}
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Manage Exam Packs

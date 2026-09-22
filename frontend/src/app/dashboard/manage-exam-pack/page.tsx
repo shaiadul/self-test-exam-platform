@@ -41,6 +41,7 @@ export default async function ManageExamPackPage({
       initialMeta={meta}
       currentUserId={profile?.id}
       currentUserRole={profile?.role}
+      packLimit={profile?.examPackLimit}
     />
   );
 }

@@ -17,6 +17,8 @@ interface AddUserModalProps {
   setNewRole: (val: string) => void;
   newExamLimit: number;
   setNewExamLimit: (val: number) => void;
+  newExamPackLimit: number;
+  setNewExamPackLimit: (val: number) => void;
   submitting: boolean;
   addError: string | null;
   roleOptions: string[];
@@ -36,6 +38,8 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   setNewRole,
   newExamLimit,
   setNewExamLimit,
+  newExamPackLimit,
+  setNewExamPackLimit,
   submitting,
   addError,
   roleOptions,
@@ -106,38 +110,75 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             />
           </div>
 
-          {/* Exam limit — only shown when teacher is selected */}
+          {/* Limits — only shown when teacher is selected */}
           {newRole === "teacher" && (
-            <div className="p-3 bg-violet-50/70 border border-violet-200/60 rounded space-y-2">
-              <label className="text-xs font-bold text-violet-900 block">
-                Teacher Exam Creation Quota <span className="text-violet-500 font-normal">(-1 = unlimited)</span>
-              </label>
-              <div className="flex flex-wrap gap-1.5 font-mono">
-                {[-1, 3, 5, 10, 20].map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setNewExamLimit(preset)}
-                    className={`px-2.5 py-1 rounded text-xs font-bold border transition cursor-pointer ${
-                      newExamLimit === preset
-                        ? "bg-violet-600 text-white border-violet-600"
-                        : "bg-white text-slate-700 border-slate-200 hover:border-violet-400"
-                    }`}
-                  >
-                    {preset === -1 ? "∞" : preset}
-                  </button>
-                ))}
+            <div className="space-y-3">
+              {/* Exam Pack Limit */}
+              <div className="p-3 bg-blue-50/70 border border-blue-200/60 rounded space-y-2">
+                <label className="text-xs font-bold text-blue-900 block">
+                  Teacher Exam Pack Quota <span className="text-blue-500 font-normal">(-1 = unlimited)</span>
+                </label>
+                <div className="flex flex-wrap gap-1.5 font-mono">
+                  {[-1, 2, 3, 5, 10].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setNewExamPackLimit(preset)}
+                      className={`px-2.5 py-1 rounded text-xs font-bold border transition cursor-pointer ${
+                        newExamPackLimit === preset
+                          ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-blue-400"
+                      }`}
+                    >
+                      {preset === -1 ? "∞" : preset}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-xs text-blue-700 font-medium">Custom:</span>
+                  <input
+                    type="number"
+                    min={-1}
+                    max={999}
+                    value={newExamPackLimit}
+                    onChange={(e) => setNewExamPackLimit(parseInt(e.target.value) || 0)}
+                    className="w-20 border border-blue-200 rounded px-2 py-1 text-xs font-mono font-bold outline-none focus:border-blue-500 bg-white"
+                  />
+                </div>
               </div>
-              <div className="flex items-center gap-2 pt-1">
-                <span className="text-xs text-violet-700 font-medium">Custom:</span>
-                <input
-                  type="number"
-                  min={-1}
-                  max={999}
-                  value={newExamLimit}
-                  onChange={(e) => setNewExamLimit(parseInt(e.target.value) || 0)}
-                  className="w-20 border border-violet-200 rounded px-2 py-1 text-xs font-mono font-bold outline-none focus:border-violet-500 bg-white"
-                />
+
+              {/* Exam Limit */}
+              <div className="p-3 bg-violet-50/70 border border-violet-200/60 rounded space-y-2">
+                <label className="text-xs font-bold text-violet-900 block">
+                  Teacher Exam Creation Quota <span className="text-violet-500 font-normal">(-1 = unlimited)</span>
+                </label>
+                <div className="flex flex-wrap gap-1.5 font-mono">
+                  {[-1, 3, 5, 10, 20].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setNewExamLimit(preset)}
+                      className={`px-2.5 py-1 rounded text-xs font-bold border transition cursor-pointer ${
+                        newExamLimit === preset
+                          ? "bg-violet-600 text-white border-violet-600 shadow-2xs"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-violet-400"
+                      }`}
+                    >
+                      {preset === -1 ? "∞" : preset}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="text-xs text-violet-700 font-medium">Custom:</span>
+                  <input
+                    type="number"
+                    min={-1}
+                    max={999}
+                    value={newExamLimit}
+                    onChange={(e) => setNewExamLimit(parseInt(e.target.value) || 0)}
+                    className="w-20 border border-violet-200 rounded px-2 py-1 text-xs font-mono font-bold outline-none focus:border-violet-500 bg-white"
+                  />
+                </div>
               </div>
             </div>
           )}

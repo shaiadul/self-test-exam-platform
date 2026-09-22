@@ -41,6 +41,7 @@ export default function UserManagementClientView({
   // Edit exam limit modal states
   const [limitModalUser, setLimitModalUser] = useState<User | null>(null);
   const [limitValue, setLimitValue] = useState<number>(5);
+  const [packLimitValue, setPackLimitValue] = useState<number>(3);
   const [savingLimit, setSavingLimit] = useState(false);
 
   // Add User modal states
@@ -50,6 +51,7 @@ export default function UserManagementClientView({
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("student");
   const [newExamLimit, setNewExamLimit] = useState<number>(5);
+  const [newExamPackLimit, setNewExamPackLimit] = useState<number>(3);
   const [submitting, setSubmitting] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
@@ -79,22 +81,25 @@ export default function UserManagementClientView({
     try {
       const res = await adminUpdateUserAction(limitModalUser.id, {
         examLimit: limitValue,
+        examPackLimit: packLimitValue,
       });
       if (res.success) {
         setUsers((prev) =>
           prev.map((u) =>
-            u.id === limitModalUser.id ? { ...u, examLimit: limitValue } : u,
+            u.id === limitModalUser.id
+              ? { ...u, examLimit: limitValue, examPackLimit: packLimitValue }
+              : u,
           ),
         );
         toast.success(
-          `Exam creation limit updated to ${limitValue === -1 ? "Unlimited" : limitValue}.`,
+          `Teacher quotas updated: ${packLimitValue === -1 ? "Unlimited" : packLimitValue} packs, ${limitValue === -1 ? "Unlimited" : limitValue} exams.`,
         );
         setLimitModalUser(null);
       } else {
-        toast.error(res.error || "Failed to update exam limit");
+        toast.error(res.error || "Failed to update quotas");
       }
     } catch {
-      toast.error("Failed to update exam limit.");
+      toast.error("Failed to update quotas.");
     } finally {
       setSavingLimit(false);
     }
@@ -130,16 +135,18 @@ export default function UserManagementClientView({
       const res = await registerAction(newName, newEmail, newPassword);
       if (res.success && res.user) {
         if (newRole !== "student" && res.user.id) {
-          const updateData: { role: string; examLimit?: number } = {
+          const updateData: { role: string; examLimit?: number; examPackLimit?: number } = {
             role: newRole,
           };
           if (newRole === "teacher") {
             updateData.examLimit = newExamLimit;
+            updateData.examPackLimit = newExamPackLimit;
           }
           await adminUpdateUserAction(res.user.id, updateData);
           res.user.role = newRole;
           if (newRole === "teacher") {
             res.user.examLimit = newExamLimit;
+            res.user.examPackLimit = newExamPackLimit;
           }
         }
 
@@ -151,6 +158,7 @@ export default function UserManagementClientView({
         setNewPassword("");
         setNewRole("student");
         setNewExamLimit(5);
+        setNewExamPackLimit(3);
       } else {
         setAddError(res.error || "Failed to register new user.");
       }
@@ -196,6 +204,7 @@ export default function UserManagementClientView({
           onOpenLimitModal={(u) => {
             setLimitModalUser(u);
             setLimitValue(u.examLimit ?? 5);
+            setPackLimitValue(u.examPackLimit ?? 3);
           }}
           onDeleteUser={handleDeleteUser}
         />
@@ -215,6 +224,7 @@ export default function UserManagementClientView({
           onOpenLimitModal={(u) => {
             setLimitModalUser(u);
             setLimitValue(u.examLimit ?? 5);
+            setPackLimitValue(u.examPackLimit ?? 3);
           }}
           onDeleteUser={handleDeleteUser}
         />
@@ -226,8 +236,10 @@ export default function UserManagementClientView({
         <EditExamLimitModal
           user={limitModalUser}
           limitValue={limitValue}
+          packLimitValue={packLimitValue}
           savingLimit={savingLimit}
           onLimitChange={setLimitValue}
+          onPackLimitChange={setPackLimitValue}
           onClose={() => setLimitModalUser(null)}
           onSubmit={handleSaveLimit}
         />
@@ -247,6 +259,8 @@ export default function UserManagementClientView({
         setNewRole={setNewRole}
         newExamLimit={newExamLimit}
         setNewExamLimit={setNewExamLimit}
+        newExamPackLimit={newExamPackLimit}
+        setNewExamPackLimit={setNewExamPackLimit}
         submitting={submitting}
         addError={addError}
         roleOptions={roleOptions}

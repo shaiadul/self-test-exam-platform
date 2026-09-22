@@ -275,6 +275,28 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 		return nil, ErrForbidden
 	}
 
+	if role == "teacher" && creatorID > 0 && s.userRepo != nil {
+		u, err := s.userRepo.GetByID(creatorID)
+		if err != nil {
+			return nil, err
+		}
+		if u != nil {
+			teacherExamLimit := 5
+			if u.ExamLimit != nil {
+				teacherExamLimit = *u.ExamLimit
+			}
+			if teacherExamLimit >= 0 {
+				teacherExamCount, err := s.repo.CountExamsByCreator(creatorID)
+				if err != nil {
+					return nil, err
+				}
+				if teacherExamCount >= teacherExamLimit {
+					return nil, fmt.Errorf("exam creation limit reached: you have already created %d of %d allowed exams; please request an increase from an admin", teacherExamCount, teacherExamLimit)
+				}
+			}
+		}
+	}
+
 	packLimit := pack.ExamLimit
 	if packLimit == 0 {
 		packLimit = exampack.DefaultExamLimit
