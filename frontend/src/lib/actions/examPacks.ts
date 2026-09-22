@@ -2,13 +2,32 @@
 
 import { revalidatePath } from "next/cache";
 import { fetcherWithAuth } from "./fetcher";
+import { getProfileAction } from "./auth";
 import { PaginationParams, PaginatedResponse, normalizePaginatedResponse } from "./pagination";
 
-export async function getExamPacksAction(clientToken?: string) {
-	const data = await fetcherWithAuth<any>("/exam-packs?per_page=100", {}, clientToken);
-	if (Array.isArray(data)) return data;
-	if (data && Array.isArray(data.data)) return data.data;
-	return [];
+export async function getExamPacksAction(options?: { mine?: boolean } | string) {
+	let endpoint = "/exam-packs?per_page=100";
+	const isMine = typeof options === "object" && options?.mine;
+	if (isMine) {
+		endpoint += "&mine=true";
+	}
+	const data = await fetcherWithAuth<any>(endpoint);
+	let packs: any[] = [];
+	if (Array.isArray(data)) packs = data;
+	else if (data && Array.isArray(data.data)) packs = data.data;
+
+	if (isMine) {
+		try {
+			const profile = await getProfileAction();
+			if (profile && String(profile.role).toLowerCase() === "teacher") {
+				return packs.filter((p: any) => p.createdBy && Number(p.createdBy) === Number(profile.id));
+			}
+		} catch {
+			// ignore
+		}
+	}
+
+	return packs;
 }
 
 export async function getExamPacksPaginatedAction(
@@ -23,13 +42,37 @@ export async function getExamPacksPaginatedAction(
 	if (params?.category) queryParams.category = params.category;
 	if (params?.sort_by) queryParams.sort_by = params.sort_by;
 	if (params?.sort_order) queryParams.sort_order = params.sort_order;
+	if (params?.mine) queryParams.mine = true;
 
 	const data = await fetcherWithAuth<any>(
 		"/exam-packs",
 		{ params: queryParams },
 		clientToken
 	);
-	return normalizePaginatedResponse(data, params?.page || 1, params?.per_page || 10);
+	const normalized = normalizePaginatedResponse(data, params?.page || 1, params?.per_page || 10);
+
+	if (params?.mine) {
+		try {
+			const profile = await getProfileAction();
+			if (profile && String(profile.role).toLowerCase() === "teacher") {
+				const filtered = (normalized.data || []).filter(
+					(p: any) => p.createdBy && Number(p.createdBy) === Number(profile.id)
+				);
+				return {
+					data: filtered,
+					meta: {
+						...normalized.meta,
+						total_items: filtered.length,
+						total_pages: Math.max(1, Math.ceil(filtered.length / (params?.per_page || 10))),
+					},
+				};
+			}
+		} catch {
+			// ignore
+		}
+	}
+
+	return normalized;
 }
 
 export async function getExamPackDetailsAction(id: number, clientToken?: string) {

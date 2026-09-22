@@ -6,6 +6,7 @@ export interface PaginationParams {
   category?: string;
   sort_by?: string;
   sort_order?: "asc" | "desc";
+  mine?: boolean;
   [key: string]: any;
 }
 

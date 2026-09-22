@@ -3,22 +3,37 @@
 import { cookies } from "next/headers";
 import { API_URL } from "./constants";
 
-export interface FetcherOptions extends RequestInit {
+export interface FetcherOptions extends Omit<RequestInit, "next"> {
   params?: Record<string, string | number | boolean | undefined>;
   throwOnError?: boolean;
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
 }
 
 /**
- * Resolves the bearer token from cookies (SSR) or passed clientToken override
+ * Resolves the bearer token directly from HTTP cookies.
+ * Falls back to clientToken override if provided.
  */
 export async function getAuthToken(clientToken?: string): Promise<string | undefined> {
-  if (clientToken) return clientToken;
   try {
     const cookieStore = await cookies();
-    return cookieStore.get("token")?.value;
+    const cookieToken =
+      cookieStore.get("token")?.value ||
+      cookieStore.get("authjs.session-token")?.value ||
+      cookieStore.get("__Secure-authjs.session-token")?.value ||
+      cookieStore.get("next-auth.session-token")?.value ||
+      cookieStore.get("__Secure-next-auth.session-token")?.value;
+
+    if (cookieToken) {
+      return cookieToken;
+    }
   } catch {
-    return undefined;
+    // cookies() unavailable outside request context
   }
+
+  return clientToken;
 }
 
 /**
@@ -48,21 +63,42 @@ export async function fetcher<T = any>(
   endpoint: string,
   options: FetcherOptions = {}
 ): Promise<T | null> {
-  const { params, headers = {}, throwOnError = false, ...rest } = options;
+  const { params, headers = {}, throwOnError = false, cache, next, ...rest } = options;
   const url = buildUrl(endpoint, params);
+
+  const fetchOptions: RequestInit & {
+    next?: { revalidate?: number | false; tags?: string[] };
+  } = {
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    ...rest,
+  };
+
+  // Dynamic next & cache configuration:
+  if (next !== undefined) {
+    fetchOptions.next = next;
+  }
+
+  // If cache is explicitly provided, use it.
+  // When next is omitted, default to dynamic "no-store" to ensure real-time consistency.
+  if (cache !== undefined) {
+    fetchOptions.cache = cache;
+  } else if (next === undefined) {
+    fetchOptions.cache = "no-store";
+  }
 
   let response: Response;
   try {
-    response = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        ...headers,
-      },
-      cache: "no-store",
-      next: { revalidate: 0 },
-      ...rest,
-    });
-  } catch (err) {
+    response = await fetch(url, fetchOptions);
+  } catch (err: any) {
+    if (
+      err?.digest === "DYNAMIC_SERVER_USAGE" ||
+      (typeof err?.message === "string" && err.message.includes("DYNAMIC_SERVER_USAGE"))
+    ) {
+      throw err;
+    }
     console.error(`fetcher network error [${endpoint}]:`, err);
     if (throwOnError) throw new Error("Network error while contacting the server.");
     return null;
@@ -95,8 +131,8 @@ async function httpErrorFromResponse(response: Response): Promise<Error> {
 }
 
 /**
- * Authenticated fetcher that automatically attaches Bearer token from cookies / clientToken
- * and applies cache: "no-store" & next: { revalidate: 0 }
+ * Authenticated fetcher that automatically attaches Bearer token from HTTP cookies.
+ * The caller does NOT need to pass or extract tokens. Dynamic cache and next options are respected.
  */
 export async function fetcherWithAuth<T = any>(
   endpoint: string,

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { fetcherWithAuth } from "./fetcher";
+import { getProfileAction } from "./auth";
 import { PaginationParams, PaginationMeta, PaginatedResponse, normalizePaginatedResponse } from "./pagination";
 
 export type ExamListParams = PaginationParams;
@@ -62,7 +63,7 @@ export async function getTeacherExamsAction(packId: number, clientToken?: string
 	if (!Array.isArray(data)) return [];
 
 	try {
-		const profile = await fetcherWithAuth<any>("/auth/profile", {}, clientToken);
+		const profile = await getProfileAction();
 		if (profile && String(profile.role).toLowerCase() === "teacher") {
 			return data.filter((e: any) => !e.createdBy || String(e.createdBy) === String(profile.id));
 		}

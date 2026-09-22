@@ -19,7 +19,7 @@ export async function loginAction(email: string, password: string) {
 			throw new Error(data.error || "Invalid credentials.");
 		}
 
-		// Save token in cookie
+		// Save token & user profile in cookie
 		const cookieStore = await cookies();
 		cookieStore.set("token", data.token, {
 			path: "/",
@@ -27,6 +27,15 @@ export async function loginAction(email: string, password: string) {
 			httpOnly: false,
 			secure: false,
 		});
+
+		if (data.user) {
+			cookieStore.set("user_profile", JSON.stringify(data.user), {
+				path: "/",
+				maxAge: 60 * 60 * 24,
+				httpOnly: false,
+				secure: false,
+			});
+		}
 
 		return { success: true, user: data.user, token: data.token };
 	} catch (error: any) {
@@ -57,6 +66,14 @@ export async function registerAction(name: string, email: string, password: stri
 				secure: false,
 			});
 		}
+		if (data.user) {
+			cookieStore.set("user_profile", JSON.stringify(data.user), {
+				path: "/",
+				maxAge: 60 * 60 * 24,
+				httpOnly: false,
+				secure: false,
+			});
+		}
 
 		return { success: true, user: data.user, token: data.token };
 	} catch (error: any) {
@@ -75,6 +92,7 @@ export async function logoutAction() {
 
 	const cookieStore = await cookies();
 	cookieStore.delete("token");
+	cookieStore.delete("user_profile");
 	cookieStore.delete("authjs.session-token");
 	cookieStore.delete("__Secure-authjs.session-token");
 	cookieStore.delete("next-auth.session-token");
@@ -84,8 +102,44 @@ export async function logoutAction() {
 	return { success: true };
 }
 
-export async function getProfileAction(clientToken?: string) {
-	return await fetcherWithAuth<any>("/auth/profile", {}, clientToken);
+/**
+ * Returns user profile, prioritizing the HTTP cookie to avoid redundant backend requests.
+ */
+export async function getProfileAction(forceFresh = false) {
+	try {
+		const cookieStore = await cookies();
+		if (!forceFresh) {
+			const cached = cookieStore.get("user_profile")?.value;
+			if (cached) {
+				try {
+					return JSON.parse(decodeURIComponent(cached));
+				} catch {
+					try {
+						return JSON.parse(cached);
+					} catch {
+						// invalid JSON, fall through to fetch
+					}
+				}
+			}
+		}
+
+		const profile = await fetcherWithAuth<any>("/auth/profile");
+		if (profile && profile.id) {
+			try {
+				cookieStore.set("user_profile", JSON.stringify(profile), {
+					path: "/",
+					maxAge: 60 * 60 * 24,
+					httpOnly: false,
+					secure: false,
+				});
+			} catch {
+				// Server component read-only cookie context; ignore
+			}
+		}
+		return profile;
+	} catch {
+		return null;
+	}
 }
 
 export async function updateProfileAction(profileData: any) {
@@ -96,6 +150,18 @@ export async function updateProfileAction(profileData: any) {
 		});
 
 		if (!user) throw new Error("Failed to update profile.");
+
+		try {
+			const cookieStore = await cookies();
+			cookieStore.set("user_profile", JSON.stringify(user), {
+				path: "/",
+				maxAge: 60 * 60 * 24,
+				httpOnly: false,
+				secure: false,
+			});
+		} catch {
+			// ignore
+		}
 
 		revalidatePath("/dashboard");
 		revalidatePath("/dashboard/edit-profile");

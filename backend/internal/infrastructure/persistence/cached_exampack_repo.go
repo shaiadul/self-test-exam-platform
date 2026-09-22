@@ -37,7 +37,7 @@ func (r *CachedExamPackRepository) GetExamPacks() ([]exampack.ExamPack, error) {
 
 	var packs []exampack.ExamPack
 	hit, _ := r.cache.Get(ctx, key, &packs)
-	if hit && len(packs) > 0 {
+	if hit {
 		return packs, nil
 	}
 
@@ -56,7 +56,7 @@ func (r *CachedExamPackRepository) GetExamPacksByCreator(creatorID int) ([]examp
 
 	var packs []exampack.ExamPack
 	hit, _ := r.cache.Get(ctx, key, &packs)
-	if hit && len(packs) > 0 {
+	if hit {
 		return packs, nil
 	}
 

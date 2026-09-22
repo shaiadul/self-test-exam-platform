@@ -35,12 +35,11 @@ func (s *ExamPackService) roleOf(userID int) (string, error) {
 	return strings.ToLower(role), nil
 }
 
-func (s *ExamPackService) ListExamPacks(userID int) ([]exampack.ExamPack, error) {
-	role, err := s.roleOf(userID)
-	if err != nil {
-		return nil, err
-	}
-	if role == "teacher" {
+func (s *ExamPackService) ListExamPacks(userID int, onlyMine bool) ([]exampack.ExamPack, error) {
+	if onlyMine {
+		if userID <= 0 {
+			return []exampack.ExamPack{}, nil
+		}
 		return s.repo.GetExamPacksByCreator(userID)
 	}
 	return s.repo.GetExamPacks()
@@ -53,14 +52,6 @@ func (s *ExamPackService) GetExamPack(userID int, id int) (*exampack.ExamPack, e
 	}
 	if pack == nil {
 		return nil, ErrExamPackNotFound
-	}
-
-	role, err := s.roleOf(userID)
-	if err != nil {
-		return nil, err
-	}
-	if role == "teacher" && (pack.CreatedBy == nil || *pack.CreatedBy != userID) {
-		return nil, ErrForbidden
 	}
 	return pack, nil
 }

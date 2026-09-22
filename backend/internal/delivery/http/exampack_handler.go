@@ -87,10 +87,29 @@ func (h *ExamPackHandler) HandleExamPacks(w http.ResponseWriter, r *http.Request
 
 func (h *ExamPackHandler) ListExamPacks(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.GetUserIDFromContext(r.Context())
-	packs, err := h.packService.ListExamPacks(userID)
+	q := r.URL.Query()
+	mineVal := q.Get("mine")
+	manageVal := q.Get("manage")
+	onlyMine := mineVal == "true" || mineVal == "1" || manageVal == "true" || manageVal == "1" || strings.Contains(r.Header.Get("Referer"), "manage-exam-pack")
+
+	packs, err := h.packService.ListExamPacks(userID, onlyMine)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
 		return
+	}
+
+	if onlyMine {
+		if userID <= 0 {
+			packs = []exampack.ExamPack{}
+		} else {
+			filtered := make([]exampack.ExamPack, 0)
+			for _, p := range packs {
+				if p.CreatedBy != nil && *p.CreatedBy == userID {
+					filtered = append(filtered, p)
+				}
+			}
+			packs = filtered
+		}
 	}
 
 	params := pagination.Parse(r)

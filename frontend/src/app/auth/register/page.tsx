@@ -32,6 +32,10 @@ export default function Register() {
       const res = await registerAction(name, email, password);
       if (res.success && res.user) {
         localStorage.setItem("token", res.token || "");
+        if (res.token && typeof document !== "undefined") {
+          document.cookie = `token=${res.token}; path=/; max-age=86400; SameSite=Lax`;
+          document.cookie = `user_profile=${encodeURIComponent(JSON.stringify(res.user))}; path=/; max-age=86400; SameSite=Lax`;
+        }
         localStorage.setItem("userRole", res.user.role || "student");
         localStorage.setItem("userName", res.user.name || "");
         localStorage.setItem("userEmail", res.user.email || "");

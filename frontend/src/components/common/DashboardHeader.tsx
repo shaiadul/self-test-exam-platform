@@ -5,7 +5,7 @@ import { FaBell, FaSearch, FaTimes, FaBookOpen, FaCheckCircle, FaExclamationCirc
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import { getAllExamsAction, PaginationMeta } from "../../lib/actions";
+import { getAllExamsAction, getProfileAction, PaginationMeta } from "../../lib/actions";
 
 // --- NOTIFICATION MOCK DATA ---
 interface NotifItem {
@@ -73,23 +73,21 @@ export const DashboardHeader = () => {
     // 1. Initial sync from localStorage
     syncUserData();
 
-    // 2. Fetch fresh profile from backend
+    // 2. Fetch fresh profile only if not yet present in localStorage
     const fetchFreshProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) return;
-        const res = await fetch("http://localhost:8080/api/auth/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const profile = await res.json();
-          if (profile) {
-            if (profile.name) localStorage.setItem("userName", profile.name);
-            if (profile.image) {
-              localStorage.setItem("userImage", profile.image);
-            }
-            syncUserData(profile);
-          }
+        const existingName = localStorage.getItem("userName");
+        if (!token || existingName) return;
+
+        const profile = await getProfileAction();
+        if (profile) {
+          if (profile.name) localStorage.setItem("userName", profile.name);
+          if (profile.image) localStorage.setItem("userImage", profile.image);
+          if (profile.role) localStorage.setItem("userRole", profile.role);
+          if (profile.email) localStorage.setItem("userEmail", profile.email);
+          if (profile.id) localStorage.setItem("userID", profile.id.toString());
+          syncUserData(profile);
         }
       } catch (e) {
         // Silently keep localStorage values

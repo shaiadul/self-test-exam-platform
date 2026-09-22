@@ -128,13 +128,8 @@ func (s *ExamService) roleOf(userID int) string {
 	return strings.ToLower(role)
 }
 
-// assertPackAccess ensures the user may view the pack's contents. Teachers are
-// restricted to packs they created or packs containing their exams; admins and students are not.
+// assertPackAccess ensures the pack exists. Viewing pack contents is open to all authenticated users.
 func (s *ExamService) assertPackAccess(userID, packID int) error {
-	role := s.roleOf(userID)
-	if role != "teacher" {
-		return nil
-	}
 	pack, err := s.packRepo.GetExamPackByID(packID)
 	if err != nil {
 		return err
@@ -142,37 +137,12 @@ func (s *ExamService) assertPackAccess(userID, packID int) error {
 	if pack == nil {
 		return ErrExamPackNotFound
 	}
-	if pack.CreatedBy != nil && *pack.CreatedBy == userID {
-		return nil
-	}
-	if exams, cerr := s.repo.GetExamsByPackID(packID); cerr == nil {
-		for _, e := range exams {
-			if e.CreatedBy != nil && *e.CreatedBy == userID {
-				return nil
-			}
-		}
-	}
-	return ErrForbidden
+	return nil
 }
 
-// assertExamView allows viewing when the user is an admin/student, the exam was
-// created by the teacher, or the exam's pack belongs to the teacher.
+// assertExamView allows viewing exams for all authenticated users.
 func (s *ExamService) assertExamView(userID int, e *exam.Exam) error {
-	role := s.roleOf(userID)
-	if role != "teacher" {
-		return nil
-	}
-	if e.CreatedBy != nil && *e.CreatedBy == userID {
-		return nil
-	}
-	pack, err := s.packRepo.GetExamPackByID(e.ExamPackID)
-	if err != nil {
-		return err
-	}
-	if pack != nil && pack.CreatedBy != nil && *pack.CreatedBy == userID {
-		return nil
-	}
-	return ErrForbidden
+	return nil
 }
 
 // assertExamEdit allows editing exams the teacher created, or any exam inside a
@@ -234,16 +204,12 @@ func (s *ExamService) assertQuestionEdit(userID int, examID string, q *exam.Ques
 }
 
 func (s *ExamService) ListExams(userID int, filter exam.ExamFilter) ([]exam.Exam, exam.PaginationMeta, error) {
-	role := s.roleOf(userID)
-	if role == "teacher" {
-		filter.TeacherID = &userID
-	}
-
 	exams, meta, err := s.repo.ListExams(filter)
 	if err != nil {
 		return nil, exam.PaginationMeta{}, err
 	}
 
+	role := s.roleOf(userID)
 	if role == "student" {
 		for i := range exams {
 			exams[i].Passcode = ""
@@ -261,14 +227,12 @@ func (s *ExamService) ListExamsByPack(userID, packID int) ([]exam.Exam, error) {
 	if err != nil {
 		return nil, err
 	}
-	if s.roleOf(userID) == "teacher" {
-		teacherExams := make([]exam.Exam, 0)
-		for _, e := range exams {
-			if e.CreatedBy != nil && *e.CreatedBy == userID {
-				teacherExams = append(teacherExams, e)
-			}
+
+	role := s.roleOf(userID)
+	if role == "student" {
+		for i := range exams {
+			exams[i].Passcode = ""
 		}
-		return teacherExams, nil
 	}
 	return exams, nil
 }

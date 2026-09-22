@@ -136,13 +136,23 @@ func (h *ExamHandler) ListExams(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var teacherID *int
+	if q.Get("mine") == "true" || q.Get("manage") == "true" {
+		teacherID = &userID
+	} else if tidStr := q.Get("teacher_id"); tidStr != "" {
+		if tid, err := strconv.Atoi(tidStr); err == nil {
+			teacherID = &tid
+		}
+	}
+
 	filter := exam.ExamFilter{
-		Search:  params.Search,
-		PackID:  packID,
-		Level:   strings.TrimSpace(q.Get("level")),
-		Batch:   strings.TrimSpace(q.Get("batch")),
-		Page:    params.Page,
-		PerPage: params.PerPage,
+		Search:    params.Search,
+		PackID:    packID,
+		TeacherID: teacherID,
+		Level:     strings.TrimSpace(q.Get("level")),
+		Batch:     strings.TrimSpace(q.Get("batch")),
+		Page:      params.Page,
+		PerPage:   params.PerPage,
 	}
 
 	exams, meta, err := h.examService.ListExams(userID, filter)

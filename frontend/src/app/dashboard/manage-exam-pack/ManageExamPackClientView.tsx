@@ -8,19 +8,21 @@ import { PageContainer } from "../../../components/common/PageContainer";
 import EmptyState from "../../../components/common/EmptyState";
 import DynamicPagination from "../../../components/common/DynamicPagination";
 import {
-  getExamPacksAction,
-  getExamPacksPaginatedAction,
   PaginationMeta,
 } from "../../../lib/actions";
 
 interface ManageExamPackClientViewProps {
   initialPacks: any[];
   initialMeta?: PaginationMeta;
+  currentUserId?: number;
+  currentUserRole?: string;
 }
 
 export default function ManageExamPackClientView({
   initialPacks,
   initialMeta,
+  currentUserId,
+  currentUserRole,
 }: ManageExamPackClientViewProps) {
   const [examPacks, setExamPacks] = useState<any[]>(initialPacks || []);
   const [meta, setMeta] = useState<PaginationMeta | undefined>(initialMeta);
@@ -36,35 +38,27 @@ export default function ManageExamPackClientView({
     }
   }, [initialPacks, initialMeta]);
 
-  useEffect(() => {
-    if (!initialPacks || initialPacks.length === 0) {
-      setLoading(true);
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("token") || undefined
-          : undefined;
-      getExamPacksAction(token)
-        .then((fetched) => {
-          if (fetched && Array.isArray(fetched) && fetched.length > 0) {
-            setExamPacks(fetched);
-          }
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+  const userRole = currentUserRole || (typeof window !== "undefined" ? localStorage.getItem("userRole") : null);
+  const userId = currentUserId || (typeof window !== "undefined" ? Number(localStorage.getItem("userID")) : null);
+
+  const ownedPacks = useMemo(() => {
+    let list = examPacks;
+    if (userRole && String(userRole).toLowerCase() === "teacher" && userId) {
+      list = list.filter((p) => p.createdBy && Number(p.createdBy) === Number(userId));
     }
-  }, [initialPacks]);
+    return list;
+  }, [examPacks, userRole, userId]);
 
   const filteredPacks = useMemo(() => {
-    if (!search.trim()) return examPacks;
+    if (!search.trim()) return ownedPacks;
     const query = search.toLowerCase();
-    return examPacks.filter(
+    return ownedPacks.filter(
       (p) =>
         p.title?.toLowerCase().includes(query) ||
         p.description?.toLowerCase().includes(query) ||
         p.category?.toLowerCase().includes(query),
     );
-  }, [examPacks, search]);
+  }, [ownedPacks, search]);
 
   return (
     <PageContainer className="space-y-6">
@@ -73,7 +67,7 @@ export default function ManageExamPackClientView({
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
-              {examPacks.length} ACTIVE PACKS
+              {ownedPacks.length} ACTIVE PACKS
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">

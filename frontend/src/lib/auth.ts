@@ -48,6 +48,8 @@ export function setSession(token: string, user: User) {
   } else {
     localStorage.removeItem("userImage");
   }
+  document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+  document.cookie = `user_profile=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=86400; SameSite=Lax`;
   window.dispatchEvent(new CustomEvent("profileUpdated", { detail: user }));
 }
 
@@ -59,6 +61,8 @@ export function clearSession() {
   localStorage.removeItem("userEmail");
   localStorage.removeItem("userID");
   localStorage.removeItem("userImage");
+  document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+  document.cookie = "user_profile=; path=/; max-age=0; SameSite=Lax";
   window.dispatchEvent(new CustomEvent("profileUpdated", { detail: null }));
 }
 
