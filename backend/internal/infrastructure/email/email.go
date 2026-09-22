@@ -17,21 +17,17 @@ type EmailOptions struct {
 	From    string // Optional sender override; defaults to RESEND_FROM_EMAIL
 }
 
-// EmailService defines the interface for sending emails.
-// Other services can depend on this interface for sending any kind of email.
 type EmailService interface {
 	Send(opts EmailOptions) (string, error)
 	SendPasswordResetOTP(toEmail, otp string) error
 }
 
-// ResendEmailService implements EmailService using the Resend API.
+
 type ResendEmailService struct {
 	client    *resend.Client
 	fromEmail string
 }
 
-// NewResendEmailService creates a new email service backed by Resend.
-// It reads RESEND_API_KEY and RESEND_FROM_EMAIL from environment variables.
 func NewResendEmailService() *ResendEmailService {
 	apiKey := os.Getenv("RESEND_API_KEY")
 	fromEmail := os.Getenv("RESEND_FROM_EMAIL")
@@ -68,7 +64,7 @@ func (s *ResendEmailService) Send(opts EmailOptions) (string, error) {
 	return sent.Id, nil
 }
 
-// SendPasswordResetOTP sends a branded password reset OTP email using the templates package.
+
 func (s *ResendEmailService) SendPasswordResetOTP(toEmail, otp string) error {
 	html := templates.RenderPasswordReset(templates.PasswordResetData{
 		OTP:       otp,
