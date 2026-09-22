@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/selftest/backend/config"
 	delivery "github.com/selftest/backend/internal/delivery/http"
+	"github.com/selftest/backend/internal/infrastructure/cache"
 	"github.com/selftest/backend/internal/infrastructure/oauth"
 	"github.com/selftest/backend/internal/infrastructure/persistence"
 	"github.com/selftest/backend/internal/infrastructure/storage"
@@ -25,10 +26,21 @@ func main() {
 	config.InitDB()
 	defer config.CloseDB()
 
-	// 1. Initialize Infrastructure Repositories & Storage
-	userRepo := persistence.NewPostgresUserRepository(config.DB)
-	packRepo := persistence.NewPostgresExamPackRepository(config.DB)
-	examRepo := persistence.NewPostgresExamRepository(config.DB)
+	// Initialize Redis Cache connection
+	config.InitRedis()
+	defer config.CloseRedis()
+
+	cacheService := cache.NewRedisCache(config.RedisClient)
+
+	// 1. Initialize Infrastructure Repositories & Storage (with Redis caching)
+	baseUserRepo := persistence.NewPostgresUserRepository(config.DB)
+	basePackRepo := persistence.NewPostgresExamPackRepository(config.DB)
+	baseExamRepo := persistence.NewPostgresExamRepository(config.DB)
+
+	userRepo := persistence.NewCachedUserRepository(baseUserRepo, cacheService)
+	packRepo := persistence.NewCachedExamPackRepository(basePackRepo, cacheService)
+	examRepo := persistence.NewCachedExamRepository(baseExamRepo, cacheService)
+
 	attemptRepo := persistence.NewPostgresAttemptRepository(config.DB)
 	reportRepo := persistence.NewPostgresReportRepository(config.DB)
 	systemRepo := persistence.NewPostgresSystemRepository(config.DB)
