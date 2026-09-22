@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { FaChevronDown, FaSearch } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface CustomSelectProps {
+export interface CustomSelectProps {
   label?: string;
   placeholder?: string;
   options: string[];
@@ -13,6 +13,10 @@ interface CustomSelectProps {
   disabled?: boolean;
   alwaysShowOptions?: string[];
   onSelectOptionWithSearch?: (option: string, currentSearch: string) => void;
+  size?: "md" | "sm" | "xxs";
+  searchable?: boolean;
+  className?: string;
+  dropdownClassName?: string;
 }
 
 export default function CustomSelect({
@@ -24,7 +28,12 @@ export default function CustomSelect({
   disabled = false,
   alwaysShowOptions,
   onSelectOptionWithSearch,
+  size = "md",
+  searchable,
+  className = "",
+  dropdownClassName = "",
 }: CustomSelectProps) {
+  const isSearchable = searchable ?? (size !== "xxs");
   const [open, setOpen] = useState(false);
   const [openUp, setOpenUp] = useState(false);
   const [search, setSearch] = useState("");
@@ -33,11 +42,13 @@ export default function CustomSelect({
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
-  const filteredOptions = options.filter(
-    (opt) =>
-      opt.toLowerCase().includes(search.toLowerCase()) ||
-      alwaysShowOptions?.includes(opt)
-  );
+  const filteredOptions = isSearchable
+    ? options.filter(
+        (opt) =>
+          opt.toLowerCase().includes(search.toLowerCase()) ||
+          alwaysShowOptions?.includes(opt)
+      )
+    : options;
 
   // Close when clicking outside
   useEffect(() => {
@@ -60,8 +71,10 @@ export default function CustomSelect({
       const rect = containerRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
       const spaceAbove = rect.top;
-      // Estimate dropdown height: search bar (~44px) + options (up to ~208px) + padding (~12px)
-      const estimatedHeight = Math.min(filteredOptions.length * 36 + 56, 260);
+      const itemHeight = size === "xxs" ? 28 : size === "sm" ? 32 : 36;
+      const searchHeight = isSearchable ? 44 : 0;
+      // Estimate dropdown height: search bar + options + padding
+      const estimatedHeight = Math.min(filteredOptions.length * itemHeight + searchHeight + 12, 260);
 
       // Open upward if not enough space below AND there is more space above
       if (spaceBelow < estimatedHeight && spaceAbove > spaceBelow) {
@@ -70,7 +83,7 @@ export default function CustomSelect({
         setOpenUp(false);
       }
     }
-  }, [filteredOptions.length]);
+  }, [filteredOptions.length, isSearchable, size]);
 
   // Update direction on open, window resize, or scroll
   useEffect(() => {
@@ -87,14 +100,14 @@ export default function CustomSelect({
 
   // Focus search input when opened
   useEffect(() => {
-    if (open && searchRef.current) {
+    if (open && isSearchable && searchRef.current) {
       setTimeout(() => searchRef.current?.focus(), 50);
     }
     if (!open) {
       setSearch("");
       setHighlightIdx(-1);
     }
-  }, [open]);
+  }, [open, isSearchable]);
 
   // Keyboard navigation
   const handleKeyDown = useCallback(
@@ -145,8 +158,28 @@ export default function CustomSelect({
     }
   }, [highlightIdx]);
 
+  const buttonPadding =
+    size === "xxs"
+      ? "px-2 py-1 text-xs h-7"
+      : size === "sm"
+      ? "px-2.5 py-1.5 text-xs"
+      : "px-3 py-2 text-xs sm:text-sm";
+
+  const chevronSize = size === "xxs" ? "text-[10px] ml-1.5" : "text-xs ml-2";
+
+  const itemPadding =
+    size === "xxs"
+      ? "px-2.5 py-1 text-xs"
+      : size === "sm"
+      ? "px-2.5 py-1.5 text-xs"
+      : "px-3 py-2 text-xs";
+
   return (
-    <div className="w-full space-y-1.5" ref={containerRef} onKeyDown={handleKeyDown}>
+    <div
+      className={`${className || "w-full"} ${label ? "space-y-1.5" : ""}`}
+      ref={containerRef}
+      onKeyDown={handleKeyDown}
+    >
       {label && (
         <label className="text-xs font-bold text-slate-700 ml-0.5 block">
           {label}
@@ -166,13 +199,17 @@ export default function CustomSelect({
             type="button"
             disabled={disabled}
             onClick={() => setOpen(!open)}
-            className="w-full px-3 py-2 text-xs sm:text-sm text-left outline-none flex items-center justify-between bg-transparent cursor-pointer"
+            className={`w-full text-left outline-none flex items-center justify-between bg-transparent cursor-pointer ${buttonPadding}`}
           >
-            <span className={`font-medium truncate ${value ? "text-slate-800" : "text-slate-400"}`}>
+            <span
+              className={`font-semibold truncate ${
+                value ? "text-slate-800" : "text-slate-400"
+              }`}
+            >
               {value || placeholder}
             </span>
             <FaChevronDown
-              className={`text-slate-400 text-xs ml-2 shrink-0 transition-transform duration-200 group-hover:text-primary ${
+              className={`text-slate-400 shrink-0 transition-transform duration-200 group-hover:text-primary ${chevronSize} ${
                 open ? "rotate-180 text-primary" : "rotate-0"
               }`}
             />
@@ -187,39 +224,45 @@ export default function CustomSelect({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: openUp ? 4 : -4 }}
               transition={{ duration: 0.15 }}
-              className={`absolute left-0 w-full bg-white border border-slate-200 rounded shadow-lg z-[999] overflow-hidden ${
+              className={`absolute left-0 ${
+                size === "xxs" ? "min-w-full w-max shadow-md" : "w-full shadow-lg"
+              } bg-white border border-slate-200 rounded z-[999] overflow-hidden ${
                 openUp ? "bottom-full mb-1" : "top-full mt-1"
-              }`}
+              } ${dropdownClassName}`}
             >
-              {/* Search input */}
-              <div className="p-1.5 border-b border-slate-100">
-                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/80">
-                  <FaSearch className="text-slate-400 text-[10px] shrink-0" />
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    value={search}
-                    onChange={(e) => {
-                      setSearch(e.target.value);
-                      setHighlightIdx(0);
-                    }}
-                    placeholder="Search..."
-                    className="w-full text-xs font-medium text-slate-800 placeholder:text-slate-400 bg-transparent outline-none"
-                  />
+              {/* Optional search input */}
+              {isSearchable && (
+                <div className="p-1.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/80">
+                    <FaSearch className="text-slate-400 text-[10px] shrink-0" />
+                    <input
+                      ref={searchRef}
+                      type="text"
+                      value={search}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        setHighlightIdx(0);
+                      }}
+                      placeholder="Search..."
+                      className="w-full text-xs font-medium text-slate-800 placeholder:text-slate-400 bg-transparent outline-none"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Options list */}
               <ul
                 ref={listRef}
-                className="max-h-52 overflow-y-auto custom-scrollbar p-1"
+                className={`max-h-52 overflow-y-auto custom-scrollbar ${
+                  size === "xxs" ? "p-0.5" : "p-1"
+                }`}
               >
                 {filteredOptions.length > 0 ? (
                   filteredOptions.map((opt, idx) => (
                     <li
                       key={idx}
                       data-option
-                      className={`px-3 py-2 rounded text-xs font-medium cursor-pointer transition-colors mb-0.5 last:mb-0 ${
+                      className={`rounded font-medium cursor-pointer transition-colors mb-0.5 last:mb-0 ${itemPadding} ${
                         value === opt
                           ? "bg-primary text-white font-bold"
                           : highlightIdx === idx

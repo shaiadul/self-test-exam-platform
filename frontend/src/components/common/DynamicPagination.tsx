@@ -7,9 +7,9 @@ import {
   FaChevronRight,
   FaAngleDoubleLeft,
   FaAngleDoubleRight,
-  FaChevronDown,
 } from "react-icons/fa";
 import { PaginationMeta } from "../../lib/actions/pagination";
+import MiniSelect from "../ui/MiniSelect";
 
 export interface DynamicPaginationProps {
   meta?: PaginationMeta | null;
@@ -137,22 +137,17 @@ export default function DynamicPagination({
             <span className="hidden md:inline text-[11px] font-semibold text-slate-400">
               Rows:
             </span>
-            <div className="relative">
-              <select
-                value={perPage}
-                onChange={(e) => handlePerPageChange(Number(e.target.value))}
-                aria-label="Rows per page"
-                className="appearance-none bg-white border border-slate-200/80 rounded pl-2 pr-7 py-1 text-xs font-semibold text-slate-700 hover:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs transition-colors cursor-pointer"
-              >
-                {perPageOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt} / page
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">
-                <FaChevronDown className="text-[9px]" />
-              </div>
+            <div className="w-[100px]">
+              <MiniSelect
+                value={`${perPage} / page`}
+                options={perPageOptions.map((opt) => `${opt} / page`)}
+                onChange={(val) => {
+                  const num = parseInt(val, 10);
+                  if (!isNaN(num)) {
+                    handlePerPageChange(num);
+                  }
+                }}
+              />
             </div>
           </div>
         )}
