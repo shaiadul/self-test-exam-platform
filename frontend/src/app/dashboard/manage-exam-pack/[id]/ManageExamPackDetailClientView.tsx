@@ -9,7 +9,6 @@ import { MdOutlineEditNote } from "react-icons/md";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
-import { ShareBtn } from "../../../../components/ui/ShareBtn";
 import {
   deleteExamAction,
   deleteExamPackAction,
@@ -186,17 +185,6 @@ export default function ManageExamPackDetailClientView({
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
-          <ShareBtn
-            metadata={{
-              title: packTitle,
-              text: `Check out the ${packTitle} exam pack on Self Test!`,
-              path: `/dashboard/exam-pack/exam-pack-details?id=${packId}`,
-            }}
-            variant="pill"
-            size="sm"
-            showLabel
-            label="Share Pack"
-          />
           <Link
             href={`/dashboard/manage-exam-pack/${packId}/add-exam`}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-primary hover:bg-primary-hover text-white rounded text-xs font-bold shadow-2xs transition"
@@ -277,16 +265,6 @@ export default function ManageExamPackDetailClientView({
                         </Link>
                       </td>
                       <td className="py-3.5 px-4 text-right space-x-1">
-                        <ShareBtn
-                          metadata={{
-                            title: `${exam.name} - Online Exam`,
-                            text: `Take the ${exam.name} examination on Self Test!`,
-                            path: exam.link,
-                          }}
-                          variant="action"
-                          size="xs"
-                          title="Share Exam Link"
-                        />
                         <button
                           onClick={() => handleEditExam(exam.id)}
                           className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition cursor-pointer"
@@ -325,16 +303,6 @@ export default function ManageExamPackDetailClientView({
                       </span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <ShareBtn
-                        metadata={{
-                          title: `${exam.name} - Online Exam`,
-                          text: `Take the ${exam.name} examination on Self Test!`,
-                          path: exam.link,
-                        }}
-                        variant="action"
-                        size="xs"
-                        title="Share Exam Link"
-                      />
                       <button
                         onClick={() => handleEditExam(exam.id)}
                         className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition cursor-pointer"

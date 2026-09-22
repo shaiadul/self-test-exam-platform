@@ -136,7 +136,7 @@ export default function ExamPackDetailsClientView({
             metadata={{
               title: packTitle,
               text: `Check out the ${packTitle} examination pack on Self Test!`,
-              path: `/dashboard/exam-pack/exam-pack-details?id=${packId}`,
+              path: `/dashboard/exam-pack/exam-pack-details?packId=${packId}`,
             }}
             variant="pill"
             size="sm"

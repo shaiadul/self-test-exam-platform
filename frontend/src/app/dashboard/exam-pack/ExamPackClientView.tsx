@@ -221,6 +221,7 @@ export default function ExamPackClientView({
             link={pack.link}
             image={pack.image || "/global/logo2.png"}
             category={pack.category}
+            showShare={true}
           />
         ))}
 

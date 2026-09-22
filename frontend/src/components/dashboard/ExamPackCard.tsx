@@ -15,6 +15,7 @@ type ExamPackCardProps = {
   totalExams: number;
   link: string;
   category?: string;
+  showShare?: boolean;
 };
 
 export default function ExamPackCard({
@@ -24,7 +25,11 @@ export default function ExamPackCard({
   totalExams,
   link,
   category,
+  showShare,
 }: ExamPackCardProps) {
+  const isManageRoute = link ? link.includes("/manage-exam-pack") : false;
+  const canShare = showShare !== undefined ? showShare : !isManageRoute;
+
   const imgSrc =
     image && (image.startsWith("/") || image.startsWith("http"))
       ? image
@@ -53,19 +58,23 @@ export default function ExamPackCard({
 
           {/* Top Floating Controls: Left = ShareBtn, Right = Category */}
           <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between z-10 pointer-events-none">
-            <div className="pointer-events-auto">
-              <ShareBtn
-                metadata={{
-                  title: title,
-                  text:
-                    description || `Explore the ${title} exam pack on Self Test!`,
-                  path: link,
-                }}
-                variant="glass"
-                size="xs"
-                title={`Share ${title}`}
-              />
-            </div>
+            {canShare ? (
+              <div className="pointer-events-auto">
+                <ShareBtn
+                  metadata={{
+                    title: title,
+                    text:
+                      description || `Explore the ${title} exam pack on Self Test!`,
+                    path: link,
+                  }}
+                  variant="glass"
+                  size="xs"
+                  title={`Share ${title}`}
+                />
+              </div>
+            ) : (
+              <div />
+            )}
 
             {category && (
               <div className="pointer-events-auto px-2 py-0.5 rounded-full bg-slate-900/70 backdrop-blur-md text-white text-[10px] font-mono font-bold uppercase border border-white/20 shadow-xs">

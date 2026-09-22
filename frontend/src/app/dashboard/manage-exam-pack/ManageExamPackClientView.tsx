@@ -135,6 +135,7 @@ export default function ManageExamPackClientView({
               totalExams={pack.totalExams || 0}
               category={pack.category}
               link={`/dashboard/manage-exam-pack/${pack.id}`}
+              showShare={false}
             />
           ))}
         </div>
