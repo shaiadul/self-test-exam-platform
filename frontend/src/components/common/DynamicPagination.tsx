@@ -116,7 +116,7 @@ export default function DynamicPagination({
 
   return (
     <div
-      className={`flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 py-3 sm:py-4 px-1 select-none ${className}`}
+      className={`flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 px-1 select-none ${className}`}
       role="navigation"
       aria-label="Pagination Navigation"
     >
