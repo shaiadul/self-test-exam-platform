@@ -38,13 +38,14 @@ export default function AddQuestionClientView({
   const [examId, setExamId] = useState<string>(examIdParam || "");
   const [examPackTitle] = useState<string>(initialPack?.title || "Exam Pack");
   const [examName, setExamName] = useState<string>(initialExam?.name || "Exam");
-  const [questions, setQuestions] = useState<Question[]>(initialQuestions || []);
+  const [questions, setQuestions] = useState<Question[]>(
+    initialQuestions || [],
+  );
 
   const [examPacks] = useState<any[]>(initialPacks || []);
   const [exams, setExams] = useState<any[]>([]);
   const [selectedPackId, setSelectedPackId] = useState<number | "">("");
 
-  // Question Form State
   const [type, setType] = useState<QuestionType>("mcq");
   const [questionText, setQuestionText] = useState("");
   const [options, setOptions] = useState<string[]>(["", "", "", ""]);
@@ -96,7 +97,8 @@ export default function AddQuestionClientView({
     setEditingId(q.id);
     setType(q.type || "mcq");
     setQuestionText(q.questionText || "");
-    const qOptions = q.options && q.options.length ? [...q.options] : ["", "", "", ""];
+    const qOptions =
+      q.options && q.options.length ? [...q.options] : ["", "", "", ""];
     setOptions(qOptions);
     setCorrectIndex(qOptions.findIndex((o) => o === q.correctAnswer));
     setPassage(q.passage || "");
@@ -146,7 +148,9 @@ export default function AddQuestionClientView({
 
     const uniqueOptions = new Set(cleanOptions);
     if (uniqueOptions.size < cleanOptions.length) {
-      toast.error("Duplicate options are not allowed. Each option must be distinct.");
+      toast.error(
+        "Duplicate options are not allowed. Each option must be distinct.",
+      );
       return;
     }
 
@@ -157,7 +161,9 @@ export default function AddQuestionClientView({
 
     const targetCorrect = options[correctIndex].trim();
     if (!cleanOptions.includes(targetCorrect)) {
-      toast.error("Selected correct answer must match one of the valid options.");
+      toast.error(
+        "Selected correct answer must match one of the valid options.",
+      );
       return;
     }
 
@@ -192,13 +198,20 @@ export default function AddQuestionClientView({
           : await createQuestionAction(examId, payload);
 
       if (res.success) {
-        toast.success(editingId !== null ? "Question updated successfully!" : "Question created successfully!");
+        toast.success(
+          editingId !== null
+            ? "Question updated successfully!"
+            : "Question created successfully!",
+        );
         resetForm();
         // Refresh question list
         const updatedQs = await getQuestionsAction(examId);
         setQuestions(updatedQs || []);
       } else {
-        toast.error(res.error || `Failed to ${editingId !== null ? "update" : "create"} question.`);
+        toast.error(
+          res.error ||
+            `Failed to ${editingId !== null ? "update" : "create"} question.`,
+        );
       }
     } catch {
       toast.error("Failed to save question.");
@@ -209,7 +222,6 @@ export default function AddQuestionClientView({
 
   return (
     <PageContainer className="space-y-4 sm:space-y-6 animate-fadeIn pb-20 sm:pb-6">
-      {/* Top Header Command Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div className="flex items-center gap-3">
           <OutlineBtn
@@ -220,18 +232,13 @@ export default function AddQuestionClientView({
             <FaArrowLeft className="text-xs" />
           </OutlineBtn>
           <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              {examId && (
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200">
-                  Exam #{examId}
-                </span>
-              )}
-            </div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               Question Bank
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              {examName ? `Configuring question items for: ${examName} (${examPackTitle})` : "Select an exam pack and exam to author question items."}
+              {examName
+                ? `Configuring question items for: ${examName} (${examPackTitle})`
+                : "Select an exam pack and exam to author question items."}
             </p>
           </div>
         </div>
@@ -241,11 +248,12 @@ export default function AddQuestionClientView({
         </span>
       </div>
 
-      {/* Selector controls if exam not pre-selected */}
       {!examIdParam && (
         <div className="bg-white p-3.5 sm:p-4 rounded border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">Select Exam Pack</label>
+            <label className="text-xs font-bold text-slate-700 block mb-1">
+              Select Exam Pack
+            </label>
             <CustomSelect
               options={examPacks.map((p) => `${p.id} - ${p.title}`)}
               value={selectedPackId ? `${selectedPackId}` : ""}
@@ -255,7 +263,9 @@ export default function AddQuestionClientView({
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">Select Target Exam</label>
+            <label className="text-xs font-bold text-slate-700 block mb-1">
+              Select Target Exam
+            </label>
             <CustomSelect
               options={exams.map((e) => `${e.id} - ${e.name}`)}
               value={examId}
@@ -267,9 +277,7 @@ export default function AddQuestionClientView({
         </div>
       )}
 
-      {/* Main Content Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
-        {/* Left 7 Cols: Question Creator Form */}
         <QuestionComposerForm
           type={type}
           setType={setType}
@@ -290,7 +298,6 @@ export default function AddQuestionClientView({
           onReset={resetForm}
         />
 
-        {/* Right 5 Cols: Current Questions List */}
         <QuestionBankList
           questions={questions}
           onEdit={handleEdit}
