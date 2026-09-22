@@ -10,6 +10,7 @@ import (
 	"github.com/selftest/backend/config"
 	delivery "github.com/selftest/backend/internal/delivery/http"
 	"github.com/selftest/backend/internal/infrastructure/cache"
+	emailinfra "github.com/selftest/backend/internal/infrastructure/email"
 	"github.com/selftest/backend/internal/infrastructure/oauth"
 	"github.com/selftest/backend/internal/infrastructure/persistence"
 	"github.com/selftest/backend/internal/infrastructure/storage"
@@ -31,6 +32,9 @@ func main() {
 	defer config.CloseRedis()
 
 	cacheService := cache.NewRedisCache(config.RedisClient)
+
+	// Initialize Resend Email Service
+	emailService := emailinfra.NewResendEmailService()
 
 	// 1. Initialize Infrastructure Repositories & Storage (with Redis caching)
 	baseUserRepo := persistence.NewPostgresUserRepository(config.DB)
@@ -54,7 +58,7 @@ func main() {
 	oauthService := oauth.NewOAuthService()
 
 	// 2. Initialize Domain / Application Services
-	userService := service.NewUserService(userRepo)
+	userService := service.NewUserService(userRepo, emailService, cacheService)
 	packService := service.NewExamPackService(packRepo, userRepo)
 	examService := service.NewExamService(examRepo, userRepo, packRepo)
 	attemptService := service.NewAttemptService(attemptRepo, examRepo, packRepo, userRepo)

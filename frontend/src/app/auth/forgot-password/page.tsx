@@ -9,17 +9,32 @@ import { Input } from "../../../components/ui/Input";
 import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
 import { FaEnvelope, FaArrowLeft } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { requestPasswordResetAction } from "../../../lib/actions/auth";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Email:", email);
-    // TODO: Handle API call for login
-    router.push("/auth/otp");
+    setError("");
+    setLoading(true);
+
+    try {
+      const result = await requestPasswordResetAction(email);
+      if (!result.success) {
+        setError(result.error || "Something went wrong. Please try again.");
+        return;
+      }
+      router.push(`/auth/otp?email=${encodeURIComponent(email)}`);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,6 +84,12 @@ export default function ForgotPassword() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-xs font-mono font-semibold rounded text-center">
+                {error}
+              </div>
+            )}
+
             <Input
               label="Email Address"
               type="email"
@@ -82,8 +103,9 @@ export default function ForgotPassword() {
             <PrimaryBtn
               type="submit"
               className="w-full py-2.5 text-sm font-bold"
+              disabled={loading}
             >
-              Send Recovery OTP
+              {loading ? "Sending..." : "Send Recovery OTP"}
             </PrimaryBtn>
 
             <div className="text-center pt-2">

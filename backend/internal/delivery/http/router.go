@@ -46,6 +46,11 @@ func NewRouter(h Handlers) http.Handler {
 	mux.HandleFunc("/api/auth/oauth/github/callback", h.AuthHandler.HandleOAuthCallback)
 	mux.HandleFunc("/api/auth/logout", h.AuthHandler.Logout)
 
+	// Password reset (public, no auth required)
+	mux.HandleFunc("/api/auth/forgot-password", h.AuthHandler.HandleForgotPassword)
+	mux.HandleFunc("/api/auth/verify-otp", h.AuthHandler.HandleVerifyOTP)
+	mux.HandleFunc("/api/auth/reset-password", h.AuthHandler.HandleResetPassword)
+
 	// Protected routes using auth middleware
 	mux.Handle("/api/auth/profile", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.GetProfile)))
 	mux.Handle("/api/auth/complete-profile", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.CompleteProfile)))

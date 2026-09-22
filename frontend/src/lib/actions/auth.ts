@@ -170,3 +170,70 @@ export async function updateProfileAction(profileData: any) {
 		return { success: false, error: error.message };
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Password Reset Flow
+// ---------------------------------------------------------------------------
+
+export async function requestPasswordResetAction(email: string) {
+	try {
+		const response = await fetch(`${API_URL}/auth/forgot-password`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email }),
+			cache: "no-store",
+		});
+
+		const data = await response.json();
+		if (!response.ok) {
+			throw new Error(data.error || "Failed to send recovery OTP.");
+		}
+
+		return { success: true, message: data.message };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}
+
+export async function verifyResetOtpAction(email: string, otp: string) {
+	try {
+		const response = await fetch(`${API_URL}/auth/verify-otp`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email, otp }),
+			cache: "no-store",
+		});
+
+		const data = await response.json();
+		if (!response.ok) {
+			throw new Error(data.error || "Invalid or expired OTP.");
+		}
+
+		return { success: true, resetToken: data.resetToken };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}
+
+export async function confirmPasswordResetAction(
+	token: string,
+	password: string
+) {
+	try {
+		const response = await fetch(`${API_URL}/auth/reset-password`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ token, password }),
+			cache: "no-store",
+		});
+
+		const data = await response.json();
+		if (!response.ok) {
+			throw new Error(data.error || "Failed to reset password.");
+		}
+
+		return { success: true, message: data.message };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}

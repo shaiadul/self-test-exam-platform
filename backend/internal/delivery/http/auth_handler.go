@@ -400,3 +400,105 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// HandleForgotPassword triggers the password reset OTP flow (POST /api/auth/forgot-password).
+func (h *AuthHandler) HandleForgotPassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := h.userService.RequestPasswordResetOTP(req.Email); err != nil {
+		switch err {
+		case service.ErrOTPRateLimit:
+			http.Error(w, `{"error": "Please wait before requesting a new OTP"}`, http.StatusTooManyRequests)
+		case service.ErrMissingFields:
+			http.Error(w, `{"error": "Email is required"}`, http.StatusBadRequest)
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true, "message": "If this email is registered, a recovery OTP has been sent."}`))
+}
+
+// HandleVerifyOTP validates the OTP and returns a short-lived reset token (POST /api/auth/verify-otp).
+func (h *AuthHandler) HandleVerifyOTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Email string `json:"email"`
+		OTP   string `json:"otp"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	resetToken, err := h.userService.VerifyPasswordResetOTP(req.Email, req.OTP)
+	if err != nil {
+		switch err {
+		case service.ErrOTPExpired:
+			http.Error(w, `{"error": "Invalid or expired OTP"}`, http.StatusUnauthorized)
+		case service.ErrMissingFields:
+			http.Error(w, `{"error": "Email and OTP are required"}`, http.StatusBadRequest)
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":    true,
+		"resetToken": resetToken,
+	})
+}
+
+// HandleResetPassword updates the user's password with a valid reset token (POST /api/auth/reset-password).
+func (h *AuthHandler) HandleResetPassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Token    string `json:"token"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := h.userService.ResetPasswordWithToken(req.Token, req.Password); err != nil {
+		switch err {
+		case service.ErrInvalidResetTkn:
+			http.Error(w, `{"error": "Invalid or expired reset token"}`, http.StatusUnauthorized)
+		case service.ErrWeakPassword:
+			http.Error(w, `{"error": "Password must be at least 6 characters"}`, http.StatusBadRequest)
+		case service.ErrUserNotFound:
+			http.Error(w, `{"error": "User not found"}`, http.StatusNotFound)
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true, "message": "Password has been reset successfully."}`))
+}

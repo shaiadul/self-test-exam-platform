@@ -1,15 +1,22 @@
 package service
 
 import (
+	"context"
+	cryptorand "crypto/rand"
 	"errors"
+	"fmt"
+	"math/big"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/selftest/backend/internal/domain/user"
+	"github.com/selftest/backend/internal/infrastructure/cache"
+	"github.com/selftest/backend/internal/infrastructure/email"
 )
 
 var (
@@ -18,14 +25,42 @@ var (
 	ErrUserNotFound    = errors.New("user not found")
 	ErrMissingFields   = errors.New("name, email, and password are required")
 	ErrInternal        = errors.New("internal server error")
+	ErrOTPExpired      = errors.New("OTP has expired or is invalid")
+	ErrOTPRateLimit    = errors.New("please wait before requesting a new OTP")
+	ErrInvalidResetTkn = errors.New("invalid or expired reset token")
+	ErrWeakPassword    = errors.New("password must be at least 6 characters")
 )
 
-type UserService struct {
-	userRepo user.UserRepository
+// otpEntry is used as in-memory fallback when Redis is unavailable.
+type otpEntry struct {
+	Code      string
+	ExpiresAt time.Time
 }
 
-func NewUserService(userRepo user.UserRepository) *UserService {
-	return &UserService{userRepo: userRepo}
+type UserService struct {
+	userRepo     user.UserRepository
+	emailService email.EmailService
+	cacheService cache.CacheService
+
+	// In-memory OTP fallback when Redis is unavailable
+	otpMu    sync.Mutex
+	otpStore map[string]otpEntry
+}
+
+func NewUserService(userRepo user.UserRepository, opts ...interface{}) *UserService {
+	svc := &UserService{
+		userRepo: userRepo,
+		otpStore: make(map[string]otpEntry),
+	}
+	for _, opt := range opts {
+		switch v := opt.(type) {
+		case email.EmailService:
+			svc.emailService = v
+		case cache.CacheService:
+			svc.cacheService = v
+		}
+	}
+	return svc
 }
 
 func (s *UserService) Register(req user.RegisterRequest) (*user.LoginResponse, error) {
@@ -332,4 +367,193 @@ func (s *UserService) generateToken(u *user.User) (string, error) {
 	})
 
 	return token.SignedString([]byte(jwtSecret))
+}
+
+// ---------------------------------------------------------------------------
+// Password Reset OTP Flow
+// ---------------------------------------------------------------------------
+
+const (
+	otpTTL      = 10 * time.Minute
+	otpCooldown = 60 * time.Second
+	resetTknTTL = 15 * time.Minute
+)
+
+func otpKey(emailAddr string) string   { return fmt.Sprintf("auth:otp:reset:%s", emailAddr) }
+func otpCDKey(emailAddr string) string { return fmt.Sprintf("auth:otp:cooldown:%s", emailAddr) }
+
+// generateOTP produces a cryptographically random 6-digit numeric string.
+func generateOTP() (string, error) {
+	n, err := cryptorand.Int(cryptorand.Reader, big.NewInt(1000000))
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%06d", n.Int64()), nil
+}
+
+// RequestPasswordResetOTP generates an OTP and sends it to the given email.
+func (s *UserService) RequestPasswordResetOTP(emailAddr string) error {
+	emailAddr = strings.TrimSpace(strings.ToLower(emailAddr))
+	if emailAddr == "" {
+		return ErrMissingFields
+	}
+
+	u, err := s.userRepo.GetByEmail(emailAddr)
+	if err != nil {
+		return err
+	}
+	if u == nil {
+		// Don't reveal whether the email exists
+		return nil
+	}
+
+	ctx := context.Background()
+
+	// Rate-limit: check cooldown
+	if s.cacheService != nil {
+		var dummy string
+		hit, _ := s.cacheService.Get(ctx, otpCDKey(emailAddr), &dummy)
+		if hit {
+			return ErrOTPRateLimit
+		}
+	}
+
+	otp, err := generateOTP()
+	if err != nil {
+		return fmt.Errorf("failed to generate OTP: %w", err)
+	}
+
+	// Store OTP
+	if s.cacheService != nil {
+		_ = s.cacheService.Set(ctx, otpKey(emailAddr), otp, otpTTL)
+		_ = s.cacheService.Set(ctx, otpCDKey(emailAddr), "1", otpCooldown)
+	} else {
+		// In-memory fallback
+		s.otpMu.Lock()
+		s.otpStore[emailAddr] = otpEntry{Code: otp, ExpiresAt: time.Now().Add(otpTTL)}
+		s.otpMu.Unlock()
+	}
+
+	// Send email
+	if s.emailService != nil {
+		if err := s.emailService.SendPasswordResetOTP(emailAddr, otp); err != nil {
+			return fmt.Errorf("failed to send reset email: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// VerifyPasswordResetOTP validates the OTP and returns a short-lived reset token.
+func (s *UserService) VerifyPasswordResetOTP(emailAddr, otp string) (string, error) {
+	emailAddr = strings.TrimSpace(strings.ToLower(emailAddr))
+	otp = strings.TrimSpace(otp)
+	if emailAddr == "" || otp == "" {
+		return "", ErrMissingFields
+	}
+
+	ctx := context.Background()
+	var storedOTP string
+
+	if s.cacheService != nil {
+		hit, _ := s.cacheService.Get(ctx, otpKey(emailAddr), &storedOTP)
+		if !hit || storedOTP == "" {
+			return "", ErrOTPExpired
+		}
+	} else {
+		s.otpMu.Lock()
+		entry, ok := s.otpStore[emailAddr]
+		s.otpMu.Unlock()
+		if !ok || time.Now().After(entry.ExpiresAt) {
+			return "", ErrOTPExpired
+		}
+		storedOTP = entry.Code
+	}
+
+	if storedOTP != otp {
+		return "", ErrOTPExpired
+	}
+
+	// Invalidate OTP to prevent replay
+	if s.cacheService != nil {
+		_ = s.cacheService.Delete(ctx, otpKey(emailAddr))
+	} else {
+		s.otpMu.Lock()
+		delete(s.otpStore, emailAddr)
+		s.otpMu.Unlock()
+	}
+
+	// Issue short-lived reset token
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "default_secret"
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email":   emailAddr,
+		"purpose": "password_reset",
+		"exp":     time.Now().Add(resetTknTTL).Unix(),
+	})
+
+	tokenStr, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenStr, nil
+}
+
+// ResetPasswordWithToken validates the reset token and updates the user's password.
+func (s *UserService) ResetPasswordWithToken(tokenStr, newPassword string) error {
+	if len(newPassword) < 6 {
+		return ErrWeakPassword
+	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "default_secret"
+	}
+
+	parsed, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return []byte(jwtSecret), nil
+	})
+	if err != nil || !parsed.Valid {
+		return ErrInvalidResetTkn
+	}
+
+	claims, ok := parsed.Claims.(jwt.MapClaims)
+	if !ok {
+		return ErrInvalidResetTkn
+	}
+
+	purpose, _ := claims["purpose"].(string)
+	if purpose != "password_reset" {
+		return ErrInvalidResetTkn
+	}
+
+	emailAddr, _ := claims["email"].(string)
+	if emailAddr == "" {
+		return ErrInvalidResetTkn
+	}
+
+	u, err := s.userRepo.GetByEmail(emailAddr)
+	if err != nil {
+		return err
+	}
+	if u == nil {
+		return ErrUserNotFound
+	}
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	pwd := string(hashed)
+	u.Password = &pwd
+
+	return s.userRepo.Update(u)
 }
