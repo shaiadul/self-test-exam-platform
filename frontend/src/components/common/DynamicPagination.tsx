@@ -47,7 +47,7 @@ export default function DynamicPagination({
     return Array.from(opts).sort((a, b) => a - b);
   }, [perPageOptions, perPage]);
 
-  if (!meta || meta.total_items === 0) {
+  if (!meta || totalItems < 10) {
     return null;
   }
 
