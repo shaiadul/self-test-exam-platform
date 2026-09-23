@@ -99,7 +99,7 @@ export default function ManageExamPackDetailClientView({
       }
     }
 
-    if (packId && (!initialExams || initialExams.length === 0 || !initialPack)) {
+    if (packId && !initialPack) {
       setLoading(true);
       const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
       const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userID") : null;

@@ -50,21 +50,7 @@ export default function ExamPackDetailsClientView({
   const [isPending, startTransition] = useTransition();
   const packTitle = initialPack?.title || "Exam Pack";
 
-  // If initial exams are empty (e.g. from cold client transition), revalidate with router.refresh()
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token && !document.cookie.includes("token=")) {
-        document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-      }
-    }
 
-    if (packId && (!initialExams || initialExams.length === 0)) {
-      startTransition(() => {
-        router.refresh();
-      });
-    }
-  }, [packId, initialExams, router]);
 
   // Map of examId to user's latest attempt
   const attemptMap = new Map<string, any>();
