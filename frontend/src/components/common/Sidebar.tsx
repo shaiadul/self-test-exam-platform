@@ -57,6 +57,8 @@ const roleAccess: Record<string, string[]> = {
   Settings: ["admin"],
 };
 
+import { useUser } from "../../context/UserContext";
+
 const isItemActive = (currentPath: string, itemHref: string) => {
   if (currentPath === itemHref) return true;
   if (itemHref === "/dashboard") return false;
@@ -67,16 +69,12 @@ const isItemActive = (currentPath: string, itemHref: string) => {
 export const Sidebar = ({ role = "student" }: { role?: string }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const [userRole, setUserRole] = useState<string>(role);
-  const [userName, setUserName] = useState<string>("Candidate");
+  const { user, clearUser } = useUser();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  useEffect(() => {
-    const storedRole = localStorage.getItem("userRole") || role;
-    const storedName = localStorage.getItem("userName") || "Candidate";
-    setUserRole(storedRole);
-    setUserName(storedName);
-  }, [role]);
+  const userRole = user?.role?.toLowerCase() || role?.toLowerCase() || "student";
+  const userName = user?.name || "Candidate";
+  const userImage = user?.image && user.image.trim() !== "" ? user.image : null;
 
   const handleLogout = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -87,10 +85,7 @@ export const Sidebar = ({ role = "student" }: { role?: string }) => {
     } catch {
       // Proceed even if network request fails
     } finally {
-      if (typeof window !== "undefined") {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
+      clearUser();
       router.push("/auth/login");
     }
   };
@@ -187,9 +182,21 @@ export const Sidebar = ({ role = "student" }: { role?: string }) => {
           href="/dashboard/edit-profile"
           className="flex items-center gap-3 p-2 rounded hover:bg-white transition-colors group border border-transparent hover:border-slate-200/60"
         >
-          <div className="w-8 h-8 rounded bg-gradient-to-br from-primary to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
-            {userName.charAt(0).toUpperCase()}
-          </div>
+          {userImage ? (
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 shadow-xs shrink-0 relative">
+              <Image
+                src={userImage}
+                alt={userName}
+                fill
+                sizes="32px"
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-8 h-8 rounded bg-gradient-to-br from-primary to-amber-500 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-slate-800 truncate group-hover:text-primary transition-colors">
               {userName}

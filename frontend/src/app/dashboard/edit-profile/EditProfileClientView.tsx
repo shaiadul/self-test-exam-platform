@@ -15,6 +15,7 @@ import {
 } from "react-icons/fa";
 import { PageContainer } from "../../../components/common/PageContainer";
 import { updateProfileAction, submitInstitutionSuggestionAction } from "../../../lib/actions";
+import { useUser } from "../../../context/UserContext";
 import { ProfileFormData, RoleBadgeConfig } from "./types";
 import { ProfileIdentityCard } from "./components/ProfileIdentityCard";
 import { ProfileGeneralForm } from "./components/ProfileGeneralForm";
@@ -30,6 +31,7 @@ export default function EditProfileClientView({
   initialAssets,
 }: EditProfileClientViewProps) {
   const router = useRouter();
+  const { updateUser } = useUser();
 
   const userRole = initialProfile?.role || "student";
   const [loading, setLoading] = useState(false);
@@ -163,9 +165,7 @@ export default function EditProfileClientView({
           } else {
             localStorage.removeItem("userImage");
           }
-          window.dispatchEvent(
-            new CustomEvent("profileUpdated", { detail: res.user || payload }),
-          );
+          updateUser(res.user || payload);
         }
         toast.success("Profile updated successfully!");
         router.push("/dashboard");

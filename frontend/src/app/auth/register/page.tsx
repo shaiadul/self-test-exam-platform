@@ -12,12 +12,14 @@ import { motion } from "framer-motion";
 
 import { registerAction } from "../../../lib/actions";
 import { SocialAuthButtons } from "../../../components/auth/SocialAuthButtons";
+import { useUser } from "../../../context/UserContext";
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const { setUser } = useUser();
 
   const [error, setError] = useState("");
 
@@ -31,15 +33,7 @@ export default function Register() {
     try {
       const res = await registerAction(name, email, password);
       if (res.success && res.user) {
-        localStorage.setItem("token", res.token || "");
-        if (res.token && typeof document !== "undefined") {
-          document.cookie = `token=${res.token}; path=/; max-age=86400; SameSite=Lax`;
-          document.cookie = `user_profile=${encodeURIComponent(JSON.stringify(res.user))}; path=/; max-age=86400; SameSite=Lax`;
-        }
-        localStorage.setItem("userRole", res.user.role || "student");
-        localStorage.setItem("userName", res.user.name || "");
-        localStorage.setItem("userEmail", res.user.email || "");
-        localStorage.setItem("userID", res.user.id.toString());
+        setUser(res.user);
         router.push("/dashboard");
       } else {
         setError(res.error || "Failed to register account.");

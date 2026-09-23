@@ -32,6 +32,8 @@ function isRouteAllowed(role: string, pathname: string): boolean {
   return true;
 }
 
+import { useUser } from "../../context/UserContext";
+
 export default function DashboardLayoutClient({
   children,
   initialRole = "student",
@@ -40,16 +42,8 @@ export default function DashboardLayoutClient({
   initialRole?: string;
 }) {
   const pathname = usePathname();
-  const [userRole, setUserRole] = useState<string>(initialRole);
-
-  useEffect(() => {
-    const role = localStorage.getItem("userRole") || initialRole;
-    const token = localStorage.getItem("token");
-    if (token && typeof document !== "undefined" && !document.cookie.includes("token=")) {
-      document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-    }
-    setUserRole(role);
-  }, [pathname, initialRole]);
+  const { user, clearUser } = useUser();
+  const userRole = user?.role?.toLowerCase() || initialRole.toLowerCase();
 
   const allowed = isRouteAllowed(userRole, pathname);
   const isExamPage = pathname.includes("/dashboard/exam-pack/exam-pack-details/");
@@ -114,7 +108,7 @@ export default function DashboardLayoutClient({
                     </Link>
                     <Link
                       href="/auth/login"
-                      onClick={() => localStorage.clear()}
+                      onClick={() => clearUser()}
                       className="px-6 py-3 border border-slate-200 text-slate-600 font-bold rounded hover:bg-slate-50 hover:text-slate-800 transition cursor-pointer text-sm"
                     >
                       Log in to Another Account

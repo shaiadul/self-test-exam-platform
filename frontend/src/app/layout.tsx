@@ -29,6 +29,9 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+import { cookies } from "next/headers";
+import { UserProvider } from "../context/UserContext";
+
 export const viewport: Viewport = {
   themeColor: siteConfig.themeColor,
   colorScheme: "light",
@@ -39,7 +42,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = constructMetadata();
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -50,15 +53,32 @@ export default function RootLayout({
     getSoftwareApplicationSchema(),
   ];
 
+  const cookieStore = await cookies();
+  let initialUser = null;
+  const userProfileCookie = cookieStore.get("user_profile")?.value;
+  if (userProfileCookie) {
+    try {
+      initialUser = JSON.parse(decodeURIComponent(userProfileCookie));
+    } catch {
+      try {
+        initialUser = JSON.parse(userProfileCookie);
+      } catch {
+        initialUser = null;
+      }
+    }
+  }
+
   return (
     <html
       lang="en"
       className={`${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
     >
       <body className="antialiased font-sans">
-        <JsonLd data={rootStructuredData} id="selftest-root-schemas" />
-        {children}
-        <Toaster richColors position="top-right" />
+        <UserProvider initialUser={initialUser}>
+          <JsonLd data={rootStructuredData} id="selftest-root-schemas" />
+          {children}
+          <Toaster richColors position="top-right" />
+        </UserProvider>
       </body>
     </html>
   );

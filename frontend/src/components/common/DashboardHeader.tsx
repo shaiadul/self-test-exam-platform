@@ -5,7 +5,8 @@ import { FaBell, FaSearch, FaTimes, FaBookOpen, FaCheckCircle, FaExclamationCirc
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import { getAllExamsAction, getProfileAction, PaginationMeta } from "../../lib/actions";
+import { getAllExamsAction, PaginationMeta } from "../../lib/actions";
+import { useUser } from "../../context/UserContext";
 
 // --- NOTIFICATION MOCK DATA ---
 interface NotifItem {
@@ -25,6 +26,7 @@ const initialNotifications: NotifItem[] = [
 
 export const DashboardHeader = () => {
   const router = useRouter();
+  const { user } = useUser();
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,10 +39,18 @@ export const DashboardHeader = () => {
   const [notifications, setNotifications] = useState<NotifItem[]>(initialNotifications);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
-  // User Profile Session state
-  const [userName, setUserName] = useState("User");
-  const [userRoleLabel, setUserRoleLabel] = useState("Student Account");
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  // User Profile from Context
+  const [avatarError, setAvatarError] = useState(false);
+  const userName = user?.name || "User";
+  const rawAvatar = user?.image && user.image.trim() !== "" ? user.image : null;
+  const userAvatar = avatarError ? null : rawAvatar;
+  const userRole = user?.role?.toLowerCase() || "student";
+  const userRoleLabel =
+    userRole === "admin"
+      ? "System Administrator"
+      : userRole === "teacher"
+      ? "Lead Instructor"
+      : "Student Account";
 
   // Refs for clicking outside
   const searchRef = useRef<HTMLDivElement>(null);
@@ -48,61 +58,7 @@ export const DashboardHeader = () => {
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
-  const syncUserData = (userData?: any) => {
-    if (typeof window === "undefined") return;
-
-    const role = userData?.role || localStorage.getItem("userRole") || "student";
-    const name = userData?.name || localStorage.getItem("userName") || "User";
-    const image = userData?.image !== undefined 
-      ? userData.image 
-      : (localStorage.getItem("userImage") || null);
-
-    setUserName(name);
-    setUserAvatar(image && image.trim() !== "" ? image : null);
-
-    if (role === "admin") {
-      setUserRoleLabel("System Administrator");
-    } else if (role === "teacher") {
-      setUserRoleLabel("Lead Instructor");
-    } else {
-      setUserRoleLabel("Student Account");
-    }
-  };
-
   useEffect(() => {
-    // 1. Initial sync from localStorage
-    syncUserData();
-
-    // 2. Fetch fresh profile only if not yet present in localStorage
-    const fetchFreshProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const existingName = localStorage.getItem("userName");
-        if (!token || existingName) return;
-
-        const profile = await getProfileAction();
-        if (profile) {
-          if (profile.name) localStorage.setItem("userName", profile.name);
-          if (profile.image) localStorage.setItem("userImage", profile.image);
-          if (profile.role) localStorage.setItem("userRole", profile.role);
-          if (profile.email) localStorage.setItem("userEmail", profile.email);
-          if (profile.id) localStorage.setItem("userID", profile.id.toString());
-          syncUserData(profile);
-        }
-      } catch (e) {
-        // Silently keep localStorage values
-      }
-    };
-    fetchFreshProfile();
-
-    // 3. Listen for profile updates dispatched across components
-    const handleProfileUpdate = (e: any) => {
-      syncUserData(e.detail);
-    };
-
-    window.addEventListener("profileUpdated", handleProfileUpdate);
-    window.addEventListener("storage", () => syncUserData());
-
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchDropdown(false);
@@ -114,8 +70,6 @@ export const DashboardHeader = () => {
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      window.removeEventListener("profileUpdated", handleProfileUpdate);
-      window.removeEventListener("storage", () => syncUserData());
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
@@ -401,7 +355,7 @@ export const DashboardHeader = () => {
                   height={36}
                   unoptimized
                   className="object-cover w-full h-full"
-                  onError={() => setUserAvatar(null)}
+                  onError={() => setAvatarError(true)}
                 />
               ) : (
                 <span>{(userName || "U").trim().charAt(0).toUpperCase()}</span>

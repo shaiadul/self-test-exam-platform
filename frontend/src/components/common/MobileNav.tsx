@@ -44,20 +44,17 @@ const isItemActive = (currentPath: string, itemHref: string) => {
   return currentPath.startsWith(itemHref + "/");
 };
 
+import { useUser } from "../../context/UserContext";
+
 export const MobileNav = ({ role = "student" }: { role?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string>(role);
-  const [userName, setUserName] = useState<string>("Candidate");
+  const { user, clearUser } = useUser();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
-  useEffect(() => {
-    const storedRole = localStorage.getItem("userRole") || role;
-    const storedName = localStorage.getItem("userName") || "Candidate";
-    setUserRole(storedRole);
-    setUserName(storedName);
-  }, [role]);
+  const userRole = user?.role?.toLowerCase() || role?.toLowerCase() || "student";
+  const userName = user?.name || "Candidate";
 
   const handleLogout = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -69,10 +66,7 @@ export const MobileNav = ({ role = "student" }: { role?: string }) => {
     } catch {
       // Proceed even if network request fails
     } finally {
-      if (typeof window !== "undefined") {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
+      clearUser();
       router.push("/auth/login");
     }
   };
