@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/selftest/backend/internal/domain/attempt"
 	"github.com/selftest/backend/internal/service"
 	"github.com/selftest/backend/middleware"
 	"github.com/selftest/backend/pkg/pagination"
@@ -75,6 +76,20 @@ func (h *AttemptHandler) GetUserAttempts(w http.ResponseWriter, r *http.Request)
 	}
 
 	params := pagination.Parse(r)
+	if params.Search != "" {
+		lowerSearch := strings.ToLower(params.Search)
+		filtered := make([]attempt.AttemptWithExam, 0)
+		for _, a := range results {
+			if strings.Contains(strings.ToLower(a.ExamName), lowerSearch) ||
+				strings.Contains(strings.ToLower(a.ExamID), lowerSearch) ||
+				strings.Contains(strings.ToLower(a.PackName), lowerSearch) ||
+				strings.Contains(strconv.Itoa(a.ID), lowerSearch) {
+				filtered = append(filtered, a)
+			}
+		}
+		results = filtered
+	}
+
 	resp := pagination.PaginateSlice(results, params)
 
 	w.Header().Set("Content-Type", "application/json")

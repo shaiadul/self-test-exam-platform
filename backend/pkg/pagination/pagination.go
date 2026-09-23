@@ -19,7 +19,11 @@ type Params struct {
 
 // Offset returns the zero-indexed SQL offset.
 func (p Params) Offset() int {
-	return (p.Page - 1) * p.PerPage
+	page := p.Page
+	if page < 1 {
+		page = 1
+	}
+	return (page - 1) * p.PerPage
 }
 
 // Meta holds pagination metadata to be returned in API responses.
@@ -81,6 +85,12 @@ func Parse(r *http.Request) Params {
 
 // NewMeta calculates the total pages and builds a Meta object.
 func NewMeta(totalItems int64, page, perPage int) Meta {
+	if page < 1 {
+		page = 1
+	}
+	if perPage < 1 {
+		perPage = 10
+	}
 	totalPages := 0
 	if totalItems > 0 && perPage > 0 {
 		totalPages = int(math.Ceil(float64(totalItems) / float64(perPage)))

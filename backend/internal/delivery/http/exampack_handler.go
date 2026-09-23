@@ -304,13 +304,16 @@ func (h *ExamPackHandler) ListExams(w http.ResponseWriter, r *http.Request, pack
 	}
 	userRole = strings.ToLower(userRole)
 
+	params := pagination.Parse(r)
 	q := r.URL.Query()
 	isManage := q.Get("manage") == "true" || q.Get("manage") == "1" || strings.Contains(r.Header.Get("Referer"), "manage-exam-pack")
 
 	if isManage {
 		if userRole == "student" {
-			params := pagination.Parse(r)
-			resp := pagination.PaginateSlice([]exam.Exam{}, params)
+			resp := pagination.Response[exam.Exam]{
+				Data: []exam.Exam{},
+				Meta: pagination.NewMeta(0, params.Page, params.PerPage),
+			}
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(resp)
 			return
@@ -328,7 +331,22 @@ func (h *ExamPackHandler) ListExams(w http.ResponseWriter, r *http.Request, pack
 		}
 	}
 
-	exams, err := h.examService.ListExamsByPack(userID, packID)
+	var teacherID *int
+	if isManage && userRole == "teacher" {
+		teacherID = &userID
+	}
+
+	filter := exam.ExamFilter{
+		Search:    params.Search,
+		PackID:    &packID,
+		TeacherID: teacherID,
+		Level:     strings.TrimSpace(q.Get("level")),
+		Batch:     strings.TrimSpace(q.Get("batch")),
+		Page:      params.Page,
+		PerPage:   params.PerPage,
+	}
+
+	exams, meta, err := h.examService.ListExams(userID, filter)
 	if err != nil {
 		switch err {
 		case service.ErrExamPackNotFound:
@@ -341,21 +359,15 @@ func (h *ExamPackHandler) ListExams(w http.ResponseWriter, r *http.Request, pack
 		return
 	}
 
-	params := pagination.Parse(r)
-	if params.Search != "" {
-		lowerSearch := strings.ToLower(params.Search)
-		filtered := make([]exam.Exam, 0)
-		for _, e := range exams {
-			if strings.Contains(strings.ToLower(e.Name), lowerSearch) ||
-				strings.Contains(strings.ToLower(e.Level), lowerSearch) ||
-				strings.Contains(strings.ToLower(e.Batch), lowerSearch) {
-				filtered = append(filtered, e)
-			}
-		}
-		exams = filtered
+	resp := pagination.Response[exam.Exam]{
+		Data: exams,
+		Meta: pagination.Meta{
+			TotalItems:  meta.TotalItems,
+			TotalPages:  meta.TotalPages,
+			CurrentPage: meta.CurrentPage,
+			PerPage:     meta.PerPage,
+		},
 	}
-
-	resp := pagination.PaginateSlice(exams, params)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }

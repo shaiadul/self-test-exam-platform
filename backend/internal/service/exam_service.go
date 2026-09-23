@@ -212,6 +212,12 @@ func (s *ExamService) assertQuestionEdit(userID int, examID string, q *exam.Ques
 }
 
 func (s *ExamService) ListExams(userID int, filter exam.ExamFilter) ([]exam.Exam, exam.PaginationMeta, error) {
+	if filter.PackID != nil {
+		if err := s.assertPackAccess(userID, *filter.PackID); err != nil {
+			return nil, exam.PaginationMeta{}, err
+		}
+	}
+
 	exams, meta, err := s.repo.ListExams(filter)
 	if err != nil {
 		return nil, exam.PaginationMeta{}, err

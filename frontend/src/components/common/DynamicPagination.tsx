@@ -36,14 +36,20 @@ export default function DynamicPagination({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  if (!meta || meta.total_items === 0 || (meta.total_pages ?? 1) <= 1) {
+  const currentPage = Math.max(1, meta?.current_page || 1);
+  const totalPages = Math.max(1, meta?.total_pages || 1);
+  const perPage = meta?.per_page || 10;
+  const totalItems = meta?.total_items || 0;
+
+  const availablePerPageOptions = React.useMemo(() => {
+    const opts = new Set(perPageOptions);
+    if (perPage > 0) opts.add(perPage);
+    return Array.from(opts).sort((a, b) => a - b);
+  }, [perPageOptions, perPage]);
+
+  if (!meta || meta.total_items === 0) {
     return null;
   }
-
-  const currentPage = Math.max(1, meta.current_page || 1);
-  const totalPages = Math.max(1, meta.total_pages || 1);
-  const perPage = meta.per_page || 10;
-  const totalItems = meta.total_items || 0;
 
   const from = Math.min((currentPage - 1) * perPage + 1, totalItems);
   const to = Math.min(currentPage * perPage, totalItems);
@@ -55,12 +61,12 @@ export default function DynamicPagination({
       onPageChange(newPage);
     }
 
-    if (syncWithUrl && (!onPageChange || syncWithUrl === true)) {
+    if (syncWithUrl) {
       const params = new URLSearchParams(
         searchParams ? searchParams.toString() : "",
       );
       params.set("page", String(newPage));
-      router.push(`${pathname}?${params.toString()}`);
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
     }
   };
 
@@ -71,13 +77,13 @@ export default function DynamicPagination({
       onPerPageChange(newPerPage);
     }
 
-    if (syncWithUrl && (!onPerPageChange || syncWithUrl === true)) {
+    if (syncWithUrl) {
       const params = new URLSearchParams(
         searchParams ? searchParams.toString() : "",
       );
       params.set("per_page", String(newPerPage));
       params.set("page", "1");
-      router.push(`${pathname}?${params.toString()}`);
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
     }
   };
 
@@ -140,7 +146,7 @@ export default function DynamicPagination({
             <div className="w-[100px]">
               <MiniSelect
                 value={`${perPage} / page`}
-                options={perPageOptions.map((opt) => `${opt} / page`)}
+                options={availablePerPageOptions.map((opt) => `${opt} / page`)}
                 onChange={(val) => {
                   const num = parseInt(val, 10);
                   if (!isNaN(num)) {
