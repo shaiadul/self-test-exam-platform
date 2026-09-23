@@ -4,7 +4,13 @@ import { useState, useEffect, useTransition } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FaEdit, FaTrashAlt, FaPlus, FaSpinner, FaArrowLeft } from "react-icons/fa";
+import {
+  FaEdit,
+  FaTrashAlt,
+  FaPlus,
+  FaSpinner,
+  FaArrowLeft,
+} from "react-icons/fa";
 import { MdOutlineEditNote } from "react-icons/md";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
@@ -42,14 +48,19 @@ export default function ManageExamPackDetailClientView({
   const [pack, setPack] = useState<any>(initialPack);
 
   const [exams, setExams] = useState<Exam[]>(() => {
-    const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userID") : null;
-    const currentUserRole = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+    const currentUserId =
+      typeof window !== "undefined" ? localStorage.getItem("userID") : null;
+    const currentUserRole =
+      typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
     if (currentUserRole === "student") {
       return [];
     }
     let filtered = initialExams || [];
     if (currentUserRole === "teacher" && currentUserId) {
-      filtered = filtered.filter((e: any) => !e.createdBy || String(e.createdBy) === String(currentUserId));
+      filtered = filtered.filter(
+        (e: any) =>
+          !e.createdBy || String(e.createdBy) === String(currentUserId),
+      );
     }
     return filtered.map((e: any) => ({
       id: e.id,
@@ -65,15 +76,20 @@ export default function ManageExamPackDetailClientView({
   // Sync state whenever SSR props change
   useEffect(() => {
     if (initialExams && initialExams.length > 0) {
-      const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userID") : null;
-      const currentUserRole = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+      const currentUserId =
+        typeof window !== "undefined" ? localStorage.getItem("userID") : null;
+      const currentUserRole =
+        typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
       if (currentUserRole === "student") {
         setExams([]);
         return;
       }
       let filtered = initialExams;
       if (currentUserRole === "teacher" && currentUserId) {
-        filtered = initialExams.filter((e: any) => !e.createdBy || String(e.createdBy) === String(currentUserId));
+        filtered = initialExams.filter(
+          (e: any) =>
+            !e.createdBy || String(e.createdBy) === String(currentUserId),
+        );
       }
       setExams(
         filtered.map((e: any) => ({
@@ -82,7 +98,7 @@ export default function ManageExamPackDetailClientView({
           startDate: e.startDate,
           endDate: e.endDate,
           link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
-        }))
+        })),
       );
     }
     if (initialPack) {
@@ -101,9 +117,14 @@ export default function ManageExamPackDetailClientView({
 
     if (packId && !initialPack) {
       setLoading(true);
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
-      const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userID") : null;
-      const currentUserRole = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("token") || undefined
+          : undefined;
+      const currentUserId =
+        typeof window !== "undefined" ? localStorage.getItem("userID") : null;
+      const currentUserRole =
+        typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
 
       if (currentUserRole === "student") {
         setExams([]);
@@ -122,7 +143,10 @@ export default function ManageExamPackDetailClientView({
           if (fetchedExams && Array.isArray(fetchedExams)) {
             let filtered = fetchedExams;
             if (currentUserRole === "teacher" && currentUserId) {
-              filtered = fetchedExams.filter((e: any) => !e.createdBy || String(e.createdBy) === String(currentUserId));
+              filtered = fetchedExams.filter(
+                (e: any) =>
+                  !e.createdBy || String(e.createdBy) === String(currentUserId),
+              );
             }
             setExams(
               filtered.map((e: any) => ({
@@ -131,7 +155,7 @@ export default function ManageExamPackDetailClientView({
                 startDate: e.startDate,
                 endDate: e.endDate,
                 link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
-              }))
+              })),
             );
           }
         })
@@ -141,10 +165,10 @@ export default function ManageExamPackDetailClientView({
     }
   }, [packId, initialExams, initialPack]);
 
-
-
   const handleEditExam = (examId: string) => {
-    router.push(`/dashboard/manage-exam-pack/${packId}/edit-exam?examId=${examId}`);
+    router.push(
+      `/dashboard/manage-exam-pack/${packId}/edit-exam?examId=${examId}`,
+    );
   };
 
   const handleDeleteExam = async (examId: string) => {
@@ -164,7 +188,12 @@ export default function ManageExamPackDetailClientView({
   };
 
   const handleDeleteExamPack = async () => {
-    if (!confirm(`Are you sure you want to delete exam pack "${packTitle}"? All exams inside will also be deleted.`)) return;
+    if (
+      !confirm(
+        `Are you sure you want to delete exam pack "${packTitle}"? All exams inside will also be deleted.`,
+      )
+    )
+      return;
     try {
       const res = await deleteExamPackAction(packId);
       if (res.success) {
@@ -251,7 +280,10 @@ export default function ManageExamPackDetailClientView({
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
                   {exams.map((exam) => (
-                    <tr key={exam.id} className="hover:bg-slate-50/50 transition">
+                    <tr
+                      key={exam.id}
+                      className="hover:bg-slate-50/50 transition"
+                    >
                       <td className="py-3.5 px-4 font-bold text-slate-900">
                         <Link
                           href={exam.link}
@@ -264,17 +296,24 @@ export default function ManageExamPackDetailClientView({
                         #{exam.id}
                       </td>
                       <td className="py-3.5 px-4 text-slate-600 font-medium font-mono text-[11px]">
-                        {formatDateTime(exam.startDate, DATE_FORMATS.DATETIME_MEDIUM)}
+                        {formatDateTime(
+                          exam.startDate,
+                          DATE_FORMATS.DATETIME_MEDIUM,
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-slate-600 font-medium font-mono text-[11px]">
-                        {formatDateTime(exam.endDate, DATE_FORMATS.DATETIME_MEDIUM)}
+                        {formatDateTime(
+                          exam.endDate,
+                          DATE_FORMATS.DATETIME_MEDIUM,
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <Link
                           href={`/dashboard/question/add?examId=${exam.id}`}
                           className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded border border-blue-200/80 text-[11px] font-bold transition font-mono"
                         >
-                          <MdOutlineEditNote className="text-sm" /> Manage Questions
+                          <MdOutlineEditNote className="text-sm" /> Manage
+                          Questions
                         </Link>
                       </td>
                       <td className="py-3.5 px-4 text-right space-x-1">
@@ -335,12 +374,26 @@ export default function ManageExamPackDetailClientView({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono bg-slate-50 p-2 rounded border border-slate-100">
                     <div>
-                      <span className="text-slate-400 block font-sans font-semibold">Start:</span>
-                      <span className="text-slate-700 truncate block">{formatDateTime(exam.startDate, DATE_FORMATS.DATETIME_MEDIUM)}</span>
+                      <span className="text-slate-400 block font-sans font-semibold">
+                        Start:
+                      </span>
+                      <span className="text-slate-700 truncate block">
+                        {formatDateTime(
+                          exam.startDate,
+                          DATE_FORMATS.DATETIME_MEDIUM,
+                        )}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block font-sans font-semibold">End:</span>
-                      <span className="text-slate-700 truncate block">{formatDateTime(exam.endDate, DATE_FORMATS.DATETIME_MEDIUM)}</span>
+                      <span className="text-slate-400 block font-sans font-semibold">
+                        End:
+                      </span>
+                      <span className="text-slate-700 truncate block">
+                        {formatDateTime(
+                          exam.endDate,
+                          DATE_FORMATS.DATETIME_MEDIUM,
+                        )}
+                      </span>
                     </div>
                   </div>
 
@@ -355,20 +408,20 @@ export default function ManageExamPackDetailClientView({
               ))}
             </div>
           </>
-        ) : (isPending || loading) ? (
+        ) : isPending || loading ? (
           <div className="py-16 flex flex-col items-center justify-center gap-2 text-slate-400 font-medium">
             <FaSpinner className="animate-spin text-2xl text-primary" />
-            <span className="text-xs font-mono font-bold">SYNCHRONIZING REPOSITORY...</span>
+            <span className="text-xs font-mono font-bold">
+              SYNCHRONIZING REPOSITORY...
+            </span>
           </div>
         ) : (
-          <div className="py-6">
-            <EmptyState
-              compact
-              type="exam"
-              title="No Exams Configured"
-              description="No exams created by you in this curriculum container yet. Click '+ Add Exam' to initialize."
-            />
-          </div>
+          <EmptyState
+            compact
+            type="exam"
+            title="No Exams Configured"
+            description="No exams created by you in this curriculum container yet. Click '+ Add Exam' to initialize."
+          />
         )}
       </div>
     </PageContainer>

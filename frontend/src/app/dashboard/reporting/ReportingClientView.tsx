@@ -118,7 +118,7 @@ export default function ReportingClientView({
 
       {/* Empty State */}
       {filteredReports.length === 0 && (
-        <div className="bg-white rounded-none border border-slate-200/80 shadow-xs max-w-2xl mx-auto">
+        
           <EmptyState
             type="reports"
             title="No Exam Reports Found"
@@ -126,7 +126,6 @@ export default function ReportingClientView({
             actionLabel="Explore Exam Packs"
             actionHref="/dashboard/exam-pack"
           />
-        </div>
       )}
 
       <DynamicPagination meta={initialMeta} />

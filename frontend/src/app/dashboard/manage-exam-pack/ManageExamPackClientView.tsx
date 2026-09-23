@@ -162,20 +162,18 @@ export default function ManageExamPackClientView({
           ))}
         </div>
       ) : (
-        <div className="w-full bg-white border border-slate-200/80 rounded p-4 sm:p-6 shadow-2xs">
-          <EmptyState
-            type="exam"
-            title={search ? "No Matching Packs" : "No Exam Packs Configured"}
-            description={
-              search
-                ? "No exam pack matches your search criteria. Try a different query or clear your filter."
-                : "No curriculum packs have been created yet. Click 'Create Exam Pack' to deploy your first syllabus container."
-            }
-            actionLabel={search ? "Clear Search Filter" : "Create Exam Pack"}
-            actionHref={search ? undefined : "/dashboard/manage-exam-pack/add"}
-            onAction={search ? () => setSearch("") : undefined}
-          />
-        </div>
+        <EmptyState
+          type="exam"
+          title={search ? "No Matching Packs" : "No Exam Packs Configured"}
+          description={
+            search
+              ? "No exam pack matches your search criteria. Try a different query or clear your filter."
+              : "No curriculum packs have been created yet. Click 'Create Exam Pack' to deploy your first syllabus container."
+          }
+          actionLabel={search ? "Clear Search Filter" : "Create Exam Pack"}
+          actionHref={search ? undefined : "/dashboard/manage-exam-pack/add"}
+          onAction={search ? () => setSearch("") : undefined}
+        />
       )}
 
       <DynamicPagination meta={meta} />

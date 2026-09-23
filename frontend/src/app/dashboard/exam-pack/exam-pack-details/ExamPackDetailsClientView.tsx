@@ -312,14 +312,12 @@ export default function ExamPackDetailsClientView({
           <DynamicPagination meta={initialMeta} />
         </>
       ) : (
-        <div className="py-6 bg-white border border-slate-200/80 rounded-none shadow-xs">
-          <EmptyState
-            compact
-            type="exam"
-            title="No Active Exams"
-            description="No active exams are available in this pack at this time."
-          />
-        </div>
+        <EmptyState
+          compact
+          type="exam"
+          title="No Active Exams"
+          description="No active exams are available in this pack at this time."
+        />
       )}
     </PageContainer>
   );

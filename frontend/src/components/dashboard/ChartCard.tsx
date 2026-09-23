@@ -30,14 +30,12 @@ export default function ChartCard({
 }: ChartCardProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="w-full flex items-center justify-center min-h-[220px] sm:min-h-[240px]">
-        <EmptyState
-          compact
-          type="exam"
-          title="No Evaluation Activity"
-          description="Evaluation and scoring telemetry will appear here once exam attempts are completed."
-        />
-      </div>
+      <EmptyState
+        compact
+        type="exam"
+        title="No Evaluation Activity"
+        description="Evaluation and scoring telemetry will appear here once exam attempts are completed."
+      />
     );
   }
 
@@ -49,13 +47,16 @@ export default function ChartCard({
       ? "#f97a00"
       : color;
   const resolvedStroke =
-    !strokeColor || strokeColor.includes("var(--color-primary") || strokeColor === "primary"
+    !strokeColor ||
+    strokeColor.includes("var(--color-primary") ||
+    strokeColor === "primary"
       ? resolvedColor
       : strokeColor;
 
   // Calculate average value
   const avg =
-    chartData.reduce((sum, item) => sum + item.value, 0) / (chartData.length || 1);
+    chartData.reduce((sum, item) => sum + item.value, 0) /
+    (chartData.length || 1);
 
   // Find max and min points to highlight
   let maxItem = chartData[0];
@@ -79,7 +80,9 @@ export default function ChartCard({
       <div className="grid grid-cols-3 gap-2 pb-3 mb-2 border-b border-slate-100">
         <div className="px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/60">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase font-mono font-bold text-slate-400">Latest</span>
+            <span className="text-[10px] uppercase font-mono font-bold text-slate-400">
+              Latest
+            </span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           </div>
           <p className="text-base sm:text-lg font-mono font-black text-slate-900 mt-0.5">
@@ -88,14 +91,18 @@ export default function ChartCard({
         </div>
 
         <div className="px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/60">
-          <span className="text-[10px] uppercase font-mono font-bold text-slate-400">Average</span>
+          <span className="text-[10px] uppercase font-mono font-bold text-slate-400">
+            Average
+          </span>
           <p className="text-base sm:text-lg font-mono font-black text-slate-700 mt-0.5">
             {avg.toFixed(1)}%
           </p>
         </div>
 
         <div className="px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/60">
-          <span className="text-[10px] uppercase font-mono font-bold text-slate-400">Peak Mark</span>
+          <span className="text-[10px] uppercase font-mono font-bold text-slate-400">
+            Peak Mark
+          </span>
           <p className="text-base sm:text-lg font-mono font-black text-emerald-600 mt-0.5">
             {maxItem?.value?.toFixed(1) || "0.0"}%
           </p>
@@ -111,10 +118,26 @@ export default function ChartCard({
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={resolvedColor} stopOpacity={0.25} />
-                <stop offset="50%" stopColor={resolvedColor} stopOpacity={0.12} />
-                <stop offset="90%" stopColor={resolvedColor} stopOpacity={0.03} />
-                <stop offset="100%" stopColor={resolvedColor} stopOpacity={0.0} />
+                <stop
+                  offset="0%"
+                  stopColor={resolvedColor}
+                  stopOpacity={0.25}
+                />
+                <stop
+                  offset="50%"
+                  stopColor={resolvedColor}
+                  stopOpacity={0.12}
+                />
+                <stop
+                  offset="90%"
+                  stopColor={resolvedColor}
+                  stopOpacity={0.03}
+                />
+                <stop
+                  offset="100%"
+                  stopColor={resolvedColor}
+                  stopOpacity={0.0}
+                />
               </linearGradient>
             </defs>
 
@@ -154,17 +177,31 @@ export default function ChartCard({
                   return (
                     <div className="bg-slate-950/95 backdrop-blur-md text-white shadow-2xl rounded p-2.5 border border-slate-800 text-xs min-w-[140px] font-mono animate-fadeIn">
                       <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-1 mb-1.5">
-                        <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">{label}</span>
+                        <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                          {label}
+                        </span>
                         <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                       </div>
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-slate-400 text-[11px]">Score:</span>
-                        <span className="text-white font-black text-sm">{val.toFixed(1)}%</span>
+                        <span className="text-slate-400 text-[11px]">
+                          Score:
+                        </span>
+                        <span className="text-white font-black text-sm">
+                          {val.toFixed(1)}%
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
                         <span>vs Avg:</span>
-                        <span className={diff >= 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
-                          {diff >= 0 ? `+${diff.toFixed(1)}%` : `${diff.toFixed(1)}%`}
+                        <span
+                          className={
+                            diff >= 0
+                              ? "text-emerald-400 font-bold"
+                              : "text-rose-400 font-bold"
+                          }
+                        >
+                          {diff >= 0
+                            ? `+${diff.toFixed(1)}%`
+                            : `${diff.toFixed(1)}%`}
                         </span>
                       </div>
                     </div>

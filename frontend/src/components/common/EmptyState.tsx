@@ -27,7 +27,7 @@ export default function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`relative overflow-hidden w-full flex flex-col items-center justify-center text-center select-none ${
+      className={`relative overflow-hidden w-full flex flex-col items-center justify-center text-center select-none bg-white border border-slate-200/80 rounded-none shadow-xs ${
         compact ? "py-6 px-3" : "py-10 sm:py-14 px-4 sm:px-6"
       } ${className}`}
     >

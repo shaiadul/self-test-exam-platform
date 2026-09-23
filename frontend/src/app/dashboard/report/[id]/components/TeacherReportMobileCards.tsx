@@ -83,14 +83,12 @@ export const TeacherReportMobileCards = ({
       ))}
 
       {students.length === 0 && (
-        <div className="py-8 px-4 text-center">
-          <EmptyState
-            compact
-            type="reports"
-            title="No Submissions Found"
-            description="No student attempts match your search or filter."
-          />
-        </div>
+        <EmptyState
+          compact
+          type="reports"
+          title="No Submissions Found"
+          description="No student attempts match your search or filter."
+        />
       )}
     </div>
   );

@@ -39,13 +39,21 @@ export default function TeacherReportDetailClientView({
       if (b.score !== a.score) {
         return b.score - a.score;
       }
-      const durA = a.durationSeconds && a.durationSeconds > 0 ? a.durationSeconds : Infinity;
-      const durB = b.durationSeconds && b.durationSeconds > 0 ? b.durationSeconds : Infinity;
+      const durA =
+        a.durationSeconds && a.durationSeconds > 0
+          ? a.durationSeconds
+          : Infinity;
+      const durB =
+        b.durationSeconds && b.durationSeconds > 0
+          ? b.durationSeconds
+          : Infinity;
       if (durA !== durB) {
         return durA - durB;
       }
-      const attNumA = a.attemptNumber && a.attemptNumber > 0 ? a.attemptNumber : 1;
-      const attNumB = b.attemptNumber && b.attemptNumber > 0 ? b.attemptNumber : 1;
+      const attNumA =
+        a.attemptNumber && a.attemptNumber > 0 ? a.attemptNumber : 1;
+      const attNumB =
+        b.attemptNumber && b.attemptNumber > 0 ? b.attemptNumber : 1;
       if (attNumA !== attNumB) {
         return attNumA - attNumB;
       }
@@ -58,10 +66,18 @@ export default function TeacherReportDetailClientView({
     const ranked = list.map((att, idx) => {
       if (idx > 0) {
         const prev = list[idx - 1];
-        const prevDur = prev.durationSeconds && prev.durationSeconds > 0 ? prev.durationSeconds : Infinity;
-        const curDur = att.durationSeconds && att.durationSeconds > 0 ? att.durationSeconds : Infinity;
-        const prevAttNum = prev.attemptNumber && prev.attemptNumber > 0 ? prev.attemptNumber : 1;
-        const curAttNum = att.attemptNumber && att.attemptNumber > 0 ? att.attemptNumber : 1;
+        const prevDur =
+          prev.durationSeconds && prev.durationSeconds > 0
+            ? prev.durationSeconds
+            : Infinity;
+        const curDur =
+          att.durationSeconds && att.durationSeconds > 0
+            ? att.durationSeconds
+            : Infinity;
+        const prevAttNum =
+          prev.attemptNumber && prev.attemptNumber > 0 ? prev.attemptNumber : 1;
+        const curAttNum =
+          att.attemptNumber && att.attemptNumber > 0 ? att.attemptNumber : 1;
         const prevTime = new Date(prev.startedAt || prev.time).getTime() || 0;
         const curTime = new Date(att.startedAt || att.time).getTime() || 0;
 
@@ -126,16 +142,14 @@ export default function TeacherReportDetailClientView({
   if (!report) {
     return (
       <PageContainer className="py-12">
-        <div className="text-center py-16 px-4 bg-white rounded border border-slate-200/80 shadow-2xs max-w-lg mx-auto">
-          <EmptyState
-            compact
-            type="reports"
-            title="Exam Report Not Found"
-            description="We couldn't load the evaluation report for this exam. It may have been archived or removed."
-            actionLabel="Return to Exam Reports"
-            actionHref="/dashboard/teacher-reports"
-          />
-        </div>
+        <EmptyState
+          compact
+          type="reports"
+          title="Exam Report Not Found"
+          description="We couldn't load the evaluation report for this exam. It may have been archived or removed."
+          actionLabel="Return to Exam Reports"
+          actionHref="/dashboard/teacher-reports"
+        />
       </PageContainer>
     );
   }

@@ -1,6 +1,11 @@
 import React from "react";
 import Link from "next/link";
-import { FaAward, FaChartLine, FaArrowRight, FaCalendarCheck } from "react-icons/fa";
+import {
+  FaAward,
+  FaChartLine,
+  FaArrowRight,
+  FaCalendarCheck,
+} from "react-icons/fa";
 import UserCard from "../../../components/dashboard/UserCard";
 import ChartCard from "../../../components/dashboard/ChartCard";
 import StatsGrid from "../../../components/dashboard/StatsGrid";
@@ -33,9 +38,9 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
 
   const isRanked = Boolean(
     stats?.rank &&
-      stats.rank > 0 &&
-      stats?.completedCount &&
-      stats.completedCount > 0
+    stats.rank > 0 &&
+    stats?.completedCount &&
+    stats.completedCount > 0,
   );
 
   const displayRank = isRanked ? `#${stats.rank}` : "Unranked";
@@ -129,7 +134,9 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
             <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-50 text-slate-600 rounded border border-slate-200 text-[11px] font-mono font-bold">
               <FaChartLine className="text-primary text-[10px]" />
               <span>
-                {hasAccuracy ? `Last ${stats.accuracyData.length} Tests` : "No Tests Yet"}
+                {hasAccuracy
+                  ? `Last ${stats.accuracyData.length} Tests`
+                  : "No Tests Yet"}
               </span>
             </div>
           </div>
@@ -142,16 +149,14 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
               avgLabel="Average Score"
             />
           ) : (
-            <div className="border border-slate-200/80 rounded bg-slate-50/50 py-4 my-auto">
-              <EmptyState
-                compact
-                type="exam"
-                title="No Accuracy Trends Yet"
-                description="Complete mock examinations to track your evaluation accuracy trajectories over time."
-                actionLabel="Explore Mock Exams"
-                actionHref="/dashboard/exam-pack"
-              />
-            </div>
+            <EmptyState
+              compact
+              type="exam"
+              title="No Accuracy Trends Yet"
+              description="Complete mock examinations to track your evaluation accuracy trajectories over time."
+              actionLabel="Explore Mock Exams"
+              actionHref="/dashboard/exam-pack"
+            />
           )}
         </div>
 
@@ -246,16 +251,14 @@ export const StudentDashboardView: React.FC<StudentDashboardViewProps> = ({
               ))}
             </div>
           ) : (
-            <div className="border border-slate-200/80 rounded bg-slate-50/50">
-              <EmptyState
-                compact
-                type="exam"
-                title="No Live Schedules"
-                description="Your educators have not scheduled any mandatory tests today."
-                actionLabel="Take Practice Mocks"
-                actionHref="/dashboard/exam-pack"
-              />
-            </div>
+            <EmptyState
+              compact
+              type="exam"
+              title="No Live Schedules"
+              description="Your educators have not scheduled any mandatory tests today."
+              actionLabel="Take Practice Mocks"
+              actionHref="/dashboard/exam-pack"
+            />
           )}
         </div>
       </div>

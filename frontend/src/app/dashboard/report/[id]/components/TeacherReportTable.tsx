@@ -84,14 +84,13 @@ export const TeacherReportTable = ({ students }: TeacherReportTableProps) => {
 
           {students.length === 0 && (
             <tr>
-              <td colSpan={6} className="py-8 text-center">
                 <EmptyState
                   compact
                   type="reports"
                   title="No Submissions Found"
                   description="No student attempts match your criteria."
+                  className="py-8"
                 />
-              </td>
             </tr>
           )}
         </tbody>

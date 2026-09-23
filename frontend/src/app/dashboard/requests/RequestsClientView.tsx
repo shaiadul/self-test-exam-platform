@@ -249,7 +249,6 @@ export default function RequestsClientView({
         </div>
 
         {requests.length === 0 ? (
-          <div className="py-6">
             <EmptyState
               compact
               type="tasks"
@@ -259,8 +258,8 @@ export default function RequestsClientView({
                   ? "There are currently no pending or historical quota requests from teachers."
                   : "You haven't submitted any quota or exam pack expansion requests yet."
               }
+            className="py-6"
             />
-          </div>
         ) : (
           <div className="p-4 space-y-3">
             {requests.map((r) => (

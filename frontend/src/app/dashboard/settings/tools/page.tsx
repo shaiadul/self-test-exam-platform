@@ -30,15 +30,13 @@ export default function ToolsPage() {
         </span>
       </div>
 
-      <div className="rounded bg-white border border-slate-200/80 shadow-2xs py-8">
-        <EmptyState
-          type="general"
-          title="Maintenance Utilities in Staging"
-          description="Administrative database migration tools, automated mock question scrapers, and batch export diagnostics will be deployed here."
-          actionLabel="Return to Settings Hub"
+      <EmptyState
+        type="general"
+        title="Maintenance Utilities in Staging"
+        description="Administrative database migration tools, automated mock question scrapers, and batch export diagnostics will be deployed here."
+        actionLabel="Return to Settings Hub"
           actionHref="/dashboard/settings"
         />
-      </div>
     </PageContainer>
   );
 }

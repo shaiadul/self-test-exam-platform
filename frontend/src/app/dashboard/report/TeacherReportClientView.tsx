@@ -219,9 +219,7 @@ export default function TeacherReportClientView({ initialReports }: TeacherRepor
         ))}
       </div>
 
-      {/* ---- Empty State ---- */}
       {filteredReports.length === 0 && (
-        <div className="rounded bg-white border border-slate-200/80 shadow-2xs">
           <EmptyState
             compact
             type="reports"
@@ -230,7 +228,6 @@ export default function TeacherReportClientView({ initialReports }: TeacherRepor
             actionLabel="Clear Filter"
             onAction={() => setSearchTerm("")}
           />
-        </div>
       )}
     </PageContainer>
   );

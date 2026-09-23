@@ -264,14 +264,12 @@ export default function FinancialReportClientView({ initialSummary, initialTrans
             ))}
 
             {transactions.length === 0 && (
-              <div className="py-6 px-4 text-center">
                 <EmptyState
                   compact
                   type="reports"
                   title="No Transactions Logged"
                   description="No journal or ledger entries have been recorded yet."
                 />
-              </div>
             )}
           </div>
         </div>

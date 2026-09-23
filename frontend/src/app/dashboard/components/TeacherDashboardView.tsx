@@ -172,7 +172,8 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({
                 Monthly Student Submission Volume
               </h3>
               <p className="text-slate-500 text-xs font-medium mt-0.5">
-                Test submission activity across your courses in the past 5 months.
+                Test submission activity across your courses in the past 5
+                months.
               </p>
             </div>
             <span className="text-[10px] font-mono bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded border border-blue-200">
@@ -226,14 +227,12 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({
               ))}
             </div>
           ) : (
-            <div className="border border-slate-200/80 rounded bg-slate-50/50">
-              <EmptyState
-                compact
-                type="tasks"
-                title="All caught up!"
-                description="No pending grading tasks or exam approvals in queue."
-              />
-            </div>
+            <EmptyState
+              compact
+              type="tasks"
+              title="All caught up!"
+              description="No pending grading tasks or exam approvals in queue."
+            />
           )}
 
           <div className="pt-2.5 border-t border-slate-100 space-y-2">
@@ -263,7 +262,8 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({
               My Course Syllabus Packs & Submission Counts
             </h3>
             <p className="text-slate-500 text-xs font-medium mt-0.5">
-              Overview of active exam modules created by you and published for students.
+              Overview of active exam modules created by you and published for
+              students.
             </p>
           </div>
           <Link
@@ -359,15 +359,13 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({
             </div>
           </>
         ) : (
-          <div className="py-6 border border-dashed border-slate-200 rounded">
-            <EmptyState
-              type="general"
-              title="No Exam Packs Created Yet"
-              description="You haven't created any course syllabus packs yet. Create your first syllabus pack to publish exams for students."
-              actionLabel="+ Create Exam Pack"
-              actionHref="/dashboard/manage-exam-pack/add"
-            />
-          </div>
+          <EmptyState
+            type="general"
+            title="No Exam Packs Created Yet"
+            description="You haven't created any course syllabus packs yet. Create your first syllabus pack to publish exams for students."
+            actionLabel="+ Create Exam Pack"
+            actionHref="/dashboard/manage-exam-pack/add"
+          />
         )}
       </div>
     </div>

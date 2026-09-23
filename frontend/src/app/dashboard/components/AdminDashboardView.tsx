@@ -193,14 +193,12 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               avgLabel="Avg Attempts"
             />
           ) : (
-            <div className="border border-slate-200/80 rounded bg-slate-50/50">
-              <EmptyState
-                compact
-                type="exam"
-                title="No Platform Evaluation Activity Yet"
-                description="Aggregated candidate attempts processed across the last 5 months will appear here as tests are submitted."
-              />
-            </div>
+            <EmptyState
+              compact
+              type="exam"
+              title="No Platform Evaluation Activity Yet"
+              description="Aggregated candidate attempts processed across the last 5 months will appear here as tests are submitted."
+            />
           )}
         </div>
 
@@ -358,9 +356,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             <div className="block sm:hidden divide-y divide-slate-100 border border-slate-200/80 bg-white">
               {stats.auditLogs.map((log: any, idx: number) => {
                 const idStr = String(log.id || "");
-                const formattedId = idStr.startsWith("#")
-                      ? idStr
-                      : `#${idStr}`;
+                const formattedId = idStr.startsWith("#") ? idStr : `#${idStr}`;
                 return (
                   <div key={idx} className="p-3 space-y-1.5">
                     <div className="flex items-center justify-between">
@@ -394,16 +390,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </div>
           </>
         ) : (
-          <div className="border border-slate-200/80 rounded bg-slate-50/50">
-            <EmptyState
-              compact
-              type="reports"
-              title="No Evaluation Audits Recorded"
-              description="Real-time transaction logs of candidate test submissions will appear here once candidates complete tests."
-              actionLabel="Exam Analytics Hub"
-              actionHref="/dashboard/settings/exam-analysis"
-            />
-          </div>
+          <EmptyState
+            compact
+            type="reports"
+            title="No Evaluation Audits Recorded"
+            description="Real-time transaction logs of candidate test submissions will appear here once candidates complete tests."
+            actionLabel="Exam Analytics Hub"
+            actionHref="/dashboard/settings/exam-analysis"
+          />
         )}
       </div>
     </div>
