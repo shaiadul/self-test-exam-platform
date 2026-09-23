@@ -7,9 +7,7 @@ import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
 import { PageContainer } from "../../../components/common/PageContainer";
 import EmptyState from "../../../components/common/EmptyState";
 import DynamicPagination from "../../../components/common/DynamicPagination";
-import {
-  PaginationMeta,
-} from "../../../lib/actions";
+import { PaginationMeta } from "../../../lib/actions";
 
 interface ManageExamPackClientViewProps {
   initialPacks: any[];
@@ -40,19 +38,31 @@ export default function ManageExamPackClientView({
     }
   }, [initialPacks, initialMeta]);
 
-  const userRole = currentUserRole || (typeof window !== "undefined" ? localStorage.getItem("userRole") : null);
-  const userId = currentUserId || (typeof window !== "undefined" ? Number(localStorage.getItem("userID")) : null);
+  const userRole =
+    currentUserRole ||
+    (typeof window !== "undefined" ? localStorage.getItem("userRole") : null);
+  const userId =
+    currentUserId ||
+    (typeof window !== "undefined"
+      ? Number(localStorage.getItem("userID"))
+      : null);
 
   const ownedPacks = useMemo(() => {
     let list = examPacks;
     if (userRole && String(userRole).toLowerCase() === "teacher" && userId) {
-      list = list.filter((p) => p.createdBy && Number(p.createdBy) === Number(userId));
+      list = list.filter(
+        (p) => p.createdBy && Number(p.createdBy) === Number(userId),
+      );
     }
     return list;
   }, [examPacks, userRole, userId]);
 
   const isTeacher = userRole && String(userRole).toLowerCase() === "teacher";
-  const quotaReached = isTeacher && packLimit !== undefined && packLimit !== -1 && ownedPacks.length >= packLimit;
+  const quotaReached =
+    isTeacher &&
+    packLimit !== undefined &&
+    packLimit !== -1 &&
+    ownedPacks.length >= packLimit;
 
   const filteredPacks = useMemo(() => {
     if (!search.trim()) return ownedPacks;
@@ -72,7 +82,11 @@ export default function ManageExamPackClientView({
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
-              {ownedPacks.length} {isTeacher && packLimit !== undefined ? `/ ${packLimit === -1 ? "∞" : packLimit}` : ""} ACTIVE PACKS
+              {ownedPacks.length}{" "}
+              {isTeacher && packLimit !== undefined
+                ? `/ ${packLimit === -1 ? "∞" : packLimit}`
+                : ""}{" "}
+              ACTIVE PACKS
             </span>
             {quotaReached && (
               <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-rose-50 text-rose-600 border border-rose-200">
@@ -144,7 +158,7 @@ export default function ManageExamPackClientView({
           ))}
         </div>
       ) : (
-        <div className="bg-white border border-slate-200/80 rounded p-4 sm:p-6 shadow-2xs max-w-xl mx-auto">
+        <div className="w-full bg-white border border-slate-200/80 rounded p-4 sm:p-6 shadow-2xs">
           <EmptyState
             type="exam"
             title={search ? "No Matching Packs" : "No Exam Packs Configured"}
