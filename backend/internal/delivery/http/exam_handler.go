@@ -136,8 +136,35 @@ func (h *ExamHandler) ListExams(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	userRole := middleware.GetUserRoleFromContext(r.Context())
+	if userRole == "" && userID > 0 {
+		userRole = h.examService.RoleOf(userID)
+	}
+	userRole = strings.ToLower(userRole)
+
+	isManage := q.Get("manage") == "true" || strings.Contains(r.Header.Get("Referer"), "manage-exam-pack")
+	if isManage && userRole == "student" {
+		resp := pagination.Response[exam.Exam]{
+			Data: []exam.Exam{},
+			Meta: pagination.Meta{
+				TotalItems:  0,
+				TotalPages:  1,
+				CurrentPage: params.Page,
+				PerPage:     params.PerPage,
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
 	var teacherID *int
-	if q.Get("mine") == "true" || q.Get("manage") == "true" {
+	if isManage {
+		if userRole == "teacher" {
+			teacherID = &userID
+		}
+		// If admin, teacherID remains nil to manage all exams across the platform
+	} else if q.Get("mine") == "true" {
 		teacherID = &userID
 	} else if tidStr := q.Get("teacher_id"); tidStr != "" {
 		if tid, err := strconv.Atoi(tidStr); err == nil {

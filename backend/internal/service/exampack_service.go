@@ -24,7 +24,7 @@ func NewExamPackService(repo exampack.ExamPackRepository, userRepo user.UserRepo
 	return &ExamPackService{repo: repo, userRepo: userRepo}
 }
 
-func (s *ExamPackService) roleOf(userID int) (string, error) {
+func (s *ExamPackService) RoleOf(userID int) (string, error) {
 	if s.userRepo == nil || userID <= 0 {
 		return "", nil
 	}
@@ -33,6 +33,10 @@ func (s *ExamPackService) roleOf(userID int) (string, error) {
 		return "", err
 	}
 	return strings.ToLower(role), nil
+}
+
+func (s *ExamPackService) roleOf(userID int) (string, error) {
+	return s.RoleOf(userID)
 }
 
 func (s *ExamPackService) ListExamPacks(userID int, onlyMine bool) ([]exampack.ExamPack, error) {
@@ -57,9 +61,13 @@ func (s *ExamPackService) GetExamPack(userID int, id int) (*exampack.ExamPack, e
 }
 
 func (s *ExamPackService) CreateExamPack(userID int, pack *exampack.ExamPack) error {
-	role, err := s.roleOf(userID)
+	role, err := s.RoleOf(userID)
 	if err != nil {
 		return err
+	}
+
+	if role != "admin" && role != "teacher" {
+		return ErrForbidden
 	}
 
 	if pack.Image == "" {
@@ -86,8 +94,10 @@ func (s *ExamPackService) CreateExamPack(userID int, pack *exampack.ExamPack) er
 			}
 			return nil
 		}
-	} else if userID > 0 {
-		pack.CreatedBy = &userID
+	} else if role == "admin" {
+		if pack.CreatedBy == nil && userID > 0 {
+			pack.CreatedBy = &userID
+		}
 	}
 
 	return s.repo.CreateExamPack(pack)
@@ -102,9 +112,12 @@ func (s *ExamPackService) UpdateExamPack(userID int, pack *exampack.ExamPack) er
 		return ErrExamPackNotFound
 	}
 
-	role, err := s.roleOf(userID)
+	role, err := s.RoleOf(userID)
 	if err != nil {
 		return err
+	}
+	if role != "admin" && role != "teacher" {
+		return ErrForbidden
 	}
 	if role == "teacher" && (existing.CreatedBy == nil || *existing.CreatedBy != userID) {
 		return ErrForbidden
@@ -122,9 +135,12 @@ func (s *ExamPackService) DeleteExamPack(userID int, id int) error {
 		return ErrExamPackNotFound
 	}
 
-	role, err := s.roleOf(userID)
+	role, err := s.RoleOf(userID)
 	if err != nil {
 		return err
+	}
+	if role != "admin" && role != "teacher" {
+		return ErrForbidden
 	}
 	if role == "teacher" && (existing.CreatedBy == nil || *existing.CreatedBy != userID) {
 		return ErrForbidden

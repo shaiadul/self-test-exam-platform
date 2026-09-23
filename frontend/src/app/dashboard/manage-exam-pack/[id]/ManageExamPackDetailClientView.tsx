@@ -44,6 +44,9 @@ export default function ManageExamPackDetailClientView({
   const [exams, setExams] = useState<Exam[]>(() => {
     const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userID") : null;
     const currentUserRole = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+    if (currentUserRole === "student") {
+      return [];
+    }
     let filtered = initialExams || [];
     if (currentUserRole === "teacher" && currentUserId) {
       filtered = filtered.filter((e: any) => !e.createdBy || String(e.createdBy) === String(currentUserId));
@@ -64,6 +67,10 @@ export default function ManageExamPackDetailClientView({
     if (initialExams && initialExams.length > 0) {
       const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userID") : null;
       const currentUserRole = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+      if (currentUserRole === "student") {
+        setExams([]);
+        return;
+      }
       let filtered = initialExams;
       if (currentUserRole === "teacher" && currentUserId) {
         filtered = initialExams.filter((e: any) => !e.createdBy || String(e.createdBy) === String(currentUserId));
@@ -97,6 +104,12 @@ export default function ManageExamPackDetailClientView({
       const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
       const currentUserId = typeof window !== "undefined" ? localStorage.getItem("userID") : null;
       const currentUserRole = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+
+      if (currentUserRole === "student") {
+        setExams([]);
+        setLoading(false);
+        return;
+      }
 
       Promise.all([
         getExamPackDetailsAction(packId, token),

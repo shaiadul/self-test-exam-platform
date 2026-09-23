@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getExamPacksPaginatedAction, getProfileAction } from "../../../lib/actions";
 import ManageExamPackClientView from "./ManageExamPackClientView";
 
@@ -14,15 +15,27 @@ export default async function ManageExamPackPage({
   const perPage = params.per_page ? parseInt(params.per_page) : 10;
   const search = params.search || undefined;
 
-  const [profile, res] = await Promise.all([
-    getProfileAction(),
-    getExamPacksPaginatedAction({ page, per_page: perPage, search, mine: true }),
-  ]);
+  const profile = await getProfileAction();
+  const role = String(profile?.role || "").toLowerCase();
+
+  // In manage exam pack: students must not see anything
+  if (role === "student") {
+    redirect("/dashboard");
+  }
+
+  const isTeacher = role === "teacher";
+  const res = await getExamPacksPaginatedAction({
+    page,
+    per_page: perPage,
+    search,
+    manage: true,
+    mine: isTeacher,
+  });
 
   let packs = res?.data || [];
   let meta = res?.meta;
 
-  if (profile && String(profile.role).toLowerCase() === "teacher") {
+  if (isTeacher && profile?.id) {
     packs = packs.filter(
       (p: any) => p.createdBy && Number(p.createdBy) === Number(profile.id)
     );

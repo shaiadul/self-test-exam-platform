@@ -59,19 +59,24 @@ export async function getExamsPaginatedAction(
 }
 
 export async function getTeacherExamsAction(packId: number, clientToken?: string) {
-	const data = await fetcherWithAuth<any[]>(`/exam-packs/${packId}/exams`, {}, clientToken);
-	if (!Array.isArray(data)) return [];
-
 	try {
 		const profile = await getProfileAction();
-		if (profile && String(profile.role).toLowerCase() === "teacher") {
+		const role = String(profile?.role || "").toLowerCase();
+		if (role === "student") {
+			return [];
+		}
+
+		const data = await fetcherWithAuth<any[]>(`/exam-packs/${packId}/exams?manage=true`, {}, clientToken);
+		if (!Array.isArray(data)) return [];
+
+		if (role === "teacher" && profile?.id) {
 			return data.filter((e: any) => !e.createdBy || String(e.createdBy) === String(profile.id));
 		}
-	} catch {
-		// Fall back to server-filtered data
-	}
 
-	return data;
+		return data;
+	} catch {
+		return [];
+	}
 }
 
 export async function getExamDetailsAction(examId: string, clientToken?: string) {

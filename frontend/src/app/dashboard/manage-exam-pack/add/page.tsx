@@ -15,6 +15,14 @@ import { createExamPackAction } from "../../../../lib/actions";
 export default function AddExamPackPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    const role = (typeof window !== "undefined" ? localStorage.getItem("userRole") || "" : "").toLowerCase();
+    if (role === "student") {
+      router.replace("/dashboard");
+    }
+  }, [router]);
+
   const [examPackData, setExamPackData] = useState({
     name: "",
     details: "",

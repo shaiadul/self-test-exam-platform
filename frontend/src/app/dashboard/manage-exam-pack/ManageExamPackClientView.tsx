@@ -49,7 +49,11 @@ export default function ManageExamPackClientView({
 
   const ownedPacks = useMemo(() => {
     let list = examPacks;
-    if (userRole && String(userRole).toLowerCase() === "teacher" && userId) {
+    const role = String(userRole || "").toLowerCase();
+    if (role === "student") {
+      return [];
+    }
+    if (role === "teacher" && userId) {
       list = list.filter(
         (p) => p.createdBy && Number(p.createdBy) === Number(userId),
       );

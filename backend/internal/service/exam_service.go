@@ -117,7 +117,7 @@ func clampPassPercent(p int) int {
 	return p
 }
 
-func (s *ExamService) roleOf(userID int) string {
+func (s *ExamService) RoleOf(userID int) string {
 	if s.userRepo == nil || userID <= 0 {
 		return ""
 	}
@@ -126,6 +126,10 @@ func (s *ExamService) roleOf(userID int) string {
 		return ""
 	}
 	return strings.ToLower(role)
+}
+
+func (s *ExamService) roleOf(userID int) string {
+	return s.RoleOf(userID)
 }
 
 // assertPackAccess ensures the pack exists. Viewing pack contents is open to all authenticated users.
@@ -145,27 +149,31 @@ func (s *ExamService) assertExamView(userID int, e *exam.Exam) error {
 	return nil
 }
 
-// assertExamEdit allows editing exams the teacher created, or any exam inside a
-// pack the teacher owns (admins may edit everything).
+// assertExamEdit allows editing exams: admin can edit all, teacher can edit own
+// exams or exams inside a pack they own, and students are forbidden.
 func (s *ExamService) assertExamEdit(userID int, e *exam.Exam) error {
-	role := s.roleOf(userID)
-	if role != "teacher" {
+	role := s.RoleOf(userID)
+	if role == "admin" {
 		return nil
 	}
-	if e.CreatedBy != nil && *e.CreatedBy == userID {
-		return nil
-	}
-
-	// Fall back to pack ownership: a teacher manages every exam (and question)
-	// inside their own packs, even if the exam row itself has no creator set.
-	if s.packRepo != nil {
-		pack, err := s.packRepo.GetExamPackByID(e.ExamPackID)
-		if err != nil {
-			return err
-		}
-		if pack != nil && pack.CreatedBy != nil && *pack.CreatedBy == userID {
+	if role == "teacher" {
+		if e.CreatedBy != nil && *e.CreatedBy == userID {
 			return nil
 		}
+
+		// Fall back to pack ownership: a teacher manages every exam (and question)
+		// inside their own packs, even if the exam row itself has no creator set.
+		if s.packRepo != nil {
+			pack, err := s.packRepo.GetExamPackByID(e.ExamPackID)
+			if err != nil {
+				return err
+			}
+			if pack != nil && pack.CreatedBy != nil && *pack.CreatedBy == userID {
+				return nil
+			}
+		}
+
+		return ErrForbidden
 	}
 
 	return ErrForbidden
@@ -270,7 +278,10 @@ func (s *ExamService) CreateExam(packID int, input CreateExamInput, creatorID in
 		return nil, ErrExamPackNotFound
 	}
 
-	role := s.roleOf(creatorID)
+	role := s.RoleOf(creatorID)
+	if role != "admin" && role != "teacher" {
+		return nil, ErrForbidden
+	}
 	if role == "teacher" && (pack.CreatedBy == nil || *pack.CreatedBy != creatorID) {
 		return nil, ErrForbidden
 	}
