@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { HiMenuAlt3, HiX } from "react-icons/hi";
 import Image from "next/image";

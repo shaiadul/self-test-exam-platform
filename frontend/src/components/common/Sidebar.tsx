@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { IoMdLogOut, IoMdSettings } from "react-icons/io";
-import { FaHome, FaBoxOpen, FaChartBar, FaUserCog, FaClipboardList, FaPoll, FaShieldAlt } from "react-icons/fa";
+import { FaHome, FaBoxOpen, FaChartBar, FaUserCog, FaClipboardList, FaPoll } from "react-icons/fa";
 import { SiGoogletagmanager } from "react-icons/si";
 import { MdQuestionAnswer } from "react-icons/md";
 import { TbMessageReportFilled } from "react-icons/tb";
