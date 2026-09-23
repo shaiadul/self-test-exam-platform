@@ -26,9 +26,8 @@ export default function ReportingClientView({
   const [sortBy, setSortBy] = useState<"score" | "date">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showDropdown, setShowDropdown] = useState(false);
-  const reports = initialReports || [];
+  const reports = useMemo(() => initialReports || [], [initialReports]);
 
-  // Summary Metrics
   const summary: ReportingSummary = useMemo(() => {
     const totalExams = reports.length;
     const passedExams = reports.filter((r) => r.passed).length;
@@ -45,7 +44,6 @@ export default function ReportingClientView({
     return { totalExams, passedExams, failedExams, avgScore, passRate };
   }, [reports]);
 
-  // Filtered & Sorted Data
   const filteredReports = useMemo(() => {
     const filtered = reports.filter(
       (r) =>
@@ -69,7 +67,6 @@ export default function ReportingClientView({
 
   return (
     <PageContainer className="space-y-6">
-      {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <span className="text-[10px] font-mono font-bold text-primary uppercase tracking-wider block mb-1">
@@ -93,10 +90,8 @@ export default function ReportingClientView({
         </PrimaryBtn>
       </div>
 
-      {/* Summary Cards */}
       {reports.length > 0 && <ReportingSummaryCards summary={summary} />}
 
-      {/* Controls Toolbar */}
       <ReportingFilterBar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -108,7 +103,6 @@ export default function ReportingClientView({
         setShowDropdown={setShowDropdown}
       />
 
-      {/* Data Views (Desktop Table & Mobile Cards) */}
       {filteredReports.length > 0 && (
         <>
           <ReportingTable reports={filteredReports} />
@@ -116,16 +110,14 @@ export default function ReportingClientView({
         </>
       )}
 
-      {/* Empty State */}
       {filteredReports.length === 0 && (
-        
-          <EmptyState
-            type="reports"
-            title="No Exam Reports Found"
-            description="You haven't attended any exams matching your search criteria. Take a self-test or mock exam to generate detailed performance analytics and certificate!"
-            actionLabel="Explore Exam Packs"
-            actionHref="/dashboard/exam-pack"
-          />
+        <EmptyState
+          type="reports"
+          title="No Exam Reports Found"
+          description="You haven't attended any exams matching your search criteria. Take a self-test or mock exam to generate detailed performance analytics and certificate!"
+          actionLabel="Explore Exam Packs"
+          actionHref="/dashboard/exam-pack"
+        />
       )}
 
       <DynamicPagination meta={initialMeta} />

@@ -82,15 +82,11 @@ export const DashboardHeader = () => {
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
-        const res = await getAllExamsAction(
-          {
-            search: searchQuery.trim() || undefined,
-            page: 1,
-            per_page: 8,
-          },
-          token
-        );
+        const res = await getAllExamsAction({
+          search: searchQuery.trim() || undefined,
+          page: 1,
+          per_page: 8,
+        });
         setSearchResults(res?.data || []);
         setSearchMeta(res?.meta || null);
       } catch (err) {

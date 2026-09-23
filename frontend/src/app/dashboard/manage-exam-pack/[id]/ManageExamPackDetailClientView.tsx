@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 import {
   FaEdit,
   FaTrashAlt,
   FaPlus,
-  FaSpinner,
   FaArrowLeft,
 } from "react-icons/fa";
 import { MdOutlineEditNote } from "react-icons/md";
@@ -21,7 +21,7 @@ import {
   getExamPackDetailsAction,
   getTeacherExamsAction,
 } from "../../../../lib/actions";
-import { formatDate, formatDateTime, DATE_FORMATS } from "@/lib/date";
+import { formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 type Exam = {
   id: string;
@@ -43,15 +43,12 @@ export default function ManageExamPackDetailClientView({
   initialExams,
 }: ManageExamPackDetailClientViewProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [loading, setLoading] = useState(false);
+  const { user } = useUser();
   const [pack, setPack] = useState<any>(initialPack);
 
   const [exams, setExams] = useState<Exam[]>(() => {
-    const currentUserId =
-      typeof window !== "undefined" ? localStorage.getItem("userID") : null;
-    const currentUserRole =
-      typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+    const currentUserId = user?.id;
+    const currentUserRole = user?.role;
     if (currentUserRole === "student") {
       return [];
     }
@@ -73,13 +70,11 @@ export default function ManageExamPackDetailClientView({
 
   const packTitle = pack?.title || initialPack?.title || "Exam Pack";
 
-  // Sync state whenever SSR props change
+  // Sync state whenever SSR props change or user profile loads
   useEffect(() => {
-    if (initialExams && initialExams.length > 0) {
-      const currentUserId =
-        typeof window !== "undefined" ? localStorage.getItem("userID") : null;
-      const currentUserRole =
-        typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+    if (initialExams) {
+      const currentUserId = user?.id;
+      const currentUserRole = user?.role;
       if (currentUserRole === "student") {
         setExams([]);
         return;
@@ -104,66 +99,44 @@ export default function ManageExamPackDetailClientView({
     if (initialPack) {
       setPack(initialPack);
     }
-  }, [initialExams, initialPack]);
+  }, [initialExams, initialPack, user]);
 
-  // Fetch via server action with client token if initial SSR data is empty
+  // Client-side fallback fetch if initial SSR data is not provided
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token && !document.cookie.includes("token=")) {
-        document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-      }
-    }
-
     if (packId && !initialPack) {
-      setLoading(true);
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("token") || undefined
-          : undefined;
-      const currentUserId =
-        typeof window !== "undefined" ? localStorage.getItem("userID") : null;
-      const currentUserRole =
-        typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
-
-      if (currentUserRole === "student") {
+      if (user?.role === "student") {
         setExams([]);
-        setLoading(false);
         return;
       }
 
       Promise.all([
-        getExamPackDetailsAction(packId, token),
-        getTeacherExamsAction(packId, token),
-      ])
-        .then(([fetchedPack, fetchedExams]) => {
-          if (fetchedPack) {
-            setPack(fetchedPack);
-          }
-          if (fetchedExams && Array.isArray(fetchedExams)) {
-            let filtered = fetchedExams;
-            if (currentUserRole === "teacher" && currentUserId) {
-              filtered = fetchedExams.filter(
-                (e: any) =>
-                  !e.createdBy || String(e.createdBy) === String(currentUserId),
-              );
-            }
-            setExams(
-              filtered.map((e: any) => ({
-                id: e.id,
-                name: e.name,
-                startDate: e.startDate,
-                endDate: e.endDate,
-                link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
-              })),
+        getExamPackDetailsAction(packId),
+        getTeacherExamsAction(packId),
+      ]).then(([fetchedPack, fetchedExams]) => {
+        if (fetchedPack) {
+          setPack(fetchedPack);
+        }
+        if (fetchedExams && Array.isArray(fetchedExams)) {
+          let filtered = fetchedExams;
+          if (user?.role === "teacher" && user?.id) {
+            filtered = fetchedExams.filter(
+              (e: any) =>
+                !e.createdBy || String(e.createdBy) === String(user.id),
             );
           }
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+          setExams(
+            filtered.map((e: any) => ({
+              id: e.id,
+              name: e.name,
+              startDate: e.startDate,
+              endDate: e.endDate,
+              link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
+            })),
+          );
+        }
+      });
     }
-  }, [packId, initialExams, initialPack]);
+  }, [packId, initialPack, user]);
 
   const handleEditExam = (examId: string) => {
     router.push(
@@ -257,9 +230,6 @@ export default function ManageExamPackDetailClientView({
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20 font-bold">
               {exams.length} ACTIVE
             </span>
-            {(isPending || loading) && (
-              <FaSpinner className="animate-spin text-xs text-primary ml-1" />
-            )}
           </div>
         </div>
 
@@ -338,7 +308,6 @@ export default function ManageExamPackDetailClientView({
               </table>
             </div>
 
-            {/* Mobile Phone Cards View */}
             <div className="block sm:hidden divide-y divide-slate-100">
               {exams.map((exam) => (
                 <div key={exam.id} className="p-3.5 space-y-2.5">
@@ -408,13 +377,6 @@ export default function ManageExamPackDetailClientView({
               ))}
             </div>
           </>
-        ) : isPending || loading ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-2 text-slate-400 font-medium">
-            <FaSpinner className="animate-spin text-2xl text-primary" />
-            <span className="text-xs font-mono font-bold">
-              SYNCHRONIZING REPOSITORY...
-            </span>
-          </div>
         ) : (
           <EmptyState
             compact

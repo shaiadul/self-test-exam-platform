@@ -33,21 +33,13 @@ export interface CompleteProfileInput {
 
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("token");
+  const match = document.cookie.match(/(?:^|;\s*)token=([^;]*)/);
+  return match ? match[1] : null;
 }
 
 export function setSession(token: string, user: User) {
   if (typeof window === "undefined") return;
-  localStorage.setItem("token", token);
-  localStorage.setItem("userRole", user.role);
-  localStorage.setItem("userName", user.name);
-  localStorage.setItem("userEmail", user.email);
-  localStorage.setItem("userID", user.id.toString());
-  if (user.image) {
-    localStorage.setItem("userImage", user.image);
-  } else {
-    localStorage.removeItem("userImage");
-  }
+  // Token is managed at the fetch level via HTTP cookie
   document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
   document.cookie = `user_profile=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=86400; SameSite=Lax`;
   window.dispatchEvent(new CustomEvent("profileUpdated", { detail: user }));

@@ -17,7 +17,10 @@ import { ExamSecurityModal } from "./components/ExamSecurityModal";
 import { ExamSubmitConfirmModal } from "./components/ExamSubmitConfirmModal";
 import { ExamTopBar } from "./components/ExamTopBar";
 import { ExamQuestionCard } from "./components/ExamQuestionCard";
-import { ExamQuestionMatrix, MobileQuestionNavStrip } from "./components/ExamQuestionMatrix";
+import {
+  ExamQuestionMatrix,
+  MobileQuestionNavStrip,
+} from "./components/ExamQuestionMatrix";
 import { formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 interface TakeExamClientViewProps {
@@ -35,7 +38,10 @@ export default function TakeExamClientView({
 
   // Helper to parse question items safely
   // Helper to parse question items safely with optional randomization
-  const normalizeQuestions = (list: any[], randomize = false): QuestionData[] => {
+  const normalizeQuestions = (
+    list: any[],
+    randomize = false,
+  ): QuestionData[] => {
     let result = (list || []).map((q: any, idx: number) => {
       let parsedOptions: string[] = [];
       if (Array.isArray(q.options)) {
@@ -51,9 +57,12 @@ export default function TakeExamClientView({
       return {
         id: q.id || idx + 1,
         type: q.type || "mcq",
-        questionText: q.questionText || q.text || q.prompt || `Question ${idx + 1}`,
+        questionText:
+          q.questionText || q.text || q.prompt || `Question ${idx + 1}`,
         options: parsedOptions,
-        correctAnswer: q.correctAnswer || (parsedOptions.length ? parsedOptions[q.correctIndex || 0] : ""),
+        correctAnswer:
+          q.correctAnswer ||
+          (parsedOptions.length ? parsedOptions[q.correctIndex || 0] : ""),
         passage: q.passage || undefined,
         pictureUrl: q.pictureUrl || undefined,
       };
@@ -72,10 +81,13 @@ export default function TakeExamClientView({
   const [examMeta, setExamMeta] = useState<ExamMeta>({
     title: initialExam?.name || "Examination",
     subject: initialExam?.level || initialExam?.subject || "General",
-    durationMinutes: initialExam?.durationMinutes || initialExam?.duration || 30,
+    durationMinutes:
+      initialExam?.durationMinutes || initialExam?.duration || 30,
     totalMarks: initialExam?.totalMarks || 100,
     passMarks: initialExam?.passingMarks || initialExam?.passMark || 33,
-    negativeMarks: initialExam?.negativeMarks ? Math.abs(Number(initialExam.negativeMarks)) : 0,
+    negativeMarks: initialExam?.negativeMarks
+      ? Math.abs(Number(initialExam.negativeMarks))
+      : 0,
     isPrivate: initialExam?.isPrivate ?? false,
     passcode: initialExam?.passcode || "",
     randomization: isRandomized,
@@ -85,7 +97,7 @@ export default function TakeExamClientView({
   });
 
   const [questions, setQuestions] = useState<QuestionData[]>(() =>
-    normalizeQuestions(initialQuestions, isRandomized)
+    normalizeQuestions(initialQuestions, isRandomized),
   );
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
@@ -98,21 +110,26 @@ export default function TakeExamClientView({
 
   // Exam Progress State
   const [userAnswers, setUserAnswers] = useState<Record<number, Answer>>({});
-  const [examStatus, setExamStatus] = useState<"instructions" | "running" | "submitted">("instructions");
+  const [examStatus, setExamStatus] = useState<
+    "instructions" | "running" | "submitted"
+  >("instructions");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [examResult, setExamResult] = useState<any>(null);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
-  const [examStartTime, setExamStartTime] = useState<Date | null>(null);
   const examStartTimeRef = useRef<Date | null>(null);
 
-  // Focus Navigation & Question State
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState<number>(0);
-  const [markedForReview, setMarkedForReview] = useState<Set<number>>(new Set());
-  const [visitedQuestions, setVisitedQuestions] = useState<Set<number>>(new Set());
-  const [filterStatus, setFilterStatus] = useState<"all" | "answered" | "unanswered" | "review">("all");
+  const [markedForReview, setMarkedForReview] = useState<Set<number>>(
+    new Set(),
+  );
+  const [visitedQuestions, setVisitedQuestions] = useState<Set<number>>(
+    new Set(),
+  );
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "answered" | "unanswered" | "review"
+  >("all");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
-  // Security & Anti-cheating State
   const [warnings, setWarnings] = useState<number>(0);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [currentWarningMsg, setCurrentWarningMsg] = useState("");
@@ -121,7 +138,6 @@ export default function TakeExamClientView({
   const isFinishingRef = useRef(false);
   isRunningRef.current = examStatus === "running" && !isFinishingRef.current;
 
-  // Mark current question as visited
   useEffect(() => {
     if (questions.length > 0 && examStatus === "running") {
       const currentQ = questions[currentQuestionIdx];
@@ -136,45 +152,55 @@ export default function TakeExamClientView({
     }
   }, [currentQuestionIdx, questions, examStatus]);
 
-  // Client-side fallback fetch for questions & exam details
-  const fetchQuestionsFallback = useCallback(async (passcode?: string) => {
-    setLoadingQuestions(true);
-    try {
-      const [qs, details] = await Promise.all([
-        getQuestionsAction(examId, passcode),
-        getExamDetailsAction(examId),
-      ]);
+  const fetchQuestionsFallback = useCallback(
+    async (passcode?: string) => {
+      setLoadingQuestions(true);
+      try {
+        const [qs, details] = await Promise.all([
+          getQuestionsAction(examId, passcode),
+          getExamDetailsAction(examId),
+        ]);
 
-      if (details) {
-        setExamMeta((prev) => ({
-          ...prev,
-          title: details.name || prev.title,
-          subject: details.level || prev.subject,
-          durationMinutes: details.durationMinutes || details.duration || prev.durationMinutes,
-          totalMarks: details.totalMarks || prev.totalMarks,
-          passMarks: details.passingMarks || details.passMark || prev.passMarks,
-          negativeMarks: details.negativeMarks ? Math.abs(Number(details.negativeMarks)) : prev.negativeMarks,
-          isPrivate: details.isPrivate ?? prev.isPrivate,
-          passcode: details.passcode || prev.passcode,
-          randomization: details.randomization ?? prev.randomization,
-          feedback: details.feedback ?? prev.feedback,
-          startDate: details.startDate || prev.startDate,
-          endDate: details.endDate || prev.endDate,
-        }));
-        if (!details.isPrivate) {
-          setIsUnlocked(true);
+        if (details) {
+          setExamMeta((prev) => ({
+            ...prev,
+            title: details.name || prev.title,
+            subject: details.level || prev.subject,
+            durationMinutes:
+              details.durationMinutes ||
+              details.duration ||
+              prev.durationMinutes,
+            totalMarks: details.totalMarks || prev.totalMarks,
+            passMarks:
+              details.passingMarks || details.passMark || prev.passMarks,
+            negativeMarks: details.negativeMarks
+              ? Math.abs(Number(details.negativeMarks))
+              : prev.negativeMarks,
+            isPrivate: details.isPrivate ?? prev.isPrivate,
+            passcode: details.passcode || prev.passcode,
+            randomization: details.randomization ?? prev.randomization,
+            feedback: details.feedback ?? prev.feedback,
+            startDate: details.startDate || prev.startDate,
+            endDate: details.endDate || prev.endDate,
+          }));
+          if (!details.isPrivate) {
+            setIsUnlocked(true);
+          }
         }
-      }
 
-      if (Array.isArray(qs) && qs.length > 0) {
-        setQuestions(normalizeQuestions(qs, details?.randomization ?? isRandomized));
+        if (Array.isArray(qs) && qs.length > 0) {
+          setQuestions(
+            normalizeQuestions(qs, details?.randomization ?? isRandomized),
+          );
+        }
+      } catch {
+        toast.error("Failed to load live question bank.");
+      } finally {
+        setLoadingQuestions(false);
       }
-    } catch {
-      toast.error("Failed to load live question bank.");
-    } finally {
-      setLoadingQuestions(false);
-    }
-  }, [examId]);
+    },
+    [examId, isRandomized],
+  );
 
   useEffect(() => {
     if (isUnlocked && (!initialQuestions || initialQuestions.length === 0)) {
@@ -182,7 +208,6 @@ export default function TakeExamClientView({
     }
   }, [initialQuestions, fetchQuestionsFallback, isUnlocked, enteredPasscode]);
 
-  // Handle Passcode Unlock
   const handleUnlockPasscode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!enteredPasscode.trim()) {
@@ -191,13 +216,21 @@ export default function TakeExamClientView({
     }
     setVerifyingPasscode(true);
     try {
-      const res = await verifyExamPasscodeAction(examId, enteredPasscode.trim());
+      const res = await verifyExamPasscodeAction(
+        examId,
+        enteredPasscode.trim(),
+      );
       if (res.success) {
         setIsUnlocked(true);
         setPasscodeError("");
-        toast.success("Exam unlocked! Please review instructions before starting.");
+        toast.success(
+          "Exam unlocked! Please review instructions before starting.",
+        );
       } else {
-        setPasscodeError(res.error || "Incorrect passcode. Please verify with your instructor.");
+        setPasscodeError(
+          res.error ||
+            "Incorrect passcode. Please verify with your instructor.",
+        );
         toast.error(res.error || "Incorrect passcode.");
       }
     } finally {
@@ -205,10 +238,10 @@ export default function TakeExamClientView({
     }
   };
 
-  // Submit Exam Handler
   const handleFinish = useCallback(
     async (reason?: string) => {
-      if (examStatus === "submitted" || isSubmitting || isFinishingRef.current) return;
+      if (examStatus === "submitted" || isSubmitting || isFinishingRef.current)
+        return;
       isFinishingRef.current = true;
       isRunningRef.current = false;
       setIsSubmitting(true);
@@ -232,12 +265,15 @@ export default function TakeExamClientView({
         });
 
         const securityMsg =
-          reason || (warnings > 0 ? `Completed with ${warnings} security warning(s)` : "Normal Clean Submission");
+          reason ||
+          (warnings > 0
+            ? `Completed with ${warnings} security warning(s)`
+            : "Normal Clean Submission");
 
         const started = examStartTimeRef.current || new Date();
         const durationSeconds = Math.max(
           1,
-          Math.round((Date.now() - started.getTime()) / 1000)
+          Math.round((Date.now() - started.getTime()) / 1000),
         );
 
         const res = await submitExamAction(
@@ -247,7 +283,7 @@ export default function TakeExamClientView({
           securityMsg,
           enteredPasscode,
           durationSeconds,
-          started.toISOString()
+          started.toISOString(),
         );
 
         if (res.success && res.result) {
@@ -271,10 +307,18 @@ export default function TakeExamClientView({
         setIsSubmitting(false);
       }
     },
-    [examId, examStatus, isSubmitting, questions, userAnswers, warnings, enteredPasscode]
+    [
+      examId,
+      examStatus,
+      isSubmitting,
+      questions,
+      userAnswers,
+      warnings,
+      enteredPasscode,
+      examMeta,
+    ],
   );
 
-  // Trigger security violation warning
   const triggerSecurityWarning = useCallback(
     (reason: string) => {
       if (!isRunningRef.current || isFinishingRef.current) return;
@@ -285,9 +329,13 @@ export default function TakeExamClientView({
         setShowWarningModal(true);
 
         if (next >= 3) {
-          toast.error("Maximum violations reached (3/3). Forced automatic submission triggered.");
+          toast.error(
+            "Maximum violations reached (3/3). Forced automatic submission triggered.",
+          );
           setTimeout(() => {
-            handleFinish("Terminated: Exceeded maximum allowed security violations (3/3)");
+            handleFinish(
+              "Terminated: Exceeded maximum allowed security violations (3/3)",
+            );
           }, 1200);
         } else {
           toast.warning(`Security Warning (${next}/3): ${reason}`);
@@ -295,10 +343,9 @@ export default function TakeExamClientView({
         return next;
       });
     },
-    [handleFinish]
+    [handleFinish],
   );
 
-  // Fullscreen Management
   const enterFullscreen = async () => {
     try {
       if (document.documentElement.requestFullscreen) {
@@ -324,7 +371,6 @@ export default function TakeExamClientView({
     }
   };
 
-  // Start Exam
   const handleStartExam = async () => {
     if (questions.length === 0) {
       toast.error("No questions available for this exam yet.");
@@ -335,8 +381,8 @@ export default function TakeExamClientView({
       toast.error(
         `Exam has not started yet. Scheduled start: ${formatDateTime(
           examMeta.startDate,
-          DATE_FORMATS.DATETIME_COMMA
-        )}`
+          DATE_FORMATS.DATETIME_COMMA,
+        )}`,
       );
       return;
     }
@@ -344,19 +390,17 @@ export default function TakeExamClientView({
       toast.error(
         `Exam window is closed. Ended on ${formatDateTime(
           examMeta.endDate,
-          DATE_FORMATS.DATETIME_COMMA
-        )}`
+          DATE_FORMATS.DATETIME_COMMA,
+        )}`,
       );
       return;
     }
     await enterFullscreen();
     const startedAt = new Date();
-    setExamStartTime(startedAt);
     examStartTimeRef.current = startedAt;
     setExamStatus("running");
   };
 
-  // --- ANTI-CHEATING LISTENERS ---
   useEffect(() => {
     if (examStatus !== "running") return;
 
@@ -368,7 +412,9 @@ export default function TakeExamClientView({
 
     const handleBlur = () => {
       if (isRunningRef.current && !isFinishingRef.current) {
-        triggerSecurityWarning("Window lost focus or another application was opened.");
+        triggerSecurityWarning(
+          "Window lost focus or another application was opened.",
+        );
       }
     };
 
@@ -391,7 +437,11 @@ export default function TakeExamClientView({
       }
 
       // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && ["I", "i", "J", "j", "C", "c"].includes(e.key)) {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        ["I", "i", "J", "j", "C", "c"].includes(e.key)
+      ) {
         e.preventDefault();
         triggerSecurityWarning("Inspect Element shortcut blocked.");
         return;
@@ -516,7 +566,7 @@ export default function TakeExamClientView({
       if (visitedQuestions.has(qId)) return "unanswered";
       return "not-visited";
     },
-    [markedForReview, userAnswers, visitedQuestions]
+    [markedForReview, userAnswers, visitedQuestions],
   );
 
   // Calculated counters
@@ -560,12 +610,7 @@ export default function TakeExamClientView({
 
   // --- 3. SUBMITTED RESULTS SCREEN ---
   if (examStatus === "submitted" && examResult) {
-    return (
-      <ExamSubmittedScreen
-        examMeta={examMeta}
-        examResult={examResult}
-      />
-    );
+    return <ExamSubmittedScreen examMeta={examMeta} examResult={examResult} />;
   }
 
   // --- 4. RUNNING PROCTORED CONSOLE ---
@@ -625,7 +670,8 @@ export default function TakeExamClientView({
                 onToggleMarkForReview={toggleMarkForReview}
                 onMarkAndNext={handleMarkAndNext}
                 onPrevQuestion={() => {
-                  if (currentQuestionIdx > 0) setCurrentQuestionIdx((i) => i - 1);
+                  if (currentQuestionIdx > 0)
+                    setCurrentQuestionIdx((i) => i - 1);
                 }}
                 onNextQuestion={() => {
                   if (currentQuestionIdx < questions.length - 1) {
@@ -636,7 +682,9 @@ export default function TakeExamClientView({
               />
             ) : (
               <div className="bg-white p-8 rounded border border-slate-200/80 text-center">
-                <p className="text-xs text-slate-500 font-bold">Question not found.</p>
+                <p className="text-xs text-slate-500 font-bold">
+                  Question not found.
+                </p>
               </div>
             )}
 

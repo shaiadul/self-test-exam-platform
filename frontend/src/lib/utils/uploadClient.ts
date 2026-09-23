@@ -31,7 +31,6 @@ export async function uploadFileToStorage(
   file: File,
   folder: string = "general"
 ): Promise<UploadResult> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") || undefined : undefined;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
   const formData = new FormData();
@@ -39,12 +38,12 @@ export async function uploadFileToStorage(
   formData.append("folder", folder);
 
   try {
-    // 1. Direct upload via the backend API. The backend uploads to the bucket
-    //    server-side, so it is unaffected by browser CORS/mixed-content issues.
+    // 1. Direct upload via the backend API with HTTP cookie credentials.
+    //    The backend uploads to the bucket server-side.
     try {
       const apiRes = await fetch(`${apiUrl}/uploads/direct`, {
         method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: "include",
         body: formData,
       });
 
@@ -64,7 +63,7 @@ export async function uploadFileToStorage(
 
     // 2. Fast path: browser uploads straight to the bucket via presigned URL.
     //    Requires the bucket to allow PUT from this origin (CORS).
-    const presignRes = await getPresignedUrlAction(file.name, file.type, folder, token);
+    const presignRes = await getPresignedUrlAction(file.name, file.type, folder);
     if (presignRes.success && presignRes.uploadUrl && presignRes.publicUrl) {
       try {
         const uploadRes = await fetch(presignRes.uploadUrl, {
@@ -86,7 +85,7 @@ export async function uploadFileToStorage(
     }
 
     // 3. Fallback: server action direct upload
-    const directRes = await directUploadAction(formData, token);
+    const directRes = await directUploadAction(formData);
     if (directRes.success && directRes.publicUrl) {
       return {
         success: true,

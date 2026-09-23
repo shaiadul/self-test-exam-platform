@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import EmptyState from "../../../../../components/common/EmptyState";
 import { formatDateTime } from "@/lib/date";
 
 interface StudentAttempt {
@@ -81,18 +80,6 @@ export const TeacherReportTable = ({ students }: TeacherReportTableProps) => {
               </td>
             </tr>
           ))}
-
-          {students.length === 0 && (
-            <tr>
-                <EmptyState
-                  compact
-                  type="reports"
-                  title="No Submissions Found"
-                  description="No student attempts match your criteria."
-                  className="py-8"
-                />
-            </tr>
-          )}
         </tbody>
       </table>
     </div>

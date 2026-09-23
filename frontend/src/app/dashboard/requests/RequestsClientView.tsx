@@ -13,7 +13,6 @@ import {
 import { Input } from "../../../components/ui/Input";
 import CustomSelect from "../../../components/ui/CustomSelect";
 import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
-import { OutlineBtn } from "../../../components/ui/OutlineBtn";
 import { PageContainer } from "../../../components/common/PageContainer";
 import EmptyState from "../../../components/common/EmptyState";
 import {
@@ -48,12 +47,15 @@ export default function RequestsClientView({
   const [requests, setRequests] = useState<any[]>(initialRequests || []);
   const [typeLabel, setTypeLabel] = useState<string>(TYPE_OPTIONS[0]);
   const [packLabel, setPackLabel] = useState<string>(
-    packs && packs.length > 0 ? `${packs[0].title} (#${packs[0].id})` : ""
+    packs && packs.length > 0 ? `${packs[0].title} (#${packs[0].id})` : "",
   );
   const [requestedLimit, setRequestedLimit] = useState<number>(3);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "ok" | "err";
+    text: string;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const type: "pack" | "limit" =
@@ -61,7 +63,7 @@ export default function RequestsClientView({
 
   const packOptions = (packs || []).map((p) => `${p.title} (#${p.id})`);
   const selectedPack = (packs || []).find(
-    (p) => `${p.title} (#${p.id})` === packLabel
+    (p) => `${p.title} (#${p.id})` === packLabel,
   );
 
   const submit = async (e: React.FormEvent) => {
@@ -93,7 +95,10 @@ export default function RequestsClientView({
       setDescription("");
       router.refresh();
     } else {
-      setMessage({ type: "err", text: res.error || "Failed to submit request." });
+      setMessage({
+        type: "err",
+        text: res.error || "Failed to submit request.",
+      });
     }
   };
 
@@ -102,10 +107,15 @@ export default function RequestsClientView({
     const res = await reviewRequestAction(id, status);
     setBusy(false);
     if (res.success) {
-      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+      setRequests((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status } : r)),
+      );
       router.refresh();
     } else {
-      setMessage({ type: "err", text: res.error || "Failed to review request." });
+      setMessage({
+        type: "err",
+        text: res.error || "Failed to review request.",
+      });
     }
   };
 
@@ -119,7 +129,9 @@ export default function RequestsClientView({
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              {isAdmin ? "Request Approvals & Quotas" : "Exam Pack & Quota Requests"}
+              {isAdmin
+                ? "Request Approvals & Quotas"
+                : "Exam Pack & Quota Requests"}
             </h1>
           </div>
         </div>
@@ -249,17 +261,16 @@ export default function RequestsClientView({
         </div>
 
         {requests.length === 0 ? (
-            <EmptyState
-              compact
-              type="tasks"
-              title="No Requests in Queue"
-              description={
-                isAdmin
-                  ? "There are currently no pending or historical quota requests from teachers."
-                  : "You haven't submitted any quota or exam pack expansion requests yet."
-              }
-            className="py-6"
-            />
+          <EmptyState
+            compact
+            type="tasks"
+            title="No Requests in Queue"
+            description={
+              isAdmin
+                ? "There are currently no pending or historical quota requests from teachers."
+                : "You haven't submitted any quota or exam pack expansion requests yet."
+            }
+          />
         ) : (
           <div className="p-4 space-y-3">
             {requests.map((r) => (
@@ -295,8 +306,13 @@ export default function RequestsClientView({
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1">
                       {isAdmin && r.teacherName ? `${r.teacherName} · ` : ""}
-                      {r.type === "limit" && r.packTitle ? `${r.packTitle} · ` : ""}
-                      Requested: <span className="font-bold font-mono text-slate-700">{r.requestedLimit}</span>
+                      {r.type === "limit" && r.packTitle
+                        ? `${r.packTitle} · `
+                        : ""}
+                      Requested:{" "}
+                      <span className="font-bold font-mono text-slate-700">
+                        {r.requestedLimit}
+                      </span>
                       {r.description ? ` · ${r.description}` : ""}
                     </p>
                   </div>

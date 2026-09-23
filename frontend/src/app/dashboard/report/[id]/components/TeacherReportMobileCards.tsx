@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import EmptyState from "../../../../../components/common/EmptyState";
 import { formatDateTime } from "@/lib/date";
 
 interface StudentAttempt {
@@ -81,15 +80,6 @@ export const TeacherReportMobileCards = ({
           </div>
         </div>
       ))}
-
-      {students.length === 0 && (
-        <EmptyState
-          compact
-          type="reports"
-          title="No Submissions Found"
-          description="No student attempts match your search or filter."
-        />
-      )}
     </div>
   );
 };

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 import { FaArrowLeft, FaSave, FaInfoCircle, FaBoxOpen } from "react-icons/fa";
 import CustomSelect from "../../../../components/ui/CustomSelect";
 import { Input } from "../../../../components/ui/Input";
@@ -14,14 +15,14 @@ import { createExamPackAction } from "../../../../lib/actions";
 
 export default function AddExamPackPage() {
   const router = useRouter();
+  const { user } = useUser();
   const [loading, setLoading] = useState(false);
 
   React.useEffect(() => {
-    const role = (typeof window !== "undefined" ? localStorage.getItem("userRole") || "" : "").toLowerCase();
-    if (role === "student") {
+    if (user?.role && user.role.toLowerCase() === "student") {
       router.replace("/dashboard");
     }
-  }, [router]);
+  }, [user, router]);
 
   const [examPackData, setExamPackData] = useState({
     name: "",

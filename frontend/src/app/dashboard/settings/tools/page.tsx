@@ -1,6 +1,6 @@
 "use client";
 
-import { FaTools, FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { OutlineBtn } from "../../../../components/ui/OutlineBtn";

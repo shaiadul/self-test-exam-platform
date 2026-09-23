@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { FaSpinner, FaSearch, FaPlus, FaBoxOpen } from "react-icons/fa";
+import { FaSearch, FaPlus } from "react-icons/fa";
+import { useUser } from "@/context/UserContext";
 import ExamPackCard from "../../../components/dashboard/ExamPackCard";
 import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
 import { PageContainer } from "../../../components/common/PageContainer";
@@ -24,9 +25,9 @@ export default function ManageExamPackClientView({
   currentUserRole,
   packLimit,
 }: ManageExamPackClientViewProps) {
+  const { user } = useUser();
   const [examPacks, setExamPacks] = useState<any[]>(initialPacks || []);
   const [meta, setMeta] = useState<PaginationMeta | undefined>(initialMeta);
-  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -38,14 +39,8 @@ export default function ManageExamPackClientView({
     }
   }, [initialPacks, initialMeta]);
 
-  const userRole =
-    currentUserRole ||
-    (typeof window !== "undefined" ? localStorage.getItem("userRole") : null);
-  const userId =
-    currentUserId ||
-    (typeof window !== "undefined"
-      ? Number(localStorage.getItem("userID"))
-      : null);
+  const userRole = currentUserRole || user?.role || null;
+  const userId = currentUserId || user?.id || null;
 
   const ownedPacks = useMemo(() => {
     let list = examPacks;
@@ -141,12 +136,7 @@ export default function ManageExamPackClientView({
       </div>
 
       {/* Main Grid */}
-      {loading ? (
-        <div className="py-20 flex flex-col items-center justify-center gap-2 text-slate-400 font-mono text-xs">
-          <FaSpinner className="animate-spin text-2xl text-primary" />
-          <span>SYNCHRONIZING EXAM PACK REGISTRY…</span>
-        </div>
-      ) : filteredPacks.length > 0 ? (
+      {filteredPacks.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
           {filteredPacks.map((pack) => (
             <ExamPackCard

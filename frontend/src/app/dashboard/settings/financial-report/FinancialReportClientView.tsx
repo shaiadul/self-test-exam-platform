@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { FaPlus, FaListUl, FaMoneyBillWave } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import EmptyState from "../../../../components/common/EmptyState";
 import { createTransactionAction } from "../../../../lib/actions";

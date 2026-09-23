@@ -72,7 +72,6 @@ export default function ChartCard({
 
   const lastItem = chartData[chartData.length - 1];
   const lastScore = lastItem ? lastItem.value : 0;
-  const deltaVsAvg = lastScore - avg;
 
   return (
     <div className="w-full flex flex-col justify-between h-full">

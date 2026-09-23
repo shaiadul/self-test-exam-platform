@@ -213,8 +213,21 @@ export default function TeacherReportDetailClientView({
           setShowDropdown={setShowDropdown}
         />
 
-        <TeacherReportTable students={sortedStudents} />
-        <TeacherReportMobileCards students={sortedStudents} />
+        {sortedStudents.length > 0 ? (
+          <>
+            <TeacherReportTable students={sortedStudents} />
+            <TeacherReportMobileCards students={sortedStudents} />
+          </>
+        ) : (
+          <EmptyState
+            compact
+            type="reports"
+            title="No Submissions Found"
+            description="No student attempts match your search or filter."
+            actionLabel={searchTerm ? "Clear Search Filter" : undefined}
+            onAction={searchTerm ? () => setSearchTerm("") : undefined}
+          />
+        )}
       </div>
     </PageContainer>
   );
