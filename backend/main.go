@@ -15,6 +15,7 @@ import (
 	"github.com/selftest/backend/internal/infrastructure/persistence"
 	"github.com/selftest/backend/internal/infrastructure/storage"
 	"github.com/selftest/backend/internal/service"
+	"github.com/selftest/backend/middleware"
 )
 
 func main() {
@@ -77,16 +78,22 @@ func main() {
 	uploadHandler := delivery.NewUploadHandler(uploadService)
 	requestHandler := delivery.NewExamRequestHandler(requestService)
 
-	// 4. Build Router with Middlewares
+	// 4. Initialize Rate Limiter
+	rateLimitConfig := config.LoadRateLimitConfig()
+	rateLimitStore := middleware.NewRedisRateLimitStore(config.RedisClient)
+	rateLimiter := middleware.NewRateLimiter(rateLimitConfig, rateLimitStore)
+
+	// 5. Build Router with Middlewares
 	router := delivery.NewRouter(delivery.Handlers{
-		AuthHandler:     authHandler,
-		ExamPackHandler: packHandler,
-		ExamHandler:     examHandler,
-		AttemptHandler:  attemptHandler,
-		ReportHandler:   reportHandler,
-		SystemHandler:   systemHandler,
-		UploadHandler:   uploadHandler,
+		AuthHandler:        authHandler,
+		ExamPackHandler:    packHandler,
+		ExamHandler:        examHandler,
+		AttemptHandler:     attemptHandler,
+		ReportHandler:      reportHandler,
+		SystemHandler:      systemHandler,
+		UploadHandler:      uploadHandler,
 		ExamRequestHandler: requestHandler,
+		RateLimiter:        rateLimiter,
 	})
 
 	port := os.Getenv("PORT")

@@ -13,8 +13,9 @@ type Handlers struct {
 	AttemptHandler  *AttemptHandler
 	ReportHandler   *ReportHandler
 	SystemHandler   *SystemHandler
-	UploadHandler   *UploadHandler
+	UploadHandler      *UploadHandler
 	ExamRequestHandler *ExamRequestHandler
+	RateLimiter        *middleware.RateLimiter
 }
 
 // CorsMiddleware adds standard headers to handle requests from next.js frontend
@@ -36,24 +37,30 @@ func CorsMiddleware(next http.Handler) http.Handler {
 func NewRouter(h Handlers) http.Handler {
 	mux := http.NewServeMux()
 
-	// Public routes
-	mux.HandleFunc("/api/auth/register", h.AuthHandler.Register)
-	mux.HandleFunc("/api/auth/login", h.AuthHandler.Login)
-	mux.HandleFunc("/api/auth/oauth/social", h.AuthHandler.HandleSocialLogin)
-	mux.HandleFunc("/api/auth/oauth/google", h.AuthHandler.HandleOAuthRedirect)
-	mux.HandleFunc("/api/auth/oauth/google/callback", h.AuthHandler.HandleOAuthCallback)
-	mux.HandleFunc("/api/auth/oauth/github", h.AuthHandler.HandleOAuthRedirect)
-	mux.HandleFunc("/api/auth/oauth/github/callback", h.AuthHandler.HandleOAuthCallback)
-	mux.HandleFunc("/api/auth/logout", h.AuthHandler.Logout)
+	// Public & Auth routes
+	if h.AuthHandler != nil {
+		mux.HandleFunc("/api/auth/register", h.AuthHandler.Register)
+		mux.HandleFunc("/api/auth/login", h.AuthHandler.Login)
+		mux.HandleFunc("/api/auth/oauth/social", h.AuthHandler.HandleSocialLogin)
+		mux.HandleFunc("/api/auth/oauth/google", h.AuthHandler.HandleOAuthRedirect)
+		mux.HandleFunc("/api/auth/oauth/google/callback", h.AuthHandler.HandleOAuthCallback)
+		mux.HandleFunc("/api/auth/oauth/github", h.AuthHandler.HandleOAuthRedirect)
+		mux.HandleFunc("/api/auth/oauth/github/callback", h.AuthHandler.HandleOAuthCallback)
+		mux.HandleFunc("/api/auth/logout", h.AuthHandler.Logout)
 
-	// Password reset (public, no auth required)
-	mux.HandleFunc("/api/auth/forgot-password", h.AuthHandler.HandleForgotPassword)
-	mux.HandleFunc("/api/auth/verify-otp", h.AuthHandler.HandleVerifyOTP)
-	mux.HandleFunc("/api/auth/reset-password", h.AuthHandler.HandleResetPassword)
+		// Password reset (public, no auth required)
+		mux.HandleFunc("/api/auth/forgot-password", h.AuthHandler.HandleForgotPassword)
+		mux.HandleFunc("/api/auth/verify-otp", h.AuthHandler.HandleVerifyOTP)
+		mux.HandleFunc("/api/auth/reset-password", h.AuthHandler.HandleResetPassword)
 
-	// Protected routes using auth middleware
-	mux.Handle("/api/auth/profile", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.GetProfile)))
-	mux.Handle("/api/auth/complete-profile", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.CompleteProfile)))
+		// Protected routes using auth middleware
+		mux.Handle("/api/auth/profile", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.GetProfile)))
+		mux.Handle("/api/auth/complete-profile", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.CompleteProfile)))
+
+		// Admin user management
+		mux.Handle("/api/admin/users", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.HandleAdminUsers)))
+		mux.Handle("/api/admin/users/", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.HandleAdminUsers)))
+	}
 
 	// Upload routes
 	if h.UploadHandler != nil {
@@ -62,21 +69,30 @@ func NewRouter(h Handlers) http.Handler {
 	}
 
 	// Exam Pack routes
-	mux.Handle("/api/exam-packs", middleware.AuthMiddleware(http.HandlerFunc(h.ExamPackHandler.HandleExamPacks)))
-	mux.Handle("/api/exam-packs/", middleware.AuthMiddleware(http.HandlerFunc(h.ExamPackHandler.HandleExamPacks)))
+	if h.ExamPackHandler != nil {
+		mux.Handle("/api/exam-packs", middleware.AuthMiddleware(http.HandlerFunc(h.ExamPackHandler.HandleExamPacks)))
+		mux.Handle("/api/exam-packs/", middleware.AuthMiddleware(http.HandlerFunc(h.ExamPackHandler.HandleExamPacks)))
+	}
 
 	// Exam routes
-	mux.Handle("/api/exams", middleware.AuthMiddleware(http.HandlerFunc(h.ExamHandler.HandleExams)))
-	mux.Handle("/api/exams/", middleware.AuthMiddleware(http.HandlerFunc(h.ExamHandler.HandleExams)))
+	if h.ExamHandler != nil {
+		mux.Handle("/api/exams", middleware.AuthMiddleware(http.HandlerFunc(h.ExamHandler.HandleExams)))
+		mux.Handle("/api/exams/", middleware.AuthMiddleware(http.HandlerFunc(h.ExamHandler.HandleExams)))
+	}
 
-	// Dashboard stats
-	mux.Handle("/api/dashboard/stats", middleware.AuthMiddleware(http.HandlerFunc(h.ReportHandler.GetDashboardStats)))
+	// Dashboard stats & Reports
+	if h.ReportHandler != nil {
+		mux.Handle("/api/dashboard/stats", middleware.AuthMiddleware(http.HandlerFunc(h.ReportHandler.GetDashboardStats)))
+		mux.Handle("/api/teacher/reports", middleware.AuthMiddleware(http.HandlerFunc(h.ReportHandler.HandleTeacherReports)))
+		mux.Handle("/api/teacher/reports/", middleware.AuthMiddleware(http.HandlerFunc(h.ReportHandler.HandleTeacherReports)))
+		mux.Handle("/api/admin/analysis", middleware.AuthMiddleware(http.HandlerFunc(h.ReportHandler.GetExamAnalysisStats)))
+	}
 
-	// Attempts & Reporting routes
-	mux.Handle("/api/attempts", middleware.AuthMiddleware(http.HandlerFunc(h.AttemptHandler.HandleAttempts)))
-	mux.Handle("/api/attempts/", middleware.AuthMiddleware(http.HandlerFunc(h.AttemptHandler.HandleAttempts)))
-	mux.Handle("/api/teacher/reports", middleware.AuthMiddleware(http.HandlerFunc(h.ReportHandler.HandleTeacherReports)))
-	mux.Handle("/api/teacher/reports/", middleware.AuthMiddleware(http.HandlerFunc(h.ReportHandler.HandleTeacherReports)))
+	// Attempts routes
+	if h.AttemptHandler != nil {
+		mux.Handle("/api/attempts", middleware.AuthMiddleware(http.HandlerFunc(h.AttemptHandler.HandleAttempts)))
+		mux.Handle("/api/attempts/", middleware.AuthMiddleware(http.HandlerFunc(h.AttemptHandler.HandleAttempts)))
+	}
 
 	// Exam pack / limit requests
 	if h.ExamRequestHandler != nil {
@@ -84,23 +100,22 @@ func NewRouter(h Handlers) http.Handler {
 		mux.Handle("/api/requests/", middleware.AuthMiddleware(http.HandlerFunc(h.ExamRequestHandler.HandleRequests)))
 	}
 
-	// Admin Settings routes
-	mux.Handle("/api/admin/users", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.HandleAdminUsers)))
-	mux.Handle("/api/admin/users/", middleware.AuthMiddleware(http.HandlerFunc(h.AuthHandler.HandleAdminUsers)))
-	mux.Handle("/api/admin/permissions", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandlePermissions)))
-	mux.Handle("/api/admin/permissions/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandlePermissions)))
+	// Admin Settings & System routes
+	if h.SystemHandler != nil {
+		mux.Handle("/api/admin/permissions", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandlePermissions)))
+		mux.Handle("/api/admin/permissions/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandlePermissions)))
+		mux.Handle("/api/assets", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleSystemAssets)))
+		mux.Handle("/api/assets/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleSystemAssets)))
+		mux.Handle("/api/transactions", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleTransactions)))
+		mux.Handle("/api/transactions/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleTransactions)))
+		mux.Handle("/api/institutions/suggest", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
+		mux.Handle("/api/admin/institutions/suggestions", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
+		mux.Handle("/api/admin/institutions/suggestions/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
+	}
+	var handler http.Handler = mux
+	if h.RateLimiter != nil {
+		handler = h.RateLimiter.Middleware(handler)
+	}
 
-	// Assets, Transactions, and Analysis routes
-	mux.Handle("/api/admin/analysis", middleware.AuthMiddleware(http.HandlerFunc(h.ReportHandler.GetExamAnalysisStats)))
-	mux.Handle("/api/assets", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleSystemAssets)))
-	mux.Handle("/api/assets/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleSystemAssets)))
-	mux.Handle("/api/transactions", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleTransactions)))
-	mux.Handle("/api/transactions/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleTransactions)))
-
-	// Institution suggestions (user submit + admin approve/reject)
-	mux.Handle("/api/institutions/suggest", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
-	mux.Handle("/api/admin/institutions/suggestions", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
-	mux.Handle("/api/admin/institutions/suggestions/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
-
-	return middleware.LoggerMiddleware(CorsMiddleware(mux))
+	return middleware.LoggerMiddleware(CorsMiddleware(handler))
 }
