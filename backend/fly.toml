@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for self-test-exam-platform on 2026-09-27T16:31:11Z
+# fly.toml app configuration file generated for self-test-exam-platform on 2026-09-27T16:40:20Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
 app = 'self-test-exam-platform'
-primary_region = 'ams'
+primary_region = 'sin'
 
 [build]
 
