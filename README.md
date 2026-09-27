@@ -39,7 +39,7 @@ The backend follows a **Clean / Hexagonal architecture** (`domain`, `service`, `
 
 ---
 
-## Architecture
+## Architecture:
 
 ```
 self-test-exam-platform/
