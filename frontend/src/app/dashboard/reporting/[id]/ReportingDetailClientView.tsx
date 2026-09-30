@@ -168,7 +168,7 @@ export default function ReportingDetailClientView({
             examName={attempt.examName || "Mock Exam"}
             examDate={formatDate(attempt.createdAt, DATE_FORMATS.DATETIME_FULL, "Recent")}
             result={{
-              total: (attempt.correct || 0) + (attempt.wrong || 0),
+              total: attempt.total || ((attempt.correct || 0) + (attempt.wrong || 0)),
               correct: attempt.correct || 0,
               wrong: attempt.wrong || 0,
               negative: attempt.negative || 0,
@@ -231,21 +231,23 @@ export default function ReportingDetailClientView({
           </div>
         )}
 
-        {/* Scorecard Component */}
-        <div className="bg-white rounded border border-slate-200/80 p-4 sm:p-6 shadow-2xs">
-          <Scorecard
-            result={{
-              total: (attempt.correct || 0) + (attempt.wrong || 0),
-              correct: attempt.correct || 0,
-              wrong: attempt.wrong || 0,
-              negative: attempt.negative || 0,
-              finalScore: attempt.finalScore || 0,
-              passed: attempt.passed || false,
-            }}
-            totalMarks={attempt.totalMarks || attempt.total || 100}
-            passingPercent={attempt.passingMarks || 33}
-          />
-        </div>
+        {/* Scorecard Component - Only visible if feedback is enabled */}
+        {attempt.feedback !== false && (
+          <div className="bg-white rounded border border-slate-200/80 p-4 sm:p-6 shadow-2xs">
+            <Scorecard
+              result={{
+                total: attempt.total || ((attempt.correct || 0) + (attempt.wrong || 0)),
+                correct: attempt.correct || 0,
+                wrong: attempt.wrong || 0,
+                negative: attempt.negative || 0,
+                finalScore: attempt.finalScore || 0,
+                passed: attempt.passed || false,
+              }}
+              totalMarks={attempt.totalMarks || attempt.total || 100}
+              passingPercent={attempt.passingMarks || 33}
+            />
+          </div>
+        )}
 
         {/* Detailed Question Solution Analysis - Only visible if feedback is enabled */}
         {attempt.feedback !== false ? (

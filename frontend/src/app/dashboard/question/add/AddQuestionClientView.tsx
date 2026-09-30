@@ -76,7 +76,7 @@ export default function AddQuestionClientView({
       setExamName(selected.name);
     }
     try {
-      const qList = await getQuestionsAction(eId);
+      const qList = await getQuestionsAction(eId, undefined, undefined, true);
       setQuestions(qList || []);
     } catch {
       toast.error("Failed to load questions.");
@@ -114,7 +114,7 @@ export default function AddQuestionClientView({
       if (res.success) {
         toast.success("Question deleted.");
         if (editingId === q.id) resetForm();
-        const updatedQs = await getQuestionsAction(examId);
+        const updatedQs = await getQuestionsAction(examId, undefined, undefined, true);
         setQuestions(updatedQs || []);
       } else {
         toast.error(res.error || "Failed to delete question.");
@@ -205,7 +205,7 @@ export default function AddQuestionClientView({
         );
         resetForm();
         // Refresh question list
-        const updatedQs = await getQuestionsAction(examId);
+        const updatedQs = await getQuestionsAction(examId, undefined, undefined, true);
         setQuestions(updatedQs || []);
       } else {
         toast.error(

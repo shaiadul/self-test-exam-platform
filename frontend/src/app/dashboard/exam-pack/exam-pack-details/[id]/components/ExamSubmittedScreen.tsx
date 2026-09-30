@@ -31,7 +31,7 @@ export const ExamSubmittedScreen: React.FC<ExamSubmittedScreenProps> = ({
             examName={examMeta.title}
             examDate={formatDate(new Date(), DATE_FORMATS.DATETIME_FULL)}
             result={{
-              total: (examResult.correct || 0) + (examResult.wrong || 0),
+              total: examResult.total || ((examResult.correct || 0) + (examResult.wrong || 0)),
               correct: examResult.correct || 0,
               wrong: examResult.wrong || 0,
               negative: examResult.negative || 0,
@@ -62,7 +62,7 @@ export const ExamSubmittedScreen: React.FC<ExamSubmittedScreenProps> = ({
           {allowFeedback ? (
             <Scorecard
               result={{
-                total: (examResult.correct || 0) + (examResult.wrong || 0),
+                total: examResult.total || ((examResult.correct || 0) + (examResult.wrong || 0)),
                 correct: examResult.correct || 0,
                 wrong: examResult.wrong || 0,
                 negative: examResult.negative || 0,

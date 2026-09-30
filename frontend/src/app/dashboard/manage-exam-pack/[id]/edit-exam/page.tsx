@@ -31,7 +31,7 @@ export default async function EditExamPage({
   const [assets, exam, questions, pack] = await Promise.all([
     getSystemAssetsAction(),
     eId ? getExamDetailsAction(eId) : Promise.resolve(null),
-    eId ? getQuestionsAction(eId) : Promise.resolve([]),
+    eId ? getQuestionsAction(eId, undefined, undefined, true) : Promise.resolve([]),
     role === "teacher" && packId ? getExamPackDetailsAction(packId) : Promise.resolve(null),
   ]);
 

@@ -628,10 +628,11 @@ func (s *ExamService) DeleteExam(userID int, id string) error {
 	return s.repo.DeleteExam(id)
 }
 
-// GetQuestions returns the questions of an exam. Correct answers are only
-// included for teachers who own the exam (and administrators); students receive
-// sanitized questions so the answer key cannot be read from the API.
-func (s *ExamService) GetQuestions(userID int, examID, passcode string) ([]exam.Question, error) {
+// GetQuestions returns the questions of an exam. Correct answers are strictly
+// withheld unless the user is explicitly in management mode (isManage = true)
+// AND has permission to edit the exam. During exam taking, correct answers
+// are NEVER returned to anyone (including teachers and administrators).
+func (s *ExamService) GetQuestions(userID int, examID, passcode string, isManage bool) ([]exam.Question, error) {
 	e, err := s.repo.GetExamByID(examID)
 	if err != nil {
 		return nil, err
@@ -655,12 +656,15 @@ func (s *ExamService) GetQuestions(userID int, examID, passcode string) ([]exam.
 		return nil, err
 	}
 
-	if !s.canSeeAnswers(userID, e) {
-		for i := range questions {
-			questions[i].CorrectAnswer = ""
+	allowAnswers := isManage && s.canSeeAnswers(userID, e)
+	sanitized := make([]exam.Question, len(questions))
+	for i, q := range questions {
+		if !allowAnswers {
+			q.CorrectAnswer = ""
 		}
+		sanitized[i] = q
 	}
-	return questions, nil
+	return sanitized, nil
 }
 
 func (s *ExamService) canSeeAnswers(userID int, e *exam.Exam) bool {

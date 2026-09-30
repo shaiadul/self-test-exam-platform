@@ -5,7 +5,6 @@ export interface QuestionData {
   type: "mcq" | "passage" | "picture";
   questionText: string;
   options: string[];
-  correctAnswer: string;
   passage?: string;
   pictureUrl?: string;
 }

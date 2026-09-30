@@ -149,8 +149,18 @@ func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.Submi
 		userName = u.Name
 	}
 
+	responseAttempt := newAttempt
+	if !targetExam.Feedback && !s.isStaff(userID) {
+		// Withhold scoring details from student when instant feedback is disabled
+		responseAttempt.Correct = 0
+		responseAttempt.Wrong = 0
+		responseAttempt.Negative = 0
+		responseAttempt.FinalScore = 0
+		responseAttempt.Passed = false
+	}
+
 	return &attempt.SubmitExamResponse{
-		ExamAttempt: newAttempt,
+		ExamAttempt: responseAttempt,
 		UserName:    userName,
 		Feedback:    targetExam.Feedback,
 	}, nil
@@ -318,6 +328,20 @@ func (s *AttemptService) GetAttemptDetails(userID, id int) (*attempt.AttemptDeta
 		userName = u.Name
 	}
 
+	correct := a.Correct
+	wrong := a.Wrong
+	negative := a.Negative
+	finalScore := a.FinalScore
+	passed := a.Passed
+
+	if targetExam != nil && !targetExam.Feedback && !s.isStaff(userID) {
+		correct = 0
+		wrong = 0
+		negative = 0
+		finalScore = 0
+		passed = false
+	}
+
 	return &attempt.AttemptDetailsResponse{
 		ID:               a.ID,
 		UserID:           a.UserID,
@@ -328,11 +352,11 @@ func (s *AttemptService) GetAttemptDetails(userID, id int) (*attempt.AttemptDeta
 		PackName:         packName,
 		Answers:          a.Answers,
 		Total:            a.Total,
-		Correct:          a.Correct,
-		Wrong:            a.Wrong,
-		Negative:         a.Negative,
-		FinalScore:       a.FinalScore,
-		Passed:           a.Passed,
+		Correct:          correct,
+		Wrong:            wrong,
+		Negative:         negative,
+		FinalScore:       finalScore,
+		Passed:           passed,
 		WarningCount:     a.WarningCount,
 		SecurityMessage:  a.SecurityMessage,
 		DurationSeconds:  a.DurationSeconds,

@@ -278,7 +278,8 @@ func (h *ExamHandler) GetQuestions(w http.ResponseWriter, r *http.Request, examI
 		return
 	}
 
-	questions, err := h.examService.GetQuestions(userID, examID, r.URL.Query().Get("passcode"))
+	isManage := r.URL.Query().Get("manage") == "true"
+	questions, err := h.examService.GetQuestions(userID, examID, r.URL.Query().Get("passcode"), isManage)
 	if err != nil {
 		switch err {
 		case service.ErrExamNotFound:

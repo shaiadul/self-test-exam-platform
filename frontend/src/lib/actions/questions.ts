@@ -3,10 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { fetcherWithAuth } from "./fetcher";
 
-export async function getQuestionsAction(examId: string, passcode?: string, clientToken?: string) {
+export async function getQuestionsAction(
+	examId: string,
+	passcode?: string,
+	clientToken?: string,
+	isManage?: boolean
+) {
+	const params: Record<string, string> = {};
+	if (passcode) params.passcode = passcode;
+	if (isManage) params.manage = "true";
+
 	const data = await fetcherWithAuth<any[]>(
 		`/exams/${examId}/questions`,
-		passcode ? { params: { passcode } } : {},
+		Object.keys(params).length > 0 ? { params } : {},
 		clientToken
 	);
 	return data || [];

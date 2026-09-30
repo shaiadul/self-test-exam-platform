@@ -60,9 +60,6 @@ export default function TakeExamClientView({
         questionText:
           q.questionText || q.text || q.prompt || `Question ${idx + 1}`,
         options: parsedOptions,
-        correctAnswer:
-          q.correctAnswer ||
-          (parsedOptions.length ? parsedOptions[q.correctIndex || 0] : ""),
         passage: q.passage || undefined,
         pictureUrl: q.pictureUrl || undefined,
       };
