@@ -24,9 +24,8 @@ export const Footer = () => {
   return (
     <footer className="w-full bg-slate-950 text-slate-400 py-16 border-t border-slate-900 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-        {/* Brand Column */}
         <div className="space-y-4">
-          <Link href="/" className="inline-block">
+          {/* <Link href="/" className="inline-block">
             <Image
               src="/global/logo2.png"
               alt="Self Test"
@@ -34,7 +33,7 @@ export const Footer = () => {
               height={32}
               className="brightness-200 contrast-200 w-auto h-8"
             />
-          </Link>
+          </Link> */}
           <p className="text-sm text-slate-400 leading-relaxed font-medium">
             Unleashing academic potential through structured mock assessments, dynamic scorecards, and instant step-by-step evaluations.
           </p>

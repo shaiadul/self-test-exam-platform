@@ -1,69 +1,71 @@
 "use client";
 
-import React, { useRef, useState, DragEvent } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
-import Image from "next/image";
-import { FaCloudUploadAlt } from "react-icons/fa";
-import CustomSelect from "../../../../components/ui/CustomSelect"; // adjust path if needed
+import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
+import { FaArrowLeft, FaSave, FaInfoCircle, FaBoxOpen } from "react-icons/fa";
+import CustomSelect from "../../../../components/ui/CustomSelect";
 import { Input } from "../../../../components/ui/Input";
 import { PageContainer } from "../../../../components/common/PageContainer";
-
+import ImageUploader from "../../../../components/ui/ImageUploader";
+import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
+import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { createExamPackAction } from "../../../../lib/actions";
-import { useRouter } from "next/navigation";
 
 export default function AddExamPackPage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [dragActive, setDragActive] = useState(false);
+  const { user } = useUser();
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (user?.role && user.role.toLowerCase() === "student") {
+      router.replace("/dashboard");
+    }
+  }, [user, router]);
+
   const [examPackData, setExamPackData] = useState({
     name: "",
     details: "",
-    level: "",
-    batch: "",
+    level: "HSC",
+    batch: "2025",
     image: "",
   });
 
-  // --- Image Upload Handlers ---
-  const handleFileChange = (file: File) => {
-    const imageUrl = URL.createObjectURL(file);
-    setExamPackData({ ...examPackData, image: imageUrl });
-  };
-
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(true);
-  };
-
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(false);
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleFileChange(file);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!examPackData.name.trim()) {
+      toast.error("Please provide an Exam Pack title.");
+      return;
+    }
+    if (examPackData.name.trim().length < 3) {
+      toast.error("Exam Pack title must be at least 3 characters long.");
+      return;
+    }
+    if (!examPackData.details.trim()) {
+      toast.error("Please provide an Exam Pack description.");
+      return;
+    }
+    if (examPackData.details.trim().length < 5) {
+      toast.error("Exam Pack description must be at least 5 characters long.");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await createExamPackAction({
-        title: examPackData.name,
-        description: examPackData.details,
+        title: examPackData.name.trim(),
+        description: examPackData.details.trim(),
         category: examPackData.level || "General",
         image: examPackData.image || "/global/test.png",
       });
       if (res.success) {
-        toast.success("Exam Pack created successfully.");
+        toast.success("Exam Pack container initialized successfully.");
         router.push("/dashboard/manage-exam-pack");
       } else {
         toast.error(res.error || "Failed to create exam pack.");
       }
-    } catch (err) {
+    } catch {
       toast.error("Failed to create exam pack.");
     } finally {
       setLoading(false);
@@ -71,167 +73,165 @@ export default function AddExamPackPage() {
   };
 
   return (
-    <PageContainer>
-      <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-[#dd6b01]">
-        Add New Exam Pack
-      </h1>
+    <PageContainer className="space-y-4 sm:space-y-6 animate-fadeIn pb-12">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+        <div className="flex items-center gap-3">
+          <OutlineBtn
+            link="/dashboard/manage-exam-pack"
+            className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200"
+            title="Return to Pack List"
+          >
+            <FaArrowLeft className="text-xs" />
+          </OutlineBtn>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Create New Exam Pack
+            </h1>
+          </div>
+        </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start"
-      >
-        {/* --- Image Upload (Drag & Drop) --- */}
-        <div
-          className={`w-full h-96 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
-            dragActive
-              ? "border-[#dd6b01] bg-orange-50"
-              : "border-gray-300 bg-gray-100 hover:border-[#dd6b01] hover:bg-orange-50/30"
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {examPackData.image ? (
-            <div className="relative w-full h-full rounded-2xl overflow-hidden">
-              <Image
-                src={examPackData.image}
-                alt="Exam Pack"
-                fill
-                className="object-cover object-center w-full h-full rounded-2xl"
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+          <FaBoxOpen className="text-xs" />
+          Create Pack
+        </span>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
+          {/* Cover Media Column */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="relative overflow-hidden rounded bg-white border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs">
+              <span className="text-xs font-bold text-slate-700 block mb-2">
+                Pack Cover Image
+              </span>
+              <ImageUploader
+                folder="exam-packs"
+                height="h-64"
+                value={examPackData.image}
+                onChange={(url) =>
+                  setExamPackData((prev) => ({ ...prev, image: url || "" }))
+                }
+                description="Aspect ratio 16:9 recommended. Max 2MB."
               />
             </div>
-          ) : (
-            <>
-              <FaCloudUploadAlt className="text-5xl text-[#dd6b01] mb-3" />
-              <p className="text-gray-700 font-medium">
-                Drag & drop image here
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                or click to upload (JPG, PNG)
-              </p>
-            </>
-          )}
 
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                handleFileChange(e.target.files[0]);
-              }
-            }}
-          />
-        </div>
-
-        {/* --- Form Inputs --- */}
-        <div className="space-y-5">
-          <Input
-            label="Exam Pack Name"
-            placeholder="Exam Pack Name*"
-            value={examPackData.name}
-            onChange={(e) =>
-              setExamPackData({ ...examPackData, name: e.target.value })
-            }
-            required
-          />
-
-          <div>
-            <label className="text-sm font-bold text-gray-700 ml-1 block mb-2">
-              Details (description)
-            </label>
-            <textarea
-              placeholder="Details*"
-              className="w-full px-4 py-3.5 text-base outline-none border-2 border-gray-200 rounded-xl resize-none focus:border-[#dd6b01] min-h-[120px] bg-white transition-all font-medium text-gray-700 focus:ring-4 focus:ring-[#dd6b01]/10 outline-none"
-              value={examPackData.details}
-              onChange={(e) =>
-                setExamPackData({ ...examPackData, details: e.target.value })
-              }
-              required
-            />
+            <div className="relative overflow-hidden rounded bg-slate-50 border border-slate-200/80 p-3 sm:p-4 text-[11px] leading-relaxed text-slate-600 space-y-2">
+              <div className="flex items-center gap-1.5 text-slate-900 font-bold text-xs">
+                <FaInfoCircle className="text-primary" />
+                <span>Container Structure Guidelines</span>
+              </div>
+              <ul className="space-y-1 text-slate-500 font-medium">
+                <li>• Each pack holds individual exam question papers.</li>
+                <li>
+                  • Candidate access policies are derived from syllabus level.
+                </li>
+                <li>
+                  • Published containers can be edited or augmented anytime.
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <CustomSelect
-              label="Level"
-              placeholder="Select Level"
-              options={[
-                "PSC",
-                "SSC",
-                "HSC",
-                "BCS",
-                "BS",
-                "BA",
-                "BBA",
-                "MA",
-                "PHD",
-              ]}
-              value={examPackData.level}
-              onChange={(val) =>
-                setExamPackData({ ...examPackData, level: val })
-              }
-            />
+          <div className="lg:col-span-8 space-y-4">
+            <div className="relative rounded bg-white border border-slate-200/80 p-3.5 sm:p-5 shadow-2xs space-y-4">
+              <Input
+                label="Exam Pack Title *"
+                placeholder="e.g. Higher Secondary Physics Board Prep"
+                value={examPackData.name}
+                onChange={(e) =>
+                  setExamPackData({ ...examPackData, name: e.target.value })
+                }
+                required
+              />
 
-            <CustomSelect
-              label="Batch"
-              placeholder="Select Batch"
-              options={Array.from({ length: 20 }, (_, i) =>
-                (2010 + i).toString(),
-              )}
-              value={examPackData.batch}
-              onChange={(val) =>
-                setExamPackData({ ...examPackData, batch: val })
-              }
-            />
+              <div className="space-y-1.5">
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-600 block">
+                  Curriculum Description / Objectives *
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="Provide syllabus outline, target topics, and chapter coverage..."
+                  className="w-full p-3 bg-white border border-slate-300 rounded text-xs text-slate-800 placeholder:text-slate-400 font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all resize-none"
+                  value={examPackData.details}
+                  onChange={(e) =>
+                    setExamPackData({
+                      ...examPackData,
+                      details: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <CustomSelect
+                  label="Target Academic Level"
+                  placeholder="Select Level"
+                  options={[
+                    "PSC",
+                    "SSC",
+                    "HSC",
+                    "Admission",
+                    "BCS",
+                    "Undergraduate",
+                    "Postgraduate",
+                  ]}
+                  value={examPackData.level}
+                  onChange={(val) =>
+                    setExamPackData({ ...examPackData, level: val })
+                  }
+                />
+
+                <CustomSelect
+                  label="Target Examination Batch"
+                  placeholder="Select Batch"
+                  options={["2024", "2025", "2026", "2027", "2028"]}
+                  value={examPackData.batch}
+                  onChange={(val) =>
+                    setExamPackData({ ...examPackData, batch: val })
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Submit HUD */}
+            <div className="rounded bg-white border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
+              <div className="text-xs text-slate-500">
+                Ready to save your exam pack
+              </div>
+
+              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end">
+                <OutlineBtn
+                  type="button"
+                  onClick={() => router.back()}
+                  className="!text-xs !py-1.5 !px-3.5 !rounded"
+                >
+                  Cancel
+                </OutlineBtn>
+
+                <PrimaryBtn
+                  type="submit"
+                  disabled={loading}
+                  className="!text-xs !py-1.5 !px-4 gap-1.5 !rounded shadow-2xs"
+                >
+                  {loading ? (
+                    <>
+                      <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full" />
+                      <span>Saving Exam Pack…</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaSave className="text-[11px]" />
+                      <span>Save Exam Pack</span>
+                    </>
+                  )}
+                </PrimaryBtn>
+              </div>
+            </div>
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-[#dd6b01] to-[#f0b176] text-white font-semibold text-base py-3 rounded-full hover:opacity-90 transition-all duration-500 cursor-pointer disabled:opacity-50"
-          >
-            {loading ? "Saving..." : "Save Exam Pack"}
-          </button>
         </div>
       </form>
-
-      {/* --- Relevant Rules Section --- */}
-      <div className="mt-14 bg-orange-50 border border-[#fcd6aa] rounded-2xl p-6 md:p-10 shadow-sm">
-        <h2 className="text-xl md:text-2xl font-semibold text-[#dd6b01] mb-4">
-          📘 Relevant Rules for Creating Exam Packs
-        </h2>
-
-        <ul className="list-disc list-inside space-y-2 text-gray-700 text-base leading-relaxed">
-          <li>
-            The <span className="font-bold">Exam Pack Name</span> must be unique
-            and descriptive.
-          </li>
-          <li>
-            Ensure the uploaded image is high-quality and under{" "}
-            <span className="font-bold">2MB</span> in size.
-          </li>
-          <li>
-            Use accurate <span className="font-bold">Level</span> and{" "}
-            <span className="font-bold">Batch</span> to categorize properly.
-          </li>
-          <li>
-            Include detailed information in the{" "}
-            <span className="font-bold">“Details”</span> section for better
-            clarity.
-          </li>
-          <li>
-            Once published, exam packs can be edited but not deleted directly
-            without admin permission.
-          </li>
-        </ul>
-
-        <p className="mt-5 text-gray-600 text-sm italic">
-          Tip: Well-organized exam packs help students quickly find relevant
-          materials.
-        </p>
-      </div>
     </PageContainer>
   );
 }

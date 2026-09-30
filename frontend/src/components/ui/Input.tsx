@@ -32,19 +32,19 @@ export const Input = ({
       )}
       <div className="relative group">
         <div className={cn(
-          "flex items-center bg-white border-2 rounded-xl transition-all duration-200 overflow-hidden",
+          "flex items-center bg-white border rounded transition-all duration-150 overflow-hidden",
           error 
-            ? "border-red-500 ring-4 ring-red-500/10" 
-            : "border-gray-200 group-hover:border-primary/50 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10"
+            ? "border-destructive ring-2 ring-destructive/10" 
+            : "border-slate-300 hover:border-slate-400 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
         )}>
           {prefix && (
-            <span className="px-4 py-3 bg-gray-50 border-r-2 border-gray-200 text-gray-500 font-bold text-sm">
+            <span className="px-3 py-2 bg-slate-50 border-r border-slate-200 text-slate-500 font-semibold text-xs">
               {prefix}
             </span>
           )}
           
           {icon && (
-            <span className="pl-4 text-gray-400 group-focus-within:text-primary transition-colors">
+            <span className="pl-3 text-slate-400 group-focus-within:text-primary transition-colors text-xs">
               {icon}
             </span>
           )}
@@ -52,7 +52,7 @@ export const Input = ({
           <input
             {...props}
             className={cn(
-              "w-full px-4 py-3.5 text-gray-700 placeholder:text-gray-400 outline-none bg-transparent font-medium",
+              "w-full px-3 py-2 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 outline-none bg-transparent font-medium",
               className
             )}
           />

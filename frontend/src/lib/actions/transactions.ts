@@ -1,56 +1,37 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { API_URL } from "./constants";
-import { getAuthHeader } from "./common";
+import { fetcherWithAuth } from "./fetcher";
 
-export async function getTransactionsAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/transactions`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return [];
-		return await response.json();
-	} catch (error) {
-		return [];
-	}
+export async function getTransactionsAction(clientToken?: string) {
+	const data = await fetcherWithAuth<any[]>("/transactions", {}, clientToken);
+	return data || [];
 }
 
-export async function getFinancialSummaryAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/transactions/summary`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return null;
-		return await response.json();
-	} catch (error) {
-		return null;
-	}
+export async function getFinancialSummaryAction(clientToken?: string) {
+	return await fetcherWithAuth<any>("/transactions/summary", {}, clientToken);
 }
 
-export async function createTransactionAction(type: string, amount: number, description: string) {
+export async function createTransactionAction(
+	type: string,
+	amount: number,
+	description: string,
+	clientToken?: string
+) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/transactions`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
+		const transaction = await fetcherWithAuth<any>(
+			"/transactions",
+			{
+				method: "POST",
+				body: JSON.stringify({ type, amount, description }),
 			},
-			body: JSON.stringify({ type, amount, description }),
-		});
+			clientToken
+		);
 
-		const data = await response.json();
-		if (!response.ok) throw new Error(data.error || "Failed to create transaction");
+		if (!transaction) throw new Error("Failed to create transaction");
 
 		revalidatePath("/dashboard/settings/financial-report");
-		return { success: true, transaction: data };
+		return { success: true, transaction };
 	} catch (error: any) {
 		return { success: false, error: error.message };
 	}

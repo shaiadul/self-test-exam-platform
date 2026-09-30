@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { formatDate, DATE_FORMATS } from "@/lib/date";
 
 interface CertificatePrintLayoutProps {
   candidateName?: string;
@@ -21,12 +22,7 @@ interface CertificatePrintLayoutProps {
 export default function CertificatePrintLayout({
   candidateName = "Md Saidul Basar",
   examName,
-  examDate = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }),
+  examDate = formatDate(new Date(), DATE_FORMATS.DATETIME_FULL),
   result,
   totalMarks,
 }: CertificatePrintLayoutProps) {
@@ -71,7 +67,7 @@ export default function CertificatePrintLayout({
       `}} />
 
       {/* Decorative Ornate Frame */}
-      <div className="border-8 border-double border-[#dd6b01] rounded-3xl p-6 h-full flex flex-col justify-between relative bg-white box-border">
+      <div className="border-8 border-double border-[#dd6b01] rounded p-6 h-full flex flex-col justify-between relative bg-white box-border">
         
         {/* Certificate Corners */}
         <div className="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-[#dd6b01]" />

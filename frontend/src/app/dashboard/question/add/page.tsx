@@ -24,7 +24,7 @@ export default async function AddQuestionPage({
   if (exam) {
     [pack, initialQuestions] = await Promise.all([
       getExamPackDetailsAction(exam.examPackId),
-      getQuestionsAction(examIdParam!),
+      getQuestionsAction(examIdParam!, undefined, undefined, true),
     ]);
   }
 

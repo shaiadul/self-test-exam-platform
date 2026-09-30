@@ -2,65 +2,21 @@
 
 import React, { useState } from "react";
 import { toast } from "sonner";
-import Image from "next/image";
-import { motion } from "framer-motion";
-import { FaBookOpen, FaImage, FaListUl, FaPlusCircle, FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
 import CustomSelect from "../../../../components/ui/CustomSelect";
-import ImageUploader from "../../../../components/ui/ImageUploader";
-import { MdOutlineDeleteSweep } from "react-icons/md";
+import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import { useRouter } from "next/navigation";
 import {
   getExamsAction,
   createQuestionAction,
-  getQuestionsAction
+  updateQuestionAction,
+  deleteQuestionAction,
+  getQuestionsAction,
 } from "../../../../lib/actions";
-
-type QuestionType = "mcq" | "passage" | "picture";
-
-interface Question {
-  id: number | string;
-  type: QuestionType;
-  questionText: string;
-  options: string[];
-  correctAnswer: string;
-  passage?: string;
-  pictureUrl?: string | null;
-}
-
-const OptionInput = ({
-  value,
-  onChange,
-  onRemove,
-  placeholder,
-  optionCount,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  onRemove: () => void;
-  placeholder: string;
-  optionCount: number;
-}) => (
-  <div className="flex items-center gap-2">
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-[#dd6b01] focus:ring-1 focus:ring-[#dd6b01]"
-    />
-    {optionCount > 2 && (
-      <button
-        type="button"
-        onClick={onRemove}
-        className="text-red-500 hover:text-red-700 text-sm font-bold p-1 cursor-pointer"
-        title="Remove Option"
-      >
-        ✕
-      </button>
-    )}
-  </div>
-);
+import { Question, QuestionType } from "./types";
+import { QuestionComposerForm } from "./components/QuestionComposerForm";
+import { QuestionBankList } from "./components/QuestionBankList";
 
 interface AddQuestionClientViewProps {
   examIdParam: string;
@@ -80,21 +36,24 @@ export default function AddQuestionClientView({
   const router = useRouter();
 
   const [examId, setExamId] = useState<string>(examIdParam || "");
-  const [examPackTitle, setExamPackTitle] = useState<string>(initialPack?.title || "Exam Pack");
+  const [examPackTitle] = useState<string>(initialPack?.title || "Exam Pack");
   const [examName, setExamName] = useState<string>(initialExam?.name || "Exam");
-  const [questions, setQuestions] = useState<Question[]>(initialQuestions || []);
+  const [questions, setQuestions] = useState<Question[]>(
+    initialQuestions || [],
+  );
 
   const [examPacks] = useState<any[]>(initialPacks || []);
   const [exams, setExams] = useState<any[]>([]);
   const [selectedPackId, setSelectedPackId] = useState<number | "">("");
 
-  // Question Form State
   const [type, setType] = useState<QuestionType>("mcq");
   const [questionText, setQuestionText] = useState("");
   const [options, setOptions] = useState<string[]>(["", "", "", ""]);
-  const [correctAnswer, setCorrectAnswer] = useState("");
+  const [correctIndex, setCorrectIndex] = useState<number>(-1);
   const [passage, setPassage] = useState("");
   const [pictureUrl, setPictureUrl] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<number | string | null>(null);
 
   const handlePackSelect = async (packIdStr: string) => {
     const pId = parseInt(packIdStr);
@@ -117,26 +76,51 @@ export default function AddQuestionClientView({
       setExamName(selected.name);
     }
     try {
-      const qList = await getQuestionsAction(eId);
+      const qList = await getQuestionsAction(eId, undefined, undefined, true);
       setQuestions(qList || []);
     } catch {
       toast.error("Failed to load questions.");
     }
   };
 
-  const handleAddOption = () => {
-    if (options.length < 6) setOptions([...options, ""]);
+  const resetForm = () => {
+    setType("mcq");
+    setQuestionText("");
+    setOptions(["", "", "", ""]);
+    setCorrectIndex(-1);
+    setPassage("");
+    setPictureUrl(null);
+    setEditingId(null);
   };
 
-  const handleOptionChange = (index: number, val: string) => {
-    const updated = [...options];
-    updated[index] = val;
-    setOptions(updated);
+  const handleEdit = (q: Question) => {
+    setEditingId(q.id);
+    setType(q.type || "mcq");
+    setQuestionText(q.questionText || "");
+    const qOptions =
+      q.options && q.options.length ? [...q.options] : ["", "", "", ""];
+    setOptions(qOptions);
+    setCorrectIndex(qOptions.findIndex((o) => o === q.correctAnswer));
+    setPassage(q.passage || "");
+    setPictureUrl(q.pictureUrl || null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleRemoveOption = (index: number) => {
-    if (options.length > 2) {
-      setOptions(options.filter((_, i) => i !== index));
+  const handleDelete = async (q: Question) => {
+    if (!examId) return;
+    if (!window.confirm("Delete this question permanently?")) return;
+    try {
+      const res = await deleteQuestionAction(examId, q.id);
+      if (res.success) {
+        toast.success("Question deleted.");
+        if (editingId === q.id) resetForm();
+        const updatedQs = await getQuestionsAction(examId, undefined, undefined, true);
+        setQuestions(updatedQs || []);
+      } else {
+        toast.error(res.error || "Failed to delete question.");
+      }
+    } catch {
+      toast.error("Failed to delete question.");
     }
   };
 
@@ -151,67 +135,125 @@ export default function AddQuestionClientView({
       toast.error("Please enter the question text.");
       return;
     }
+    if (questionText.trim().length < 3) {
+      toast.error("Question text must be at least 3 characters long.");
+      return;
+    }
+
     const cleanOptions = options.map((o) => o.trim()).filter(Boolean);
     if (cleanOptions.length < 2) {
-      toast.error("At least 2 options are required.");
-      return;
-    }
-    if (!correctAnswer) {
-      toast.error("Please select the correct answer.");
+      toast.error("At least 2 non-empty options are required.");
       return;
     }
 
-    const correctIndex = cleanOptions.indexOf(correctAnswer);
+    const uniqueOptions = new Set(cleanOptions);
+    if (uniqueOptions.size < cleanOptions.length) {
+      toast.error(
+        "Duplicate options are not allowed. Each option must be distinct.",
+      );
+      return;
+    }
 
+    if (correctIndex < 0 || !options[correctIndex]?.trim()) {
+      toast.error("Please select which option is the correct answer.");
+      return;
+    }
+
+    const targetCorrect = options[correctIndex].trim();
+    if (!cleanOptions.includes(targetCorrect)) {
+      toast.error(
+        "Selected correct answer must match one of the valid options.",
+      );
+      return;
+    }
+
+    if (type === "passage" && !passage.trim()) {
+      toast.error("Passage text is required for comprehension questions.");
+      return;
+    }
+
+    if (type === "picture" && !pictureUrl?.trim()) {
+      toast.error("Please upload or provide an image for picture questions.");
+      return;
+    }
+
+    const correctPos = Math.max(0, cleanOptions.indexOf(targetCorrect));
+
+    setSubmitting(true);
     try {
-      const res = await createQuestionAction(examId, {
-        text: questionText,
+      const payload = {
+        questionText: questionText.trim(),
+        text: questionText.trim(),
         type,
         options: cleanOptions,
-        correctIndex: correctIndex >= 0 ? correctIndex : 0,
-        explanation: passage || "",
-      });
+        correctAnswer: targetCorrect,
+        correctIndex: correctPos,
+        passage: passage.trim() || undefined,
+        pictureUrl: pictureUrl || undefined,
+      };
+
+      const res =
+        editingId !== null
+          ? await updateQuestionAction(examId, editingId, payload)
+          : await createQuestionAction(examId, payload);
 
       if (res.success) {
-        toast.success("Question created successfully!");
-        setQuestionText("");
-        setOptions(["", "", "", ""]);
-        setCorrectAnswer("");
-        setPassage("");
-        setPictureUrl(null);
+        toast.success(
+          editingId !== null
+            ? "Question updated successfully!"
+            : "Question created successfully!",
+        );
+        resetForm();
         // Refresh question list
-        const updatedQs = await getQuestionsAction(examId);
+        const updatedQs = await getQuestionsAction(examId, undefined, undefined, true);
         setQuestions(updatedQs || []);
       } else {
-        toast.error(res.error || "Failed to create question.");
+        toast.error(
+          res.error ||
+            `Failed to ${editingId !== null ? "update" : "create"} question.`,
+        );
       }
     } catch {
-      toast.error("Failed to create question.");
+      toast.error("Failed to save question.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <PageContainer className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <button
+    <PageContainer className="space-y-4 sm:space-y-6 animate-fadeIn pb-20 sm:pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+        <div className="flex items-center gap-3">
+          <OutlineBtn
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm text-[#dd6b01] font-bold mb-2 cursor-pointer hover:underline"
+            className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200 cursor-pointer"
+            title="Back"
           >
-            <FaArrowLeft /> Back
-          </button>
-          <h1 className="text-3xl font-extrabold text-gray-900">Question Bank Manager</h1>
-          <p className="text-xs text-gray-500 font-semibold mt-1">
-            {examName ? `Configuring questions for: ${examName} (${examPackTitle})` : "Select an exam pack and exam to manage questions."}
-          </p>
+            <FaArrowLeft className="text-xs" />
+          </OutlineBtn>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Question Bank
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              {examName
+                ? `Configuring question items for: ${examName} (${examPackTitle})`
+                : "Select an exam pack and exam to author question items."}
+            </p>
+          </div>
         </div>
+
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+          {questions.length} Questions in Bank
+        </span>
       </div>
 
-      {/* Selector controls if exam not pre-selected */}
       {!examIdParam && (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white p-3.5 sm:p-4 rounded border border-slate-200/80 shadow-2xs grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-bold text-gray-700 block mb-1">Select Exam Pack</label>
+            <label className="text-xs font-bold text-slate-700 block mb-1">
+              Select Exam Pack
+            </label>
             <CustomSelect
               options={examPacks.map((p) => `${p.id} - ${p.title}`)}
               value={selectedPackId ? `${selectedPackId}` : ""}
@@ -221,7 +263,9 @@ export default function AddQuestionClientView({
           </div>
 
           <div>
-            <label className="text-xs font-bold text-gray-700 block mb-1">Select Exam</label>
+            <label className="text-xs font-bold text-slate-700 block mb-1">
+              Select Target Exam
+            </label>
             <CustomSelect
               options={exams.map((e) => `${e.id} - ${e.name}`)}
               value={examId}
@@ -233,154 +277,32 @@ export default function AddQuestionClientView({
         </div>
       )}
 
-      {/* Main Content Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Question Creator Form */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
-          <h2 className="text-lg font-extrabold text-[#dd6b01]">Create New Question</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
+        <QuestionComposerForm
+          type={type}
+          setType={setType}
+          questionText={questionText}
+          setQuestionText={setQuestionText}
+          options={options}
+          setOptions={setOptions}
+          correctIndex={correctIndex}
+          setCorrectIndex={setCorrectIndex}
+          passage={passage}
+          setPassage={setPassage}
+          pictureUrl={pictureUrl}
+          setPictureUrl={setPictureUrl}
+          submitting={submitting}
+          editingId={editingId}
+          examId={examId}
+          onSubmit={handleCreateQuestion}
+          onReset={resetForm}
+        />
 
-          {/* Question Type Selector */}
-          <div className="flex gap-2">
-            {[
-              { id: "mcq", label: "MCQ", icon: <FaListUl /> },
-              { id: "passage", label: "Passage Based", icon: <FaBookOpen /> },
-              { id: "picture", label: "Picture Based", icon: <FaImage /> },
-            ].map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setType(t.id as QuestionType)}
-                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition cursor-pointer ${
-                  type === t.id
-                    ? "bg-[#dd6b01] text-white border-[#dd6b01] shadow"
-                    : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-                }`}
-              >
-                {t.icon} {t.label}
-              </button>
-            ))}
-          </div>
-
-          <form onSubmit={handleCreateQuestion} className="space-y-4">
-            {type === "passage" && (
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Passage Text</label>
-                <textarea
-                  className="w-full p-3 border border-gray-300 rounded-xl text-sm outline-none focus:border-[#dd6b01] min-h-[100px]"
-                  placeholder="Enter passage context..."
-                  value={passage}
-                  onChange={(e) => setPassage(e.target.value)}
-                />
-              </div>
-            )}
-
-            {type === "picture" && (
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">Question Image</label>
-                <ImageUploader preview={pictureUrl} onUpload={(url) => setPictureUrl(url)} />
-              </div>
-            )}
-
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Question Prompt</label>
-              <textarea
-                className="w-full p-3 border border-gray-300 rounded-xl text-sm outline-none focus:border-[#dd6b01] min-h-[80px]"
-                placeholder="Type your question prompt here..."
-                value={questionText}
-                onChange={(e) => setQuestionText(e.target.value)}
-                required
-              />
-            </div>
-
-            {/* Options */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-gray-700 block">Answer Choices</label>
-              {options.map((opt, idx) => (
-                <OptionInput
-                  key={idx}
-                  value={opt}
-                  onChange={(val) => handleOptionChange(idx, val)}
-                  onRemove={() => handleRemoveOption(idx)}
-                  placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-                  optionCount={options.length}
-                />
-              ))}
-
-              {options.length < 6 && (
-                <button
-                  type="button"
-                  onClick={handleAddOption}
-                  className="text-xs font-bold text-[#dd6b01] hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <FaPlusCircle /> Add Choice Option
-                </button>
-              )}
-            </div>
-
-            {/* Correct Answer Select */}
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">Correct Answer Choice</label>
-              <CustomSelect
-                options={options.filter((o) => o.trim() !== "")}
-                value={correctAnswer}
-                onChange={(val) => setCorrectAnswer(val)}
-                placeholder="Select Correct Option"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={!examId}
-              className="w-full py-3 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-sm rounded-xl shadow transition disabled:opacity-50 cursor-pointer"
-            >
-              Add Question to Bank
-            </button>
-          </form>
-        </div>
-
-        {/* Right Col: Current Questions List */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-            <h3 className="text-base font-extrabold text-gray-900">Existing Questions ({questions.length})</h3>
-          </div>
-
-          <div className="space-y-4 max-h-[600px] overflow-y-auto pr-1">
-            {questions.map((q, idx) => (
-              <motion.div
-                key={q.id || idx}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2 text-xs"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="font-bold text-gray-900">
-                    Q{idx + 1}. {q.questionText}
-                  </span>
-                  <span className="px-2 py-0.5 bg-orange-100 text-[#dd6b01] rounded text-[10px] font-bold uppercase">
-                    {q.type}
-                  </span>
-                </div>
-
-                <div className="space-y-1 text-gray-600 pl-2">
-                  {q.options && q.options.map((opt, oIdx) => (
-                    <div
-                      key={oIdx}
-                      className={opt === q.correctAnswer ? "font-bold text-emerald-700" : ""}
-                    >
-                      • {String.fromCharCode(65 + oIdx)}. {opt} {opt === q.correctAnswer && "✓"}
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-
-            {questions.length === 0 && (
-              <div className="text-center py-12 text-gray-400 font-medium text-xs">
-                No questions added to this exam yet.
-              </div>
-            )}
-          </div>
-        </div>
+        <QuestionBankList
+          questions={questions}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </PageContainer>
   );

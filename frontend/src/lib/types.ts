@@ -12,12 +12,15 @@ export interface User {
 
 export interface Exam {
   id: string;
+  attemptId?: number;
+  examId?: string;
   name: string;
   score?: string;
   negative?: string;
   answerSheet?: string;
   dateTime?: string;
   image?: string;
+  passed?: boolean;
 }
 
 export interface ExamPack {

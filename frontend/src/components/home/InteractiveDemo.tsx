@@ -83,30 +83,30 @@ export const InteractiveDemo = () => {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Title */}
-        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14 space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-400 font-bold text-xs uppercase tracking-wider">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10 space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-orange-500/10 border border-orange-500/30 text-orange-400 font-mono font-bold text-xs uppercase tracking-wider">
             <FaBrain className="text-orange-400" /> Interactive Demo
           </div>
-          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Try a Live Assessment Question
           </h2>
-          <p className="text-slate-400 text-sm sm:text-base font-medium">
+          <p className="text-slate-400 text-xs sm:text-sm font-medium">
             Experience our instant automated grading, timer feedback, and step-by-step solution breakdowns in real time.
           </p>
         </div>
 
         {/* Demo App Wrapper */}
-        <div className="max-w-3xl mx-auto bg-slate-800/80 border border-slate-700/80 rounded-3xl p-4 sm:p-8 backdrop-blur-xl shadow-2xl">
+        <div className="max-w-3xl mx-auto bg-slate-900/90 border border-slate-800 rounded p-4 sm:p-6 backdrop-blur-xl shadow-xs">
           {/* Subject Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 border-b border-slate-700/60 scrollbar-none">
+          <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 border-b border-slate-800 scrollbar-none">
             {sampleQuestions.map((q, idx) => (
               <button
                 key={q.subject}
                 onClick={() => handleSubjectChange(idx)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ${
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded font-mono font-bold text-xs whitespace-nowrap transition-all duration-150 ${
                   selectedSubjectIndex === idx
-                    ? "bg-primary text-white shadow-lg shadow-orange-500/25"
-                    : "bg-slate-700/50 text-slate-300 hover:bg-slate-700 hover:text-white"
+                    ? "bg-primary text-white shadow-xs"
+                    : "bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-700/50"
                 }`}
               >
                 {q.icon}
@@ -119,34 +119,34 @@ export const InteractiveDemo = () => {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentQ.id}
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-6"
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-4"
             >
               {/* Question Header */}
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <span className="text-xs font-bold text-orange-400 uppercase tracking-widest">
-                    Question 01 of 01 • Mock Assessment
+                  <span className="text-[10px] font-mono font-bold text-orange-400 uppercase tracking-widest">
+                    Question 01 of 01 • Live Sandbox
                   </span>
-                  <h3 className="text-base sm:text-lg font-bold text-white leading-relaxed">
+                  <h3 className="text-sm sm:text-base font-bold text-white leading-relaxed">
                     {currentQ.question}
                   </h3>
                 </div>
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700/60 border border-slate-600 text-slate-300 text-xs font-mono">
+                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono">
                   <FaClock className="text-amber-400" /> 00:45
                 </div>
               </div>
 
               {/* Options Grid */}
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-2">
                 {currentQ.options.map((opt, idx) => {
-                  let btnStyle = "bg-slate-700/40 border-slate-700 text-slate-200 hover:bg-slate-700/80 hover:border-slate-600";
+                  let btnStyle = "bg-slate-800/60 border-slate-700/80 text-slate-200 hover:bg-slate-800 hover:border-slate-600";
                   
                   if (selectedOption === idx) {
-                    btnStyle = "bg-orange-500/20 border-primary text-white font-semibold";
+                    btnStyle = "bg-primary/20 border-primary text-white font-semibold";
                   }
 
                   if (isSubmitted) {
@@ -162,22 +162,22 @@ export const InteractiveDemo = () => {
                       key={idx}
                       onClick={() => handleSelectOption(idx)}
                       disabled={isSubmitted}
-                      className={`w-full flex items-center justify-between p-4 rounded-xl border text-left text-sm transition-all duration-200 ${btnStyle}`}
+                      className={`w-full flex items-center justify-between p-3 rounded border text-left text-xs sm:text-sm transition-all duration-150 cursor-pointer ${btnStyle}`}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="w-7 h-7 rounded-lg bg-slate-800/80 flex items-center justify-center text-xs font-bold text-slate-400 border border-slate-700">
+                        <span className="w-5 h-5 rounded bg-slate-800 flex items-center justify-center text-[11px] font-mono font-bold text-slate-400 border border-slate-700">
                           {String.fromCharCode(65 + idx)}
                         </span>
                         <span>{opt}</span>
                       </div>
                       
                       {isSubmitted && idx === currentQ.correctIndex && (
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+                        <div className="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
                           <FaCheck />
                         </div>
                       )}
                       {isSubmitted && selectedOption === idx && idx !== currentQ.correctIndex && (
-                        <div className="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs">
+                        <div className="w-5 h-5 rounded bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs">
                           <FaTimes />
                         </div>
                       )}
@@ -187,42 +187,42 @@ export const InteractiveDemo = () => {
               </div>
 
               {/* Action Bar */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-slate-700/60">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-800">
                 {!isSubmitted ? (
                   <button
                     onClick={handleSubmit}
                     disabled={selectedOption === null}
-                    className={`w-full sm:w-auto px-6 py-3 rounded-full font-bold text-sm transition-all duration-200 ${
+                    className={`w-full sm:w-auto px-5 py-2 rounded font-bold text-xs transition-all duration-150 cursor-pointer ${
                       selectedOption !== null
-                        ? "bg-gradient-to-r from-primary to-amber-500 text-white shadow-lg shadow-orange-500/30 hover:opacity-95"
-                        : "bg-slate-700/50 text-slate-500 cursor-not-allowed"
+                        ? "bg-primary text-white shadow-xs hover:bg-primary-dark"
+                        : "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-750"
                     }`}
                   >
                     Submit Answer
                   </button>
                 ) : (
-                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
                     <button
                       onClick={handleReset}
-                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs sm:text-sm transition-colors"
+                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors border border-slate-700 cursor-pointer"
                     >
-                      <FaRedo size={12} /> Retry Question
+                      <FaRedo size={10} /> Retry Question
                     </button>
                     <Link
                       href="/auth/register"
-                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-dark text-white font-bold text-xs sm:text-sm transition-all shadow-md"
+                      className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-1.5 rounded bg-primary hover:bg-primary-dark text-white font-bold text-xs transition-all shadow-xs"
                     >
                       <span>Full Exam Suite</span>
-                      <FaArrowRight size={12} />
+                      <FaArrowRight size={10} />
                     </Link>
                   </div>
                 )}
 
                 {isSubmitted && (
-                  <div className={`text-xs font-bold px-3 py-1.5 rounded-full ${
+                  <div className={`text-[11px] font-mono font-bold px-2.5 py-1 rounded border ${
                     selectedOption === currentQ.correctIndex
-                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                      : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                      : "bg-rose-500/20 text-rose-400 border-rose-500/30"
                   }`}>
                     {selectedOption === currentQ.correctIndex ? "Correct Answer! (+1.0 Score)" : "Incorrect Option (0.0 Score)"}
                   </div>
@@ -234,13 +234,13 @@ export const InteractiveDemo = () => {
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 sm:p-5 space-y-2 text-left"
+                  transition={{ duration: 0.2 }}
+                  className="bg-slate-950/90 border border-slate-800 rounded p-3.5 sm:p-4 space-y-1.5 text-left"
                 >
-                  <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                  <div className="flex items-center gap-2 text-amber-400 font-mono font-bold text-xs uppercase tracking-wider">
                     <FaLightbulb /> Detailed Solution & Pedagogy
                   </div>
-                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed font-medium">
+                  <p className="text-slate-300 text-xs leading-relaxed font-medium">
                     {currentQ.explanation}
                   </p>
                 </motion.div>

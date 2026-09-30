@@ -1,0 +1,35 @@
+# Next.js build output
+.next
+out
+
+# Development files
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env secrets (injected at runtime)
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Tests
+coverage
+__tests__
+*.test.*

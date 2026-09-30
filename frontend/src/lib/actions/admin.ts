@@ -1,94 +1,87 @@
 "use server";
 
-import { API_URL } from "./constants";
-import { getAuthHeader } from "./common";
+import { fetcherWithAuth } from "./fetcher";
+import { PaginationParams, PaginatedResponse, normalizePaginatedResponse } from "./pagination";
 
-export async function adminGetUsersAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/admin/users`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return [];
-		return await response.json();
-	} catch (error) {
-		return [];
-	}
+export async function adminGetUsersAction(clientToken?: string) {
+	const res = await fetcherWithAuth<any>("/admin/users?per_page=100", {}, clientToken);
+	if (Array.isArray(res)) return res;
+	if (res && Array.isArray(res.data)) return res.data;
+	return [];
 }
 
-export async function adminUpdateUserAction(id: number, role: string) {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/admin/users/${id}`, {
-			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
-			},
-			body: JSON.stringify({ role }),
-		});
+export async function adminGetUsersPaginatedAction(
+	params?: PaginationParams,
+	clientToken?: string
+): Promise<PaginatedResponse<any>> {
+	const queryParams: Record<string, string | number | boolean | undefined> = {};
+	if (params?.page) queryParams.page = params.page;
+	if (params?.per_page) queryParams.per_page = params.per_page;
+	if (params?.search) queryParams.search = params.search;
 
-		if (!response.ok) {
-			const data = await response.json();
-			throw new Error(data.error || "Failed to update user");
-		}
+	const res = await fetcherWithAuth<any>(
+		"/admin/users",
+		{ params: queryParams },
+		clientToken
+	);
+
+	return normalizePaginatedResponse(res, params?.page || 1, params?.per_page || 10);
+}
+
+export async function adminUpdateUserAction(
+	id: number,
+	updateData: string | { role?: string; examLimit?: number; examPackLimit?: number },
+	clientToken?: string
+) {
+	try {
+		const payload = typeof updateData === "string" ? { role: updateData } : updateData;
+		await fetcherWithAuth<any>(
+			`/admin/users/${id}`,
+			{
+				method: "PUT",
+				body: JSON.stringify(payload),
+				throwOnError: true,
+			},
+			clientToken
+		);
 		return { success: true };
 	} catch (error: any) {
 		return { success: false, error: error.message };
 	}
 }
 
-export async function adminDeleteUserAction(id: number) {
+export async function adminDeleteUserAction(id: number, clientToken?: string) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/admin/users/${id}`, {
-			method: "DELETE",
-			headers: { ...authHeader },
-		});
-
-		if (!response.ok) {
-			const data = await response.json();
-			throw new Error(data.error || "Failed to delete user");
-		}
+		await fetcherWithAuth<any>(
+			`/admin/users/${id}`,
+			{
+				method: "DELETE",
+				throwOnError: true,
+			},
+			clientToken
+		);
 		return { success: true };
 	} catch (error: any) {
 		return { success: false, error: error.message };
 	}
 }
 
-export async function adminGetPermissionsAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/admin/permissions`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return [];
-		return await response.json();
-	} catch (error) {
-		return [];
-	}
+export async function adminGetPermissionsAction(clientToken?: string) {
+	const data = await fetcherWithAuth<any[]>("/admin/permissions", {}, clientToken);
+	return data || [];
 }
 
-export async function adminUpdatePermissionAction(id: number, access: string) {
+export async function adminUpdatePermissionAction(id: number, access: string, clientToken?: string) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/admin/permissions/${id}`, {
-			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
+		await fetcherWithAuth<any>(
+			`/admin/permissions/${id}`,
+			{
+				method: "PUT",
+				body: JSON.stringify({ access }),
+				throwOnError: true,
 			},
-			body: JSON.stringify({ access }),
-		});
-
-		if (!response.ok) {
-			const data = await response.json();
-			throw new Error(data.error || "Failed to update permission");
-		}
+			clientToken
+		);
 		return { success: true };
 	} catch (error: any) {
 		return { success: false, error: error.message };

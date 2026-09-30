@@ -1,64 +1,23 @@
 "use server";
 
-import { API_URL } from "./constants";
-import { getAuthHeader } from "./common";
+import { fetcherWithAuth } from "./fetcher";
 
-export async function getDashboardStatsAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/dashboard/stats`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return null;
-		return await response.json();
-	} catch (error) {
-		return null;
-	}
+export async function getDashboardStatsAction(clientToken?: string) {
+	return await fetcherWithAuth<any>("/dashboard/stats", {}, clientToken);
 }
 
-export async function getTeacherReportsAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/teacher/reports`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return [];
-		return await response.json();
-	} catch (error) {
-		return [];
+export async function getTeacherReportsAction(clientToken?: string) {
+	const res = await fetcherWithAuth<any>("/teacher/reports", {}, clientToken);
+	if (res && typeof res === "object" && Array.isArray(res.data)) {
+		return res.data as any[];
 	}
+	return Array.isArray(res) ? res : [];
 }
 
-export async function getTeacherReportDetailsAction(examId: string) {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/teacher/reports/${examId}`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return null;
-		return await response.json();
-	} catch (error) {
-		return null;
-	}
+export async function getTeacherReportDetailsAction(examId: string, clientToken?: string) {
+	return await fetcherWithAuth<any>(`/teacher/reports/${examId}`, {}, clientToken);
 }
 
-export async function getAnalysisStatsAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/admin/analysis`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return null;
-		return await response.json();
-	} catch (error) {
-		return null;
-	}
+export async function getAnalysisStatsAction(clientToken?: string) {
+	return await fetcherWithAuth<any>("/admin/analysis", {}, clientToken);
 }

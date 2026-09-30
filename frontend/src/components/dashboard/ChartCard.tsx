@@ -1,8 +1,9 @@
 "use client";
 
+import React from "react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -12,6 +13,8 @@ import {
   ReferenceLine,
 } from "recharts";
 
+import EmptyState from "../common/EmptyState";
+
 interface ChartCardProps {
   data?: Array<{ name: string; value: number }>;
   color?: string;
@@ -19,117 +22,283 @@ interface ChartCardProps {
   avgLabel?: string;
 }
 
-const defaultData = [
-  { name: "Exam 1", value: 30 },
-  { name: "Exam 2", value: 55 },
-  { name: "Exam 3", value: 45 },
-  { name: "Exam 4", value: 70 },
-  { name: "Exam 5", value: 50 },
-];
-
 export default function ChartCard({
-  data = defaultData,
-  color = "#dd6b01",
-  strokeColor = "#f59e0b",
-  avgLabel = "Avg",
+  data = [],
+  color = "#f97a00",
+  strokeColor = "#f97a00",
+  avgLabel = "Average Score",
 }: ChartCardProps) {
+  if (!data || data.length === 0) {
+    return (
+      <EmptyState
+        compact
+        type="exam"
+        title="No Evaluation Activity"
+        description="Evaluation and scoring telemetry will appear here once exam attempts are completed."
+      />
+    );
+  }
+
+  const chartData = data;
+
+  // Resolve CSS variables or fall back to primary orange (#f97a00)
+  const resolvedColor =
+    !color || color.includes("var(--color-primary") || color === "primary"
+      ? "#f97a00"
+      : color;
+  const resolvedStroke =
+    !strokeColor ||
+    strokeColor.includes("var(--color-primary") ||
+    strokeColor === "primary"
+      ? resolvedColor
+      : strokeColor;
+
   // Calculate average value
-  const avg = data.reduce((sum, item) => sum + item.value, 0) / (data.length || 1);
+  const avg =
+    chartData.reduce((sum, item) => sum + item.value, 0) /
+    (chartData.length || 1);
 
   // Find max and min points to highlight
-  let maxItem = data[0];
-  let minItem = data[0];
-  data.forEach(item => {
+  let maxItem = chartData[0];
+  let minItem = chartData[0];
+  chartData.forEach((item) => {
     if (item.value > maxItem.value) maxItem = item;
     if (item.value < minItem.value) minItem = item;
   });
 
+  // Generate safe alphanumeric ID so url(#id) never breaks SVG/CSS syntax
+  const safeId = resolvedColor.replace(/[^a-zA-Z0-9]/g, "");
+  const gradientId = `areaGradient-${safeId || "f97a00"}`;
+
+  const lastItem = chartData[chartData.length - 1];
+  const lastScore = lastItem ? lastItem.value : 0;
+
   return (
-    <div className="w-full h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-          <defs>
-            <linearGradient id={`lineGradient-${color}`} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor={color} stopOpacity={0.9} />
-              <stop offset="100%" stopColor={strokeColor} stopOpacity={0.9} />
-            </linearGradient>
-            <linearGradient id={`fillGradient-${color}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={strokeColor} stopOpacity={0.15} />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
-            </linearGradient>
-          </defs>
+    <div className="w-full flex flex-col justify-between h-full">
+      {/* Vibe Coding HUD Telemetry Bar */}
+      <div className="grid grid-cols-3 gap-2 pb-3 mb-2 border-b border-slate-100">
+        <div className="px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/60">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase font-mono font-bold text-slate-400">
+              Latest
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          </div>
+          <p className="text-base sm:text-lg font-mono font-black text-slate-900 mt-0.5">
+            {lastScore.toFixed(1)}%
+          </p>
+        </div>
 
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+        <div className="px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/60">
+          <span className="text-[10px] uppercase font-mono font-bold text-slate-400">
+            Average
+          </span>
+          <p className="text-base sm:text-lg font-mono font-black text-slate-700 mt-0.5">
+            {avg.toFixed(1)}%
+          </p>
+        </div>
 
-          <XAxis 
-            dataKey="name" 
-            stroke="#94a3b8" 
-            fontSize={11}
-            tickLine={false}
-            axisLine={false}
-            dy={8}
-          />
-          <YAxis
-            domain={[0, 100]}
-            ticks={[0, 25, 50, 75, 100]}
-            stroke="#94a3b8"
-            fontSize={11}
-            tickLine={false}
-            axisLine={false}
-            dx={-8}
-            tickFormatter={(value) => `${value}%`}
-          />
+        <div className="px-2.5 py-1.5 rounded bg-slate-50 border border-slate-200/60">
+          <span className="text-[10px] uppercase font-mono font-bold text-slate-400">
+            Peak Mark
+          </span>
+          <p className="text-base sm:text-lg font-mono font-black text-emerald-600 mt-0.5">
+            {maxItem?.value?.toFixed(1) || "0.0"}%
+          </p>
+        </div>
+      </div>
 
-          <Tooltip
-            content={({ active, payload, label }) => {
-              if (active && payload && payload.length) {
-                return (
-                  <div className="bg-white/95 backdrop-blur-md shadow-lg border border-gray-100 rounded-xl px-3 py-2 text-xs">
-                    <p className="font-bold text-gray-800 mb-1">{label}</p>
-                    <div className="flex items-center gap-1.5 font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }}></span>
-                      <span className="text-gray-500">Value:</span>
-                      <span className="text-gray-900 font-extrabold">{payload[0].value}%</span>
+      {/* Chart Canvas */}
+      <div className="w-full h-[220px] sm:h-[240px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart
+            data={chartData}
+            margin={{ top: 12, right: 10, left: -25, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="0%"
+                  stopColor={resolvedColor}
+                  stopOpacity={0.25}
+                />
+                <stop
+                  offset="50%"
+                  stopColor={resolvedColor}
+                  stopOpacity={0.12}
+                />
+                <stop
+                  offset="90%"
+                  stopColor={resolvedColor}
+                  stopOpacity={0.03}
+                />
+                <stop
+                  offset="100%"
+                  stopColor={resolvedColor}
+                  stopOpacity={0.0}
+                />
+              </linearGradient>
+            </defs>
+
+            <CartesianGrid
+              strokeDasharray="2 2"
+              stroke="#e2e8f0"
+              vertical={false}
+              opacity={0.8}
+            />
+
+            <XAxis
+              dataKey="name"
+              stroke="#64748b"
+              fontSize={11}
+              fontWeight={600}
+              tickLine={false}
+              axisLine={false}
+              dy={8}
+            />
+            <YAxis
+              domain={[0, 100]}
+              ticks={[0, 25, 50, 75, 100]}
+              stroke="#94a3b8"
+              fontSize={10}
+              fontWeight={500}
+              tickLine={false}
+              axisLine={false}
+              dx={-6}
+              tickFormatter={(value) => `${value}%`}
+            />
+
+            <Tooltip
+              content={({ active, payload, label }) => {
+                if (active && payload && payload.length) {
+                  const val = Number(payload[0].value);
+                  const diff = val - avg;
+                  return (
+                    <div className="bg-slate-950/95 backdrop-blur-md text-white shadow-2xl rounded p-2.5 border border-slate-800 text-xs min-w-[140px] font-mono animate-fadeIn">
+                      <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-1 mb-1.5">
+                        <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                          {label}
+                        </span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      </div>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-slate-400 text-[11px]">
+                          Score:
+                        </span>
+                        <span className="text-white font-black text-sm">
+                          {val.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+                        <span>vs Avg:</span>
+                        <span
+                          className={
+                            diff >= 0
+                              ? "text-emerald-400 font-bold"
+                              : "text-rose-400 font-bold"
+                          }
+                        >
+                          {diff >= 0
+                            ? `+${diff.toFixed(1)}%`
+                            : `${diff.toFixed(1)}%`}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              }
-              return null;
-            }}
-          />
+                  );
+                }
+                return null;
+              }}
+            />
 
-          {/* Average Line */}
-          <ReferenceLine
-            y={avg}
-            stroke="#10b981"
-            strokeDasharray="4 4"
-            label={{
-              value: `${avgLabel}: ${avg.toFixed(0)}%`,
-              position: "insideBottomRight",
-              fill: "#10b981",
-              fontSize: 10,
-              fontWeight: "bold",
-            }}
-          />
+            {/* Average Benchmark Line */}
+            {avg > 0 && (
+              <ReferenceLine
+                y={avg}
+                stroke="#10b981"
+                strokeDasharray="3 3"
+                strokeWidth={1.5}
+                label={{
+                  value: `${avgLabel}: ${avg.toFixed(0)}%`,
+                  position: "insideTopRight",
+                  fill: "#059669",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  offset: 6,
+                }}
+              />
+            )}
 
-          {/* Highlight high and low bounds */}
-          {maxItem && (
-            <ReferenceDot x={maxItem.name} y={maxItem.value} r={5} fill="#10b981" stroke="#ffffff" strokeWidth={1.5} />
-          )}
-          {minItem && (
-            <ReferenceDot x={minItem.name} y={minItem.value} r={5} fill="#ef4444" stroke="#ffffff" strokeWidth={1.5} />
-          )}
+            {/* High and low markers */}
+            {maxItem && chartData.length > 1 && (
+              <ReferenceDot
+                x={maxItem.name}
+                y={maxItem.value}
+                r={4.5}
+                fill="#10b981"
+                stroke="#ffffff"
+                strokeWidth={2}
+              />
+            )}
+            {minItem && chartData.length > 1 && minItem !== maxItem && (
+              <ReferenceDot
+                x={minItem.name}
+                y={minItem.value}
+                r={4.5}
+                fill="#ef4444"
+                stroke="#ffffff"
+                strokeWidth={2}
+              />
+            )}
 
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke={`url(#lineGradient-${color})`}
-            strokeWidth={3.5}
-            dot={{ r: 4.5, fill: "#ffffff", stroke: color, strokeWidth: 2.5 }}
-            activeDot={{ r: 7, fill: color, stroke: "#ffffff", strokeWidth: 2 }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke={resolvedStroke}
+              strokeWidth={2.5}
+              fill={`url(#${gradientId})`}
+              dot={{
+                r: 3.5,
+                fill: "#ffffff",
+                stroke: resolvedStroke,
+                strokeWidth: 2,
+              }}
+              activeDot={{
+                r: 5.5,
+                fill: resolvedStroke,
+                stroke: "#ffffff",
+                strokeWidth: 2.5,
+              }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Footer Legend */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-100 text-xs font-semibold text-slate-500 font-mono">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span
+              className="w-2.5 h-2.5 rounded-sm"
+              style={{ backgroundColor: resolvedColor }}
+            />
+            <span className="text-[11px]">Score Trajectory</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-emerald-500" />
+            <span className="text-[11px]">Avg Target ({avg.toFixed(0)}%)</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5 text-[10px]">
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span>Peak ({maxItem?.value || 0}%)</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+            <span>Trough ({minItem?.value || 0}%)</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

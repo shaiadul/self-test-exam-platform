@@ -1,0 +1,144 @@
+package http
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/selftest/backend/internal/domain/report"
+	"github.com/selftest/backend/internal/service"
+	"github.com/selftest/backend/middleware"
+	"github.com/selftest/backend/pkg/pagination"
+)
+
+type ReportHandler struct {
+	reportService *service.ReportService
+}
+
+func NewReportHandler(reportService *service.ReportService) *ReportHandler {
+	return &ReportHandler{reportService: reportService}
+}
+
+func (h *ReportHandler) GetDashboardStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, err := middleware.GetUserIDFromContext(r.Context())
+	if err != nil {
+		http.Error(w, `{"error": "Unauthorized context"}`, http.StatusUnauthorized)
+		return
+	}
+
+	stats, err := h.reportService.GetDashboardStats(userID)
+	if err != nil {
+		if err == service.ErrUserNotFound {
+			http.Error(w, `{"error": "User not found"}`, http.StatusNotFound)
+			return
+		}
+		if err == service.ErrUnknownRole {
+			http.Error(w, `{"error": "Unknown user role"}`, http.StatusBadRequest)
+			return
+		}
+		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
+}
+
+func (h *ReportHandler) HandleTeacherReports(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+
+	if path == "/api/teacher/reports" || path == "/api/teacher/reports/" {
+		if r.Method == http.MethodGet {
+			h.GetTeacherReports(w, r)
+		} else {
+			http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		}
+		return
+	}
+
+	examID := strings.TrimPrefix(path, "/api/teacher/reports/")
+	if examID == "" {
+		http.Error(w, `{"error": "Invalid Exam ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	if r.Method == http.MethodGet {
+		h.GetTeacherReportDetails(w, r, examID)
+	} else {
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+	}
+}
+
+func (h *ReportHandler) GetTeacherReports(w http.ResponseWriter, r *http.Request) {
+	userID, err := middleware.GetUserIDFromContext(r.Context())
+	if err != nil {
+		http.Error(w, `{"error": "Unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	reports, err := h.reportService.GetTeacherReports(userID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	params := pagination.Parse(r)
+	if params.Search != "" {
+		lowerSearch := strings.ToLower(params.Search)
+		filtered := make([]report.TeacherReport, 0)
+		for _, rep := range reports {
+			if strings.Contains(strings.ToLower(rep.ExamName), lowerSearch) ||
+				strings.Contains(strings.ToLower(rep.PackName), lowerSearch) {
+				filtered = append(filtered, rep)
+			}
+		}
+		reports = filtered
+	}
+
+	resp := pagination.PaginateSlice(reports, params)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *ReportHandler) GetTeacherReportDetails(w http.ResponseWriter, r *http.Request, examID string) {
+	userID, _ := middleware.GetUserIDFromContext(r.Context())
+	detail, err := h.reportService.GetTeacherReportDetails(userID, examID)
+	if err != nil {
+		switch err {
+		case service.ErrExamNotFound:
+			http.Error(w, `{"error": "Exam not found"}`, http.StatusNotFound)
+			return
+		case service.ErrForbidden:
+			http.Error(w, `{"error": "You do not have access to this exam report"}`, http.StatusForbidden)
+			return
+		default:
+			http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(detail)
+}
+
+func (h *ReportHandler) GetExamAnalysisStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	stats, err := h.reportService.GetExamAnalysisStats()
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error": "%v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
+}

@@ -1,58 +1,43 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { API_URL } from "./constants";
-import { getAuthHeader } from "./common";
+import { fetcherWithAuth } from "./fetcher";
 
-export async function getSystemAssetsAction() {
-	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/assets`, {
-			headers: { ...authHeader },
-			next: { revalidate: 0 },
-		});
-
-		if (!response.ok) return [];
-		return await response.json();
-	} catch (error) {
-		return [];
-	}
+export async function getSystemAssetsAction(clientToken?: string) {
+	const data = await fetcherWithAuth<any[]>("/assets", {}, clientToken);
+	return data || [];
 }
 
-export async function createSystemAssetAction(type: string, value: string) {
+export async function createSystemAssetAction(type: string, value: string, clientToken?: string) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/assets`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
+		const asset = await fetcherWithAuth<any>(
+			"/assets",
+			{
+				method: "POST",
+				body: JSON.stringify({ type, value }),
 			},
-			body: JSON.stringify({ type, value }),
-		});
+			clientToken
+		);
 
-		const data = await response.json();
-		if (!response.ok) throw new Error(data.error || "Failed to create asset");
+		if (!asset) throw new Error("Failed to create asset");
 
 		revalidatePath("/dashboard/settings/assets-setup");
-		return { success: true, asset: data };
+		return { success: true, asset };
 	} catch (error: any) {
 		return { success: false, error: error.message };
 	}
 }
 
-export async function deleteSystemAssetAction(id: number) {
+export async function updateSystemAssetAction(id: number, value: string, clientToken?: string) {
 	try {
-		const authHeader = await getAuthHeader();
-		const response = await fetch(`${API_URL}/assets/${id}`, {
-			method: "DELETE",
-			headers: { ...authHeader },
-		});
-
-		if (!response.ok) {
-			const data = await response.json();
-			throw new Error(data.error || "Failed to delete asset");
-		}
+		await fetcherWithAuth<any>(
+			`/assets/${id}`,
+			{
+				method: "PUT",
+				body: JSON.stringify({ value }),
+			},
+			clientToken
+		);
 
 		revalidatePath("/dashboard/settings/assets-setup");
 		return { success: true };
@@ -60,3 +45,98 @@ export async function deleteSystemAssetAction(id: number) {
 		return { success: false, error: error.message };
 	}
 }
+
+export async function deleteSystemAssetAction(id: number, clientToken?: string) {
+	try {
+		await fetcherWithAuth<any>(
+			`/assets/${id}`,
+			{
+				method: "DELETE",
+			},
+			clientToken
+		);
+
+		revalidatePath("/dashboard/settings/assets-setup");
+		return { success: true };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}
+
+// ---- Institution Suggestions ----
+
+/** User submits a custom institution name (shown to admin for approval). */
+export async function submitInstitutionSuggestionAction(value: string, clientToken?: string) {
+	try {
+		const s = await fetcherWithAuth<any>(
+			"/institutions/suggest",
+			{
+				method: "POST",
+				body: JSON.stringify({ value }),
+			},
+			clientToken
+		);
+		return { success: true, suggestion: s };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}
+
+/** Admin: fetch all (or filtered by status) institution suggestions. */
+export async function getInstitutionSuggestionsAction(status?: string, clientToken?: string) {
+	const qs = status ? `?status=${status}` : "";
+	const data = await fetcherWithAuth<any[]>(`/admin/institutions/suggestions${qs}`, {}, clientToken);
+	return Array.isArray(data) ? data : [];
+}
+
+/** Admin: edit an institution suggestion name. */
+export async function updateInstitutionSuggestionAction(id: number, value: string, clientToken?: string) {
+	try {
+		const s = await fetcherWithAuth<any>(
+			`/admin/institutions/suggestions/${id}`,
+			{
+				method: "PUT",
+				body: JSON.stringify({ value }),
+			},
+			clientToken
+		);
+		revalidatePath("/dashboard/settings/assets-setup");
+		return { success: true, suggestion: s };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}
+
+/** Admin: approve a suggestion (optionally with an edited value) → promotes value to system_assets. */
+export async function approveInstitutionSuggestionAction(id: number, editedValue?: string, clientToken?: string) {
+	try {
+		const s = await fetcherWithAuth<any>(
+			`/admin/institutions/suggestions/${id}/approve`,
+			{
+				method: "PUT",
+				body: editedValue ? JSON.stringify({ value: editedValue }) : undefined,
+			},
+			clientToken
+		);
+		revalidatePath("/dashboard/settings/assets-setup");
+		return { success: true, suggestion: s };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}
+
+/** Admin: reject (soft-delete) a suggestion. */
+export async function rejectInstitutionSuggestionAction(id: number, clientToken?: string) {
+	try {
+		await fetcherWithAuth<any>(
+			`/admin/institutions/suggestions/${id}`,
+			{ method: "DELETE" },
+			clientToken
+		);
+		revalidatePath("/dashboard/settings/assets-setup");
+		return { success: true };
+	} catch (error: any) {
+		return { success: false, error: error.message };
+	}
+}
+

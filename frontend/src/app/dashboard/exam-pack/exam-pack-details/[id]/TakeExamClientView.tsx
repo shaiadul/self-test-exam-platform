@@ -1,75 +1,27 @@
 "use client";
 
-import Image from "next/image";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { PageContainer } from "../../../../../components/common/PageContainer";
-import Scorecard from "../../../../../components/dashboard/Scorecard";
-import CertificatePrintLayout from "../../../../../components/dashboard/CertificatePrintLayout";
-import { submitExamAction } from "../../../../../lib/actions";
-
-// --- TYPES ---
-type Answer = string;
-interface QuestionData {
-  id: number;
-  type: "mcq" | "passage" | "picture";
-  questionText: string;
-  options: string[];
-  correctAnswer: string;
-  passage?: string;
-  pictureUrl?: string;
-}
-
-// --- TIMER ---
-interface TimerProps {
-  duration: number;
-  onTimeUp: () => void;
-  isRunning: boolean;
-}
-
-const Timer = ({ duration, onTimeUp, isRunning }: TimerProps) => {
-  const [timeLeft, setTimeLeft] = useState(duration);
-
-  useEffect(() => {
-    if (!isRunning) return;
-
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          onTimeUp();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isRunning, onTimeUp]);
-
-  const formatTime = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, "0")}:${mins
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  return (
-    <div className="flex items-center gap-2 bg-[#fff4ec] px-4 py-2 rounded-xl border border-orange-200 shadow-inner">
-      <span className="text-xl">⏱️</span>
-      <div>
-        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Remaining Time</p>
-        <p className="text-lg font-black text-[#dd6b01] font-mono leading-none">
-          {formatTime(timeLeft)}
-        </p>
-      </div>
-    </div>
-  );
-};
+import {
+  submitExamAction,
+  verifyExamPasscodeAction,
+  getQuestionsAction,
+  getExamDetailsAction,
+} from "../../../../../lib/actions";
+import { Answer, QuestionData, ExamMeta } from "./types";
+import { ExamPasscodeModal } from "./components/ExamPasscodeModal";
+import { ExamInstructionsScreen } from "./components/ExamInstructionsScreen";
+import { ExamSubmittedScreen } from "./components/ExamSubmittedScreen";
+import { ExamSecurityModal } from "./components/ExamSecurityModal";
+import { ExamSubmitConfirmModal } from "./components/ExamSubmitConfirmModal";
+import { ExamTopBar } from "./components/ExamTopBar";
+import { ExamQuestionCard } from "./components/ExamQuestionCard";
+import {
+  ExamQuestionMatrix,
+  MobileQuestionNavStrip,
+} from "./components/ExamQuestionMatrix";
+import { formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 interface TakeExamClientViewProps {
   examId: string;
@@ -84,33 +36,484 @@ export default function TakeExamClientView({
 }: TakeExamClientViewProps) {
   const router = useRouter();
 
-  const [examMeta] = useState({
-    title: initialExam?.name || "Mock Exam",
-    subject: initialExam?.subject || "General Exam",
-    durationMinutes: initialExam?.duration || 30,
+  // Helper to parse question items safely
+  // Helper to parse question items safely with optional randomization
+  const normalizeQuestions = (
+    list: any[],
+    randomize = false,
+  ): QuestionData[] => {
+    let result = (list || []).map((q: any, idx: number) => {
+      let parsedOptions: string[] = [];
+      if (Array.isArray(q.options)) {
+        parsedOptions = q.options;
+      } else if (typeof q.options === "string") {
+        parsedOptions = q.options
+          .replace(/[{}]/g, "")
+          .split(",")
+          .map((s: string) => s.trim())
+          .filter(Boolean);
+      }
+
+      return {
+        id: q.id || idx + 1,
+        type: q.type || "mcq",
+        questionText:
+          q.questionText || q.text || q.prompt || `Question ${idx + 1}`,
+        options: parsedOptions,
+        passage: q.passage || undefined,
+        pictureUrl: q.pictureUrl || undefined,
+      };
+    });
+
+    if (randomize && result.length > 1) {
+      result = [...result].sort(() => Math.random() - 0.5);
+    }
+
+    return result;
+  };
+
+  const isRandomized = initialExam?.randomization ?? false;
+  const hasFeedback = initialExam?.feedback ?? true;
+
+  const [examMeta, setExamMeta] = useState<ExamMeta>({
+    title: initialExam?.name || "Examination",
+    subject: initialExam?.level || initialExam?.subject || "General",
+    durationMinutes:
+      initialExam?.durationMinutes || initialExam?.duration || 30,
     totalMarks: initialExam?.totalMarks || 100,
-    passMarks: initialExam?.passMarks || 40,
-    negativeMarks: initialExam?.negativeMarks || 0.25,
+    passMarks: initialExam?.passingMarks || initialExam?.passMark || 33,
+    negativeMarks: initialExam?.negativeMarks
+      ? Math.abs(Number(initialExam.negativeMarks))
+      : 0,
+    isPrivate: initialExam?.isPrivate ?? false,
+    passcode: initialExam?.passcode || "",
+    randomization: isRandomized,
+    feedback: hasFeedback,
+    startDate: initialExam?.startDate || "",
+    endDate: initialExam?.endDate || "",
   });
 
-  const [questions] = useState<QuestionData[]>(
-    (initialQuestions || []).map((q: any, idx: number) => ({
-      id: q.id || idx + 1,
-      type: q.type || "mcq",
-      questionText: q.text || q.questionText,
-      options: q.options || [],
-      correctAnswer: q.options?.[q.correctIndex] || q.correctAnswer || "",
-      passage: q.passage,
-      pictureUrl: q.pictureUrl,
-    }))
+  const [questions, setQuestions] = useState<QuestionData[]>(() =>
+    normalizeQuestions(initialQuestions, isRandomized),
   );
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
 
+  // Password Unlock State
+  const requiresPassword = examMeta.isPrivate;
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(!requiresPassword);
+  const [enteredPasscode, setEnteredPasscode] = useState("");
+  const [passcodeError, setPasscodeError] = useState("");
+  const [verifyingPasscode, setVerifyingPasscode] = useState(false);
+
+  // Exam Progress State
   const [userAnswers, setUserAnswers] = useState<Record<number, Answer>>({});
-  const [warnings, setWarnings] = useState<number>(0);
-  const [examStatus, setExamStatus] = useState<"instructions" | "running" | "submitted">("instructions");
+  const [examStatus, setExamStatus] = useState<
+    "instructions" | "running" | "submitted"
+  >("instructions");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [examResult, setExamResult] = useState<any>(null);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const examStartTimeRef = useRef<Date | null>(null);
 
+  const [currentQuestionIdx, setCurrentQuestionIdx] = useState<number>(0);
+  const [markedForReview, setMarkedForReview] = useState<Set<number>>(
+    new Set(),
+  );
+  const [visitedQuestions, setVisitedQuestions] = useState<Set<number>>(
+    new Set(),
+  );
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "answered" | "unanswered" | "review"
+  >("all");
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  const [warnings, setWarnings] = useState<number>(0);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [currentWarningMsg, setCurrentWarningMsg] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const isRunningRef = useRef(false);
+  const isFinishingRef = useRef(false);
+  isRunningRef.current = examStatus === "running" && !isFinishingRef.current;
+
+  useEffect(() => {
+    if (questions.length > 0 && examStatus === "running") {
+      const currentQ = questions[currentQuestionIdx];
+      if (currentQ) {
+        setVisitedQuestions((prev) => {
+          if (prev.has(currentQ.id)) return prev;
+          const next = new Set(prev);
+          next.add(currentQ.id);
+          return next;
+        });
+      }
+    }
+  }, [currentQuestionIdx, questions, examStatus]);
+
+  const fetchQuestionsFallback = useCallback(
+    async (passcode?: string) => {
+      setLoadingQuestions(true);
+      try {
+        const [qs, details] = await Promise.all([
+          getQuestionsAction(examId, passcode),
+          getExamDetailsAction(examId),
+        ]);
+
+        if (details) {
+          setExamMeta((prev) => ({
+            ...prev,
+            title: details.name || prev.title,
+            subject: details.level || prev.subject,
+            durationMinutes:
+              details.durationMinutes ||
+              details.duration ||
+              prev.durationMinutes,
+            totalMarks: details.totalMarks || prev.totalMarks,
+            passMarks:
+              details.passingMarks || details.passMark || prev.passMarks,
+            negativeMarks: details.negativeMarks
+              ? Math.abs(Number(details.negativeMarks))
+              : prev.negativeMarks,
+            isPrivate: details.isPrivate ?? prev.isPrivate,
+            passcode: details.passcode || prev.passcode,
+            randomization: details.randomization ?? prev.randomization,
+            feedback: details.feedback ?? prev.feedback,
+            startDate: details.startDate || prev.startDate,
+            endDate: details.endDate || prev.endDate,
+          }));
+          if (!details.isPrivate) {
+            setIsUnlocked(true);
+          }
+        }
+
+        if (Array.isArray(qs) && qs.length > 0) {
+          setQuestions(
+            normalizeQuestions(qs, details?.randomization ?? isRandomized),
+          );
+        }
+      } catch {
+        toast.error("Failed to load live question bank.");
+      } finally {
+        setLoadingQuestions(false);
+      }
+    },
+    [examId, isRandomized],
+  );
+
+  useEffect(() => {
+    if (isUnlocked && (!initialQuestions || initialQuestions.length === 0)) {
+      fetchQuestionsFallback(enteredPasscode);
+    }
+  }, [initialQuestions, fetchQuestionsFallback, isUnlocked, enteredPasscode]);
+
+  const handleUnlockPasscode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!enteredPasscode.trim()) {
+      setPasscodeError("Please enter the exam passcode.");
+      return;
+    }
+    setVerifyingPasscode(true);
+    try {
+      const res = await verifyExamPasscodeAction(
+        examId,
+        enteredPasscode.trim(),
+      );
+      if (res.success) {
+        setIsUnlocked(true);
+        setPasscodeError("");
+        toast.success(
+          "Exam unlocked! Please review instructions before starting.",
+        );
+      } else {
+        setPasscodeError(
+          res.error ||
+            "Incorrect passcode. Please verify with your instructor.",
+        );
+        toast.error(res.error || "Incorrect passcode.");
+      }
+    } finally {
+      setVerifyingPasscode(false);
+    }
+  };
+
+  const handleFinish = useCallback(
+    async (reason?: string) => {
+      if (examStatus === "submitted" || isSubmitting || isFinishingRef.current)
+        return;
+      isFinishingRef.current = true;
+      isRunningRef.current = false;
+      setIsSubmitting(true);
+      setShowSubmitConfirm(false);
+
+      if (document.fullscreenElement) {
+        try {
+          await document.exitFullscreen();
+        } catch {
+          // ignore
+        }
+      }
+
+      try {
+        const mappedAnswers: Record<string, string> = {};
+        questions.forEach((q) => {
+          const selectedText = userAnswers[q.id];
+          if (selectedText !== undefined) {
+            mappedAnswers[q.id.toString()] = selectedText;
+          }
+        });
+
+        const securityMsg =
+          reason ||
+          (warnings > 0
+            ? `Completed with ${warnings} security warning(s)`
+            : "Normal Clean Submission");
+
+        const started = examStartTimeRef.current || new Date();
+        const durationSeconds = Math.max(
+          1,
+          Math.round((Date.now() - started.getTime()) / 1000),
+        );
+
+        const res = await submitExamAction(
+          examId,
+          mappedAnswers,
+          warnings,
+          securityMsg,
+          enteredPasscode,
+          durationSeconds,
+          started.toISOString(),
+        );
+
+        if (res.success && res.result) {
+          const resultData = {
+            ...res.result,
+            feedback:
+              res.result.feedback !== undefined
+                ? res.result.feedback
+                : (examMeta.feedback ?? true),
+          };
+          setExamResult(resultData);
+          setExamStatus("submitted");
+          setShowWarningModal(false);
+          toast.success("Exam submitted successfully!");
+        } else {
+          toast.error(res.error || "Failed to submit exam.");
+        }
+      } catch {
+        toast.error("An error occurred during exam submission.");
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [
+      examId,
+      examStatus,
+      isSubmitting,
+      questions,
+      userAnswers,
+      warnings,
+      enteredPasscode,
+      examMeta,
+    ],
+  );
+
+  const triggerSecurityWarning = useCallback(
+    (reason: string) => {
+      if (!isRunningRef.current || isFinishingRef.current) return;
+
+      setWarnings((prev) => {
+        const next = prev + 1;
+        setCurrentWarningMsg(reason);
+        setShowWarningModal(true);
+
+        if (next >= 3) {
+          toast.error(
+            "Maximum violations reached (3/3). Forced automatic submission triggered.",
+          );
+          setTimeout(() => {
+            handleFinish(
+              "Terminated: Exceeded maximum allowed security violations (3/3)",
+            );
+          }, 1200);
+        } else {
+          toast.warning(`Security Warning (${next}/3): ${reason}`);
+        }
+        return next;
+      });
+    },
+    [handleFinish],
+  );
+
+  const enterFullscreen = async () => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
+      setIsFullscreen(true);
+    } catch {
+      toast.info("Proceeding in standard view. Note: Avoid switching windows.");
+    }
+  };
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleStartExam = async () => {
+    if (questions.length === 0) {
+      toast.error("No questions available for this exam yet.");
+      return;
+    }
+    const currentTime = new Date();
+    if (examMeta.startDate && currentTime < new Date(examMeta.startDate)) {
+      toast.error(
+        `Exam has not started yet. Scheduled start: ${formatDateTime(
+          examMeta.startDate,
+          DATE_FORMATS.DATETIME_COMMA,
+        )}`,
+      );
+      return;
+    }
+    if (examMeta.endDate && currentTime > new Date(examMeta.endDate)) {
+      toast.error(
+        `Exam window is closed. Ended on ${formatDateTime(
+          examMeta.endDate,
+          DATE_FORMATS.DATETIME_COMMA,
+        )}`,
+      );
+      return;
+    }
+    await enterFullscreen();
+    const startedAt = new Date();
+    examStartTimeRef.current = startedAt;
+    setExamStatus("running");
+  };
+
+  useEffect(() => {
+    if (examStatus !== "running") return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && isRunningRef.current && !isFinishingRef.current) {
+        triggerSecurityWarning("Tab switched or browser minimized.");
+      }
+    };
+
+    const handleBlur = () => {
+      if (isRunningRef.current && !isFinishingRef.current) {
+        triggerSecurityWarning(
+          "Window lost focus or another application was opened.",
+        );
+      }
+    };
+
+    const handleFullscreenChange = () => {
+      const active = !!document.fullscreenElement;
+      setIsFullscreen(active);
+      if (!active && isRunningRef.current && !isFinishingRef.current) {
+        triggerSecurityWarning("Exited fullscreen proctored mode.");
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isRunningRef.current || isFinishingRef.current) return;
+
+      // F12
+      if (e.key === "F12") {
+        e.preventDefault();
+        triggerSecurityWarning("Developer Tools key (F12) intercepted.");
+        return;
+      }
+
+      // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        ["I", "i", "J", "j", "C", "c"].includes(e.key)
+      ) {
+        e.preventDefault();
+        triggerSecurityWarning("Inspect Element shortcut blocked.");
+        return;
+      }
+
+      // Ctrl+U
+      if ((e.ctrlKey || e.metaKey) && ["U", "u"].includes(e.key)) {
+        e.preventDefault();
+        triggerSecurityWarning("View Source shortcut blocked.");
+        return;
+      }
+
+      // Keyboard option selection: A, B, C, D (or 1, 2, 3, 4)
+      const currentQ = questions[currentQuestionIdx];
+      if (currentQ && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const key = e.key.toUpperCase();
+        let targetOptIdx = -1;
+        if (key === "A" || key === "1") targetOptIdx = 0;
+        else if (key === "B" || key === "2") targetOptIdx = 1;
+        else if (key === "C" || key === "3") targetOptIdx = 2;
+        else if (key === "D" || key === "4") targetOptIdx = 3;
+
+        if (targetOptIdx >= 0 && targetOptIdx < currentQ.options.length) {
+          e.preventDefault();
+          const chosen = currentQ.options[targetOptIdx];
+          setUserAnswers((prev) => ({ ...prev, [currentQ.id]: chosen }));
+          return;
+        }
+
+        // Arrow keys for Next / Previous question
+        if (e.key === "ArrowRight") {
+          e.preventDefault();
+          if (currentQuestionIdx < questions.length - 1) {
+            setCurrentQuestionIdx((i) => i + 1);
+          }
+          return;
+        }
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          if (currentQuestionIdx > 0) {
+            setCurrentQuestionIdx((i) => i - 1);
+          }
+          return;
+        }
+      }
+    };
+
+    const preventContextMenu = (e: MouseEvent) => e.preventDefault();
+    const preventCopyCutPaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+      toast.error("Copying or pasting exam content is disabled.");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleBlur);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("contextmenu", preventContextMenu);
+    document.addEventListener("copy", preventCopyCutPaste);
+    document.addEventListener("cut", preventCopyCutPaste);
+    document.addEventListener("paste", preventCopyCutPaste);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleBlur);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("contextmenu", preventContextMenu);
+      document.removeEventListener("copy", preventCopyCutPaste);
+      document.removeEventListener("cut", preventCopyCutPaste);
+      document.removeEventListener("paste", preventCopyCutPaste);
+    };
+  }, [examStatus, triggerSecurityWarning, currentQuestionIdx, questions]);
+
+  // Option selection
   const handleSelectOption = (questionId: number, option: Answer) => {
     setUserAnswers((prev) => ({
       ...prev,
@@ -118,247 +521,198 @@ export default function TakeExamClientView({
     }));
   };
 
-  const handleFinish = async () => {
-    if (examStatus === "submitted" || isSubmitting) return;
-    setIsSubmitting(true);
+  // Clear answer
+  const handleClearAnswer = (questionId: number) => {
+    setUserAnswers((prev) => {
+      const next = { ...prev };
+      delete next[questionId];
+      return next;
+    });
+  };
 
-    try {
-      // Map user answers format: { questionId: selectedIndex }
-      const mappedAnswers: Record<string, number> = {};
-      questions.forEach((q) => {
-        const selectedText = userAnswers[q.id];
-        if (selectedText !== undefined) {
-          const index = q.options.indexOf(selectedText);
-          if (index !== -1) {
-            mappedAnswers[q.id.toString()] = index;
-          }
-        }
-      });
-
-      const res = await submitExamAction(
-        examId,
-        mappedAnswers,
-        warnings,
-        warnings >= 3 ? "Terminated due to multiple security warnings" : "Normal Submission"
-      );
-
-      if (res.success && res.result) {
-        setExamResult(res.result);
-        setExamStatus("submitted");
-        toast.success("Exam submitted successfully!");
+  // Toggle mark for review
+  const toggleMarkForReview = (questionId: number) => {
+    setMarkedForReview((prev) => {
+      const next = new Set(prev);
+      if (next.has(questionId)) {
+        next.delete(questionId);
       } else {
-        toast.error(res.error || "Failed to submit exam.");
+        next.add(questionId);
       }
-    } catch {
-      toast.error("An error occurred during submission.");
-    } finally {
-      setIsSubmitting(false);
+      return next;
+    });
+  };
+
+  // Mark for review and proceed to next
+  const handleMarkAndNext = (questionId: number) => {
+    setMarkedForReview((prev) => {
+      const next = new Set(prev);
+      next.add(questionId);
+      return next;
+    });
+    if (currentQuestionIdx < questions.length - 1) {
+      setCurrentQuestionIdx((i) => i + 1);
     }
   };
 
+  // Psychological status of each question
+  const getQuestionStatus = useCallback(
+    (qId: number): "answered" | "review" | "unanswered" | "not-visited" => {
+      if (markedForReview.has(qId)) return "review";
+      if (userAnswers[qId] !== undefined) return "answered";
+      if (visitedQuestions.has(qId)) return "unanswered";
+      return "not-visited";
+    },
+    [markedForReview, userAnswers, visitedQuestions],
+  );
+
+  // Calculated counters
+  const answeredCount = Object.keys(userAnswers).length;
+  const reviewCount = markedForReview.size;
+
+  // Active question
+  const currentQ = questions[currentQuestionIdx];
+
+  // --- 1. PASSWORD CHALLENGE SCREEN ---
+  if (!isUnlocked) {
+    return (
+      <ExamPasscodeModal
+        title={examMeta.title}
+        enteredPasscode={enteredPasscode}
+        passcodeError={passcodeError}
+        verifyingPasscode={verifyingPasscode}
+        onPasscodeChange={(val) => {
+          setEnteredPasscode(val);
+          setPasscodeError("");
+        }}
+        onSubmit={handleUnlockPasscode}
+        onCancel={() => router.back()}
+      />
+    );
+  }
+
+  // --- 2. INSTRUCTIONS SCREEN ---
   if (examStatus === "instructions") {
     return (
-      <PageContainer className="max-w-4xl mx-auto py-12">
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl space-y-6">
-          <div className="border-b border-gray-100 pb-6 text-center space-y-2">
-            <span className="px-3.5 py-1.5 bg-orange-100 text-[#dd6b01] font-extrabold text-xs rounded-full uppercase tracking-wider">
-              {examMeta.subject}
-            </span>
-            <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
-              {examMeta.title}
-            </h1>
-            <p className="text-sm text-gray-500 font-semibold">
-              Please review instructions carefully before starting the exam.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-orange-50/40 border border-orange-100 rounded-2xl text-center">
-            <div>
-              <p className="text-[10px] text-gray-400 font-extrabold uppercase">Total Questions</p>
-              <p className="text-xl font-black text-gray-900">{questions.length}</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-gray-400 font-extrabold uppercase">Duration</p>
-              <p className="text-xl font-black text-[#dd6b01]">{examMeta.durationMinutes} Mins</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-gray-400 font-extrabold uppercase">Total Marks</p>
-              <p className="text-xl font-black text-blue-600">{examMeta.totalMarks}</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-gray-400 font-extrabold uppercase">Negative Marking</p>
-              <p className="text-xl font-black text-rose-500">-{examMeta.negativeMarks}</p>
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-4">
-            <h3 className="font-bold text-gray-900 text-sm">Strict Security Rules & System Monitoring:</h3>
-            <ul className="text-xs text-gray-600 space-y-2 list-disc list-inside font-semibold">
-              <li>Do not switch tabs or minimize the browser window during the test.</li>
-              <li>Timer will run continuously and submit automatically upon reaching zero.</li>
-              <li>Multiple security warnings will result in forced automatic submission.</li>
-            </ul>
-          </div>
-
-          <div className="pt-6 border-t border-gray-100 flex gap-4">
-            <button
-              onClick={() => router.back()}
-              className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-2xl transition"
-            >
-              Back
-            </button>
-            <button
-              onClick={() => setExamStatus("running")}
-              className="flex-1 py-3 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-sm rounded-2xl shadow-lg shadow-orange-500/20 transition cursor-pointer"
-            >
-              Start Exam Now
-            </button>
-          </div>
-        </div>
-      </PageContainer>
+      <ExamInstructionsScreen
+        examMeta={examMeta}
+        questions={questions}
+        loadingQuestions={loadingQuestions}
+        onStartExam={handleStartExam}
+        onExit={() => router.back()}
+        onRefreshQuestions={() => fetchQuestionsFallback(enteredPasscode)}
+      />
     );
   }
 
+  // --- 3. SUBMITTED RESULTS SCREEN ---
   if (examStatus === "submitted" && examResult) {
-    return (
-      <PageContainer className="max-w-4xl mx-auto py-12">
-        <div className="hidden print:block">
-          <CertificatePrintLayout
-            candidateName={examResult.userName || "Student"}
-            examName={examMeta.title}
-            examDate={new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-            result={{
-              total: (examResult.correct || 0) + (examResult.wrong || 0),
-              correct: examResult.correct || 0,
-              wrong: examResult.wrong || 0,
-              negative: examResult.negative || 0,
-              finalScore: examResult.finalScore || 0,
-              passed: examResult.passed || false,
-            }}
-            totalMarks={examMeta.totalMarks}
-          />
-        </div>
-
-        <div className="print:hidden space-y-8 animate-fadeIn">
-          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl text-center space-y-6">
-            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mx-auto border-4 border-green-200">
-              ✓
-            </div>
-            <h1 className="text-3xl font-black text-gray-900">Exam Successfully Submitted!</h1>
-
-            <Scorecard
-              result={{
-                total: (examResult.correct || 0) + (examResult.wrong || 0),
-                correct: examResult.correct || 0,
-                wrong: examResult.wrong || 0,
-                negative: examResult.negative || 0,
-                finalScore: examResult.finalScore || 0,
-                passed: examResult.passed || false,
-              }}
-              totalMarks={examMeta.totalMarks}
-            />
-
-            <div className="flex gap-4 pt-4">
-              <button
-                onClick={() => window.print()}
-                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm rounded-2xl shadow transition"
-              >
-                Print Official Certificate
-              </button>
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="flex-1 py-3 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-sm rounded-2xl shadow transition"
-              >
-                Back to Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
-      </PageContainer>
-    );
+    return <ExamSubmittedScreen examMeta={examMeta} examResult={examResult} />;
   }
 
+  // --- 4. RUNNING PROCTORED CONSOLE ---
   return (
-    <PageContainer className="space-y-6 max-w-5xl mx-auto">
-      {/* Running Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-md">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900">{examMeta.title}</h1>
-          <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">{examMeta.subject}</p>
-        </div>
+    <div className="select-none min-h-screen bg-slate-100/60 flex flex-col">
+      {/* SECURITY VIOLATION MODAL */}
+      <ExamSecurityModal
+        isOpen={showWarningModal}
+        warnings={warnings}
+        currentWarningMsg={currentWarningMsg}
+        onResumeFullscreen={async () => {
+          await enterFullscreen();
+          setShowWarningModal(false);
+        }}
+      />
 
-        <div className="flex items-center gap-4">
-          <Timer
-            duration={examMeta.durationMinutes * 60}
-            onTimeUp={handleFinish}
-            isRunning={examStatus === "running"}
-          />
-          <button
-            onClick={handleFinish}
-            disabled={isSubmitting}
-            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition cursor-pointer"
-          >
-            {isSubmitting ? "Submitting..." : "Submit Exam"}
-          </button>
-        </div>
-      </div>
+      {/* SUBMISSION CONFIRMATION MODAL */}
+      <ExamSubmitConfirmModal
+        isOpen={showSubmitConfirm}
+        answeredCount={answeredCount}
+        totalCount={questions.length}
+        reviewCount={reviewCount}
+        isSubmitting={isSubmitting}
+        onCancel={() => setShowSubmitConfirm(false)}
+        onConfirm={() => handleFinish()}
+      />
 
-      {/* Questions list */}
-      <div className="space-y-6">
-        {questions.map((q, idx) => (
-          <div key={q.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md space-y-4">
-            <div className="flex items-start gap-3">
-              <span className="w-8 h-8 rounded-xl bg-orange-100 text-[#dd6b01] font-black text-sm flex items-center justify-center flex-shrink-0">
-                {idx + 1}
-              </span>
-              <h3 className="text-lg font-bold text-gray-900 pt-0.5">{q.questionText}</h3>
-            </div>
+      {/* PROCTORED TOP CONSOLE BAR */}
+      <ExamTopBar
+        examMeta={examMeta}
+        warnings={warnings}
+        totalQuestions={questions.length}
+        currentQuestionIdx={currentQuestionIdx}
+        isSubmitting={isSubmitting}
+        isFullscreen={isFullscreen}
+        onTimeUp={() => handleFinish("Time expired")}
+        onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
+        onToggleFullscreen={toggleFullscreen}
+        onOpenSubmitConfirm={() => setShowSubmitConfirm(true)}
+      />
 
-            {q.passage && (
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 text-xs text-gray-700 leading-relaxed">
-                {q.passage}
+      {/* MAIN EXAM STAGE: DUAL PANE LAYOUT */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-2 sm:px-6 py-2 sm:py-4 flex flex-col justify-between">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 sm:gap-4 items-start">
+          {/* LEFT COLUMN: MAIN QUESTION CONSOLE */}
+          <div className="lg:col-span-8 xl:col-span-9 space-y-2 sm:space-y-3">
+            {currentQ ? (
+              <ExamQuestionCard
+                currentQ={currentQ}
+                currentQuestionIdx={currentQuestionIdx}
+                totalQuestions={questions.length}
+                negativeMarks={examMeta.negativeMarks}
+                userAnswer={userAnswers[currentQ.id]}
+                isMarkedForReview={markedForReview.has(currentQ.id)}
+                onSelectOption={handleSelectOption}
+                onClearAnswer={handleClearAnswer}
+                onToggleMarkForReview={toggleMarkForReview}
+                onMarkAndNext={handleMarkAndNext}
+                onPrevQuestion={() => {
+                  if (currentQuestionIdx > 0)
+                    setCurrentQuestionIdx((i) => i - 1);
+                }}
+                onNextQuestion={() => {
+                  if (currentQuestionIdx < questions.length - 1) {
+                    setCurrentQuestionIdx((i) => i + 1);
+                  }
+                }}
+                onOpenSubmitConfirm={() => setShowSubmitConfirm(true)}
+              />
+            ) : (
+              <div className="bg-white p-8 rounded border border-slate-200/80 text-center">
+                <p className="text-xs text-slate-500 font-bold">
+                  Question not found.
+                </p>
               </div>
             )}
 
-            {q.pictureUrl && (
-              <Image
-                src={q.pictureUrl}
-                alt="Question diagram"
-                width={400}
-                height={250}
-                className="rounded-2xl border border-gray-200 object-cover max-h-60"
-              />
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              {q.options.map((opt, optIdx) => {
-                const selected = userAnswers[q.id] === opt;
-                return (
-                  <button
-                    key={optIdx}
-                    onClick={() => handleSelectOption(q.id, opt)}
-                    className={`p-4 rounded-2xl text-xs font-bold text-left border transition flex items-center justify-between cursor-pointer ${
-                      selected
-                        ? "bg-orange-50 border-[#dd6b01] text-[#dd6b01] shadow-sm"
-                        : "bg-white border-gray-200 hover:border-orange-200 text-gray-700"
-                    }`}
-                  >
-                    <span>
-                      {String.fromCharCode(65 + optIdx)}. {opt}
-                    </span>
-                    {selected && <span className="text-sm">✓</span>}
-                  </button>
-                );
-              })}
-            </div>
+            {/* Mobile Horizontal Quick-Nav Strip (< lg only, directly below exam question) */}
+            <MobileQuestionNavStrip
+              questions={questions}
+              currentQuestionIdx={currentQuestionIdx}
+              getQuestionStatus={getQuestionStatus}
+              onSelectQuestion={setCurrentQuestionIdx}
+            />
           </div>
-        ))}
-      </div>
-    </PageContainer>
+
+          {/* RIGHT COLUMN: DESKTOP QUESTION MATRIX SIDEBAR & MOBILE DRAWER */}
+          <ExamQuestionMatrix
+            questions={questions}
+            currentQuestionIdx={currentQuestionIdx}
+            answeredCount={answeredCount}
+            reviewCount={reviewCount}
+            visitedQuestions={visitedQuestions}
+            markedForReview={markedForReview}
+            filterStatus={filterStatus}
+            mobileDrawerOpen={mobileDrawerOpen}
+            onSelectQuestion={setCurrentQuestionIdx}
+            onSetFilterStatus={setFilterStatus}
+            onOpenMobileDrawer={() => setMobileDrawerOpen(true)}
+            onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
+            onOpenSubmitConfirm={() => setShowSubmitConfirm(true)}
+            getQuestionStatus={getQuestionStatus}
+          />
+        </div>
+      </main>
+    </div>
   );
 }

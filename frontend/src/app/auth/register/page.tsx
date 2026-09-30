@@ -6,16 +6,20 @@ import logo2 from "../../../../public/global/logo2.png";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Input } from "../../../components/ui/Input";
+import { PrimaryBtn } from "../../../components/ui/PrimaryBtn";
 import { FaEnvelope, FaLock, FaArrowLeft, FaUser } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 import { registerAction } from "../../../lib/actions";
+import { SocialAuthButtons } from "../../../components/auth/SocialAuthButtons";
+import { useUser } from "../../../context/UserContext";
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const { setUser } = useUser();
 
   const [error, setError] = useState("");
 
@@ -29,11 +33,7 @@ export default function Register() {
     try {
       const res = await registerAction(name, email, password);
       if (res.success && res.user) {
-        localStorage.setItem("token", res.token || "");
-        localStorage.setItem("userRole", res.user.role || "student");
-        localStorage.setItem("userName", res.user.name || "");
-        localStorage.setItem("userEmail", res.user.email || "");
-        localStorage.setItem("userID", res.user.id.toString());
+        setUser(res.user);
         router.push("/dashboard");
       } else {
         setError(res.error || "Failed to register account.");
@@ -48,7 +48,7 @@ export default function Register() {
 
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col">
-      <section className="flex items-center justify-between mx-auto max-w-7xl w-full px-6 py-8">
+      <section className="flex items-center justify-between mx-auto max-w-7xl w-full px-4 py-4 sm:px-6 sm:py-8">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -59,7 +59,7 @@ export default function Register() {
               alt="logo"
               width={180}
               height={40}
-              className="w-auto h-10"
+              className="w-auto h-8 sm:h-10"
             />
           </Link>
         </motion.div>
@@ -69,32 +69,32 @@ export default function Register() {
         >
           <Link
             href="/"
-            className="flex items-center gap-2 text-gray-500 hover:text-primary font-bold transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-500 hover:text-primary font-bold transition-colors"
           >
-            <FaArrowLeft className="text-sm" />
+            <FaArrowLeft className="text-xs" />
             <span>Back to Home</span>
           </Link>
         </motion.div>
       </section>
 
-      <section className="flex-1 flex items-center justify-center p-6 pb-20">
+      <section className="flex-1 flex items-center justify-center p-3 sm:p-4 pb-12 sm:pb-16">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-white p-10 rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100"
+          className="w-full max-w-md bg-white p-4 sm:p-8 rounded border border-slate-200/80 shadow-xs"
         >
-          <div className="text-center mb-10">
-            <h2 className="text-4xl font-black gradient-text mb-3">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1.5">
               Create Account
             </h2>
-            <p className="text-gray-500 font-medium">
-              Join 1200+ students on our platform
+            <p className="text-slate-500 text-xs font-medium">
+              Join candidates and educators on the testing portal
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm font-semibold rounded-xl text-center">
+              <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-600 text-xs font-mono font-semibold rounded text-center">
                 {error}
               </div>
             )}
@@ -129,16 +129,26 @@ export default function Register() {
               required
             />
 
-            <button
+            <PrimaryBtn
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-lg px-6 py-4 rounded-2xl hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-2.5 text-sm font-bold"
             >
               {loading ? "Creating account..." : "Register Now"}
-            </button>
+            </PrimaryBtn>
 
-            <div className="text-center pt-4">
-              <p className="text-gray-500 font-medium">
+            <div className="relative flex items-center py-2">
+              <div className="flex-grow border-t border-slate-200/80"></div>
+              <span className="flex-shrink mx-3 text-slate-400 text-[11px] font-bold uppercase tracking-wider font-mono">
+                or sign up with
+              </span>
+              <div className="flex-grow border-t border-slate-200/80"></div>
+            </div>
+
+            <SocialAuthButtons mode="register" />
+
+            <div className="text-center pt-2">
+              <p className="text-slate-500 text-xs font-medium">
                 Already have an account?{" "}
                 <Link
                   href="/auth/login"

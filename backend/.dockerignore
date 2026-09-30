@@ -1,0 +1,41 @@
+# Git history
+.git
+.gitignore
+
+# Compiled binaries
+backend
+backend.exe
+main
+server
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.test
+*.out
+coverage.txt
+coverage.out
+*.prof
+
+# Local environment files (secrets are passed at runtime)
+.env
+.env.*
+!.env.example
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Go workspace
+go.work
+go.work.sum
+vendor/

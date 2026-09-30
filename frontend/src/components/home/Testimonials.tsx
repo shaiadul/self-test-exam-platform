@@ -39,52 +39,52 @@ export const Testimonials = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-20 space-y-4">
-          <span className="text-xs text-primary font-bold uppercase tracking-widest bg-primary/10 border border-primary/20 px-3.5 py-1.5 rounded-full inline-block">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14 space-y-3">
+          <span className="text-xs text-primary font-mono font-bold uppercase tracking-widest bg-primary/10 border border-primary/20 px-3 py-1 rounded inline-block">
             Student Feedback
           </span>
-          <h2 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight">
+          <h2 className="text-2xl sm:text-4xl font-bold text-gray-900 tracking-tight">
             Trusted by Ambitious Learners Nationwide
           </h2>
-          <p className="text-gray-500 font-medium text-sm sm:text-base leading-relaxed">
+          <p className="text-gray-500 font-medium text-xs sm:text-sm leading-relaxed">
             See how students and educators use Self Test to reach top academic results.
           </p>
         </div>
 
         {/* Reviews Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {reviews.map((review, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
-              className="flex flex-col p-8 bg-white border border-gray-200/80 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 relative group"
+              transition={{ duration: 0.3, delay: index * 0.08 }}
+              className="flex flex-col p-6 bg-white border border-slate-200/80 rounded shadow-xs hover:border-slate-300 transition-all duration-200 relative group"
             >
               {/* Quote Icon */}
-              <FaQuoteLeft className="text-gray-200 group-hover:text-primary/20 text-3xl mb-4 transition-colors" />
+              <FaQuoteLeft className="text-gray-200 group-hover:text-primary/20 text-2xl mb-3 transition-colors" />
 
               {/* Rating Stars */}
-              <div className="flex gap-1 text-amber-400 text-xs mb-4">
+              <div className="flex gap-1 text-amber-400 text-xs mb-3">
                 {[...Array(review.rating)].map((_, i) => (
                   <FaStar key={i} />
                 ))}
               </div>
 
               {/* Review Text */}
-              <p className="text-gray-600 text-sm font-medium leading-relaxed mb-6 flex-1 italic">
+              <p className="text-gray-600 text-xs sm:text-sm font-medium leading-relaxed mb-5 flex-1 italic">
                 &quot;{review.text}&quot;
               </p>
 
               {/* Author Footer */}
-              <div className="flex items-center gap-3.5 pt-4 border-t border-gray-100">
-                <div className={`w-11 h-11 rounded-full ${review.color} text-white font-black text-sm flex items-center justify-center shadow-sm`}>
+              <div className="flex items-center gap-3 pt-3.5 border-t border-slate-100">
+                <div className={`w-9 h-9 rounded ${review.color} text-white font-mono font-bold text-xs flex items-center justify-center shadow-2xs`}>
                   {review.avatar}
                 </div>
                 <div className="text-left">
-                  <h4 className="font-bold text-gray-900 text-sm">{review.name}</h4>
-                  <p className="text-xs text-gray-500 font-medium">{review.role} • {review.school}</p>
+                  <h4 className="font-bold text-gray-900 text-xs">{review.name}</h4>
+                  <p className="text-[11px] text-gray-500 font-medium">{review.role} • {review.school}</p>
                 </div>
               </div>
             </motion.div>

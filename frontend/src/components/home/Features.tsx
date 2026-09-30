@@ -49,47 +49,47 @@ export const Features = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-20 space-y-4">
-          <span className="text-xs text-primary font-bold uppercase tracking-widest bg-primary/10 border border-primary/20 px-3.5 py-1.5 rounded-full inline-block">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14 space-y-3">
+          <span className="text-xs text-primary font-mono font-bold uppercase tracking-widest bg-primary/10 border border-primary/20 px-3 py-1 rounded inline-block">
             Comprehensive Feature Suite
           </span>
-          <h2 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight leading-tight">
+          <h2 className="text-2xl sm:text-4xl font-bold text-gray-900 tracking-tight leading-tight">
             Assessing your knowledge has <br className="hidden sm:inline" />
             never been this seamless.
           </h2>
-          <p className="text-gray-500 font-medium text-sm sm:text-base leading-relaxed">
+          <p className="text-gray-500 font-medium text-xs sm:text-sm leading-relaxed">
             Discover a professional suite of tools designed to help you prepare, track, and execute assessments flawlessly.
           </p>
         </div>
 
         {/* Features Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="flex flex-col text-left p-6 sm:p-8 bg-white border border-gray-200/80 rounded-3xl shadow-xs hover:shadow-xl hover:border-primary/30 transition-all duration-300 group"
+              transition={{ duration: 0.3, delay: index * 0.05 }}
+              className="flex flex-col text-left p-5 sm:p-6 bg-white border border-slate-200/80 rounded shadow-xs hover:border-primary/40 transition-all duration-200 group"
             >
               {/* Icon container */}
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg mb-6 border shadow-xs ${feature.iconColor} transform group-hover:scale-110 transition-transform duration-300`}>
+              <div className={`w-10 h-10 rounded flex items-center justify-center text-base mb-4 border shadow-2xs ${feature.iconColor} transform group-hover:scale-105 transition-transform duration-200`}>
                 {feature.icon}
               </div>
               
-              <h3 className="text-lg font-black text-gray-900 mb-3 group-hover:text-primary transition-colors duration-300">
+              <h3 className="text-base font-bold text-gray-900 mb-2 group-hover:text-primary transition-colors duration-200">
                 {feature.title}
               </h3>
               
-              <p className="text-gray-500 text-sm font-medium leading-relaxed mb-6 flex-1">
+              <p className="text-gray-500 text-xs font-medium leading-relaxed mb-4 flex-1">
                 {feature.description}
               </p>
 
               {/* Action link */}
               <Link href="/auth" className="flex items-center gap-2 text-xs font-bold text-primary hover:text-primary-dark transition-colors cursor-pointer w-fit group/link">
                 <span>Explore assessments</span>
-                <FaLongArrowAltRight className="transform group-hover/link:translate-x-1.5 transition-transform duration-300" />
+                <FaLongArrowAltRight className="transform group-hover/link:translate-x-1.5 transition-transform duration-200" />
               </Link>
             </motion.div>
           ))}

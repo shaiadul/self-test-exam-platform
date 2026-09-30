@@ -7,28 +7,16 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	
 	"github.com/selftest/backend/config"
-	"github.com/selftest/backend/handler"
+	delivery "github.com/selftest/backend/internal/delivery/http"
+	"github.com/selftest/backend/internal/infrastructure/cache"
+	emailinfra "github.com/selftest/backend/internal/infrastructure/email"
+	"github.com/selftest/backend/internal/infrastructure/oauth"
+	"github.com/selftest/backend/internal/infrastructure/persistence"
+	"github.com/selftest/backend/internal/infrastructure/storage"
+	"github.com/selftest/backend/internal/service"
 	"github.com/selftest/backend/middleware"
-	"github.com/selftest/backend/repository"
 )
-
-// corsMiddleware adds standard headers to handle requests from next.js frontend
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*") // For development; can restrict to localhost:3000 later
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
 
 func main() {
 	// Load environment variables
@@ -38,53 +26,75 @@ func main() {
 
 	// Initialize Database connection
 	config.InitDB()
-	defer config.DB.Close()
+	defer config.CloseDB()
 
-	// Initialize repository and handler
-	userRepo := repository.NewSQLUserRepository(config.DB)
-	authHandler := handler.NewAuthHandler(userRepo)
-	
-	examRepo := repository.NewSQLExamRepository(config.DB)
-	examHandler := handler.NewExamHandler(examRepo, userRepo)
+	// Initialize Redis Cache connection
+	config.InitRedis()
+	defer config.CloseRedis()
 
-	// Routing setup
-	mux := http.NewServeMux()
+	cacheService := cache.NewRedisCache(config.RedisClient)
 
-	// Public routes
-	mux.HandleFunc("/api/auth/register", authHandler.Register)
-	mux.HandleFunc("/api/auth/login", authHandler.Login)
+	// Initialize Resend Email Service
+	emailService := emailinfra.NewResendEmailService()
 
-	// Protected routes using auth middleware
-	mux.Handle("/api/auth/profile", middleware.AuthMiddleware(http.HandlerFunc(authHandler.GetProfile)))
-	mux.Handle("/api/auth/complete-profile", middleware.AuthMiddleware(http.HandlerFunc(authHandler.CompleteProfile)))
-	
-	// Exam routes
-	mux.Handle("/api/exam-packs", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleExamPacks)))
-	mux.Handle("/api/exam-packs/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleExamPacks)))
-	mux.Handle("/api/exams/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleExams)))
-	mux.Handle("/api/dashboard/stats", middleware.AuthMiddleware(http.HandlerFunc(examHandler.GetDashboardStats)))
+	// 1. Initialize Infrastructure Repositories & Storage (with Redis caching)
+	baseUserRepo := persistence.NewPostgresUserRepository(config.DB)
+	basePackRepo := persistence.NewPostgresExamPackRepository(config.DB)
+	baseExamRepo := persistence.NewPostgresExamRepository(config.DB)
 
-	// Attempts & Reporting routes
-	mux.Handle("/api/attempts", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleAttempts)))
-	mux.Handle("/api/attempts/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleAttempts)))
-	mux.Handle("/api/teacher/reports", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleTeacherReports)))
-	mux.Handle("/api/teacher/reports/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleTeacherReports)))
+	userRepo := persistence.NewCachedUserRepository(baseUserRepo, cacheService)
+	packRepo := persistence.NewCachedExamPackRepository(basePackRepo, cacheService)
+	examRepo := persistence.NewCachedExamRepository(baseExamRepo, cacheService)
 
-	// Admin Settings routes
-	mux.Handle("/api/admin/users", middleware.AuthMiddleware(http.HandlerFunc(authHandler.HandleAdminUsers)))
-	mux.Handle("/api/admin/users/", middleware.AuthMiddleware(http.HandlerFunc(authHandler.HandleAdminUsers)))
-	mux.Handle("/api/admin/permissions", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandlePermissions)))
-	mux.Handle("/api/admin/permissions/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandlePermissions)))
+	attemptRepo := persistence.NewPostgresAttemptRepository(config.DB)
+	reportRepo := persistence.NewPostgresReportRepository(config.DB)
+	systemRepo := persistence.NewPostgresSystemRepository(config.DB)
+	requestRepo := persistence.NewPostgresExamRequestRepository(config.DB)
 
-	// Assets, Transactions, and Analysis routes
-	mux.Handle("/api/admin/analysis", middleware.AuthMiddleware(http.HandlerFunc(examHandler.GetExamAnalysisStats)))
-	mux.Handle("/api/assets", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleSystemAssets)))
-	mux.Handle("/api/assets/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleSystemAssets)))
-	mux.Handle("/api/transactions", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleTransactions)))
-	mux.Handle("/api/transactions/", middleware.AuthMiddleware(http.HandlerFunc(examHandler.HandleTransactions)))
+	s3Storage, err := storage.NewS3Storage()
+	if err != nil {
+		fmt.Printf("Warning: Failed to initialize S3 storage: %v\n", err)
+	}
 
-	// Apply CORS
-	handlerWithCORS := corsMiddleware(mux)
+	oauthService := oauth.NewOAuthService()
+
+	// 2. Initialize Domain / Application Services
+	userService := service.NewUserService(userRepo, emailService, cacheService)
+	packService := service.NewExamPackService(packRepo, userRepo)
+	examService := service.NewExamService(examRepo, userRepo, packRepo)
+	attemptService := service.NewAttemptService(attemptRepo, examRepo, packRepo, userRepo)
+	reportService := service.NewReportService(userRepo, examRepo, packRepo, attemptRepo, reportRepo)
+	systemService := service.NewSystemService(systemRepo)
+	uploadService := service.NewUploadService(s3Storage)
+	requestService := service.NewExamRequestService(requestRepo, userRepo, packRepo)
+
+	// 3. Initialize Delivery HTTP Handlers
+	authHandler := delivery.NewAuthHandler(userService, oauthService)
+	packHandler := delivery.NewExamPackHandler(packService, examService)
+	examHandler := delivery.NewExamHandler(examService, attemptService)
+	attemptHandler := delivery.NewAttemptHandler(attemptService)
+	reportHandler := delivery.NewReportHandler(reportService)
+	systemHandler := delivery.NewSystemHandler(systemService)
+	uploadHandler := delivery.NewUploadHandler(uploadService)
+	requestHandler := delivery.NewExamRequestHandler(requestService)
+
+	// 4. Initialize Rate Limiter
+	rateLimitConfig := config.LoadRateLimitConfig()
+	rateLimitStore := middleware.NewRedisRateLimitStore(config.RedisClient)
+	rateLimiter := middleware.NewRateLimiter(rateLimitConfig, rateLimitStore)
+
+	// 5. Build Router with Middlewares
+	router := delivery.NewRouter(delivery.Handlers{
+		AuthHandler:        authHandler,
+		ExamPackHandler:    packHandler,
+		ExamHandler:        examHandler,
+		AttemptHandler:     attemptHandler,
+		ReportHandler:      reportHandler,
+		SystemHandler:      systemHandler,
+		UploadHandler:      uploadHandler,
+		ExamRequestHandler: requestHandler,
+		RateLimiter:        rateLimiter,
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -92,5 +102,5 @@ func main() {
 	}
 
 	fmt.Printf("Go server started on port %s...\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, handlerWithCORS))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }

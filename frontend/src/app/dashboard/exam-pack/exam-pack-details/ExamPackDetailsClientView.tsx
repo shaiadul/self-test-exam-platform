@@ -1,116 +1,324 @@
 "use client";
 
-import Link from "next/link";
+import React from "react";
+import { FaEye, FaPlay, FaCheckCircle, FaArrowLeft } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
+import EmptyState from "../../../../components/common/EmptyState";
+import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
+import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
+import { ShareBtn } from "../../../../components/ui/ShareBtn";
+import DynamicPagination from "../../../../components/common/DynamicPagination";
+import { PaginationMeta } from "../../../../lib/actions";
+import { formatDateTime, DATE_FORMATS } from "@/lib/date";
 
 type Exam = {
   id: string;
   name: string;
   startDate: string;
   endDate: string;
-  status: "Start Exam" | "Complete" | "Expire";
+  status: "Start Exam" | "Complete" | "Expire" | "Upcoming";
   link: string;
+  attemptId?: number;
 };
 
 interface ExamPackDetailsClientViewProps {
+  packId?: number;
   initialPack: any;
   initialExams: any[];
+  initialMeta?: PaginationMeta;
   initialStats: any;
+  initialAttempts?: any[];
 }
 
 export default function ExamPackDetailsClientView({
   initialPack,
-  initialExams,
+  initialExams = [],
+  initialMeta,
   initialStats,
+  initialAttempts = [],
 }: ExamPackDetailsClientViewProps) {
-  const packTitle = initialPack?.title || "Science Explorer";
+  const packTitle = initialPack?.title || "Exam Pack";
 
-  const completedSet = new Set<string>();
+  // Map of examId to user's latest attempt
+  const attemptMap = new Map<string, any>();
+  initialAttempts.forEach((a: any) => {
+    if (!attemptMap.has(a.examId)) {
+      attemptMap.set(a.examId, a);
+    }
+  });
+
+  // Fallback check from initialStats.recentExams
   if (initialStats?.recentExams) {
     initialStats.recentExams.forEach((item: any) => {
-      const cleanId = item.id.startsWith("#") ? item.id.substring(1) : item.id;
-      completedSet.add(cleanId);
+      const cleanId =
+        item.examId ||
+        (item.id.startsWith("#") ? item.id.substring(1) : item.id);
+      if (!attemptMap.has(cleanId)) {
+        attemptMap.set(cleanId, { id: item.attemptId, examId: cleanId });
+      }
     });
   }
 
   const now = new Date();
   const exams: Exam[] = (initialExams || []).map((e: any) => {
+    const start = new Date(e.startDate);
     const end = new Date(e.endDate);
-    let status: "Start Exam" | "Complete" | "Expire" = "Start Exam";
+    const userAttempt = attemptMap.get(e.id);
+    let status: "Start Exam" | "Complete" | "Expire" | "Upcoming" =
+      "Start Exam";
 
-    if (completedSet.has(e.id)) {
+    if (userAttempt) {
       status = "Complete";
     } else if (now > end) {
       status = "Expire";
+    } else if (now < start) {
+      status = "Upcoming";
     }
 
     return {
       id: e.id,
       name: e.name,
-      startDate: e.startDate,
-      endDate: e.endDate,
+      startDate: formatDateTime(e.startDate, DATE_FORMATS.DATETIME_MEDIUM),
+      endDate: formatDateTime(e.endDate, DATE_FORMATS.DATETIME_MEDIUM),
       status,
       link: `/dashboard/exam-pack/exam-pack-details/${e.id}`,
+      attemptId: userAttempt?.id,
     };
   });
 
   return (
     <PageContainer className="space-y-6">
-      <h1 className="text-3xl font-bold text-[#dd6b01] mb-6">
-        Exam Pack Details: {packTitle}
-      </h1>
-
-      <div className="overflow-x-auto bg-white border border-gray-100 rounded-2xl shadow-sm">
-        <table className="min-w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider">
-              <th className="px-6 py-4 text-left">Exam Name</th>
-              <th className="px-6 py-4 text-left">Exam Code</th>
-              <th className="px-6 py-4 text-left">Start Date</th>
-              <th className="px-6 py-4 text-left">End Date</th>
-              <th className="px-6 py-4 text-center">Action / Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {exams.map((exam) => (
-              <tr key={exam.id} className="hover:bg-gray-50/50 transition">
-                <td className="px-6 py-4 font-bold text-gray-900">{exam.name}</td>
-                <td className="px-6 py-4 font-mono text-xs text-gray-500">#{exam.id}</td>
-                <td className="px-6 py-4 text-sm text-gray-600 font-medium">{exam.startDate}</td>
-                <td className="px-6 py-4 text-sm text-gray-600 font-medium">{exam.endDate}</td>
-                <td className="px-6 py-4 text-center">
-                  {exam.status === "Start Exam" && (
-                    <Link
-                      href={exam.link}
-                      className="inline-block px-5 py-2 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow transition"
-                    >
-                      Start Exam
-                    </Link>
-                  )}
-                  {exam.status === "Complete" && (
-                    <span className="inline-block px-4 py-1.5 bg-green-50 text-green-700 font-bold text-xs rounded-full border border-green-200">
-                      ✓ Completed
-                    </span>
-                  )}
-                  {exam.status === "Expire" && (
-                    <span className="inline-block px-4 py-1.5 bg-gray-100 text-gray-500 font-bold text-xs rounded-full border border-gray-200">
-                      Expired
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-
-            {exams.length === 0 && (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-gray-500 font-medium">
-                  No active exams available in this pack.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+        <div className="flex items-center gap-3">
+          <OutlineBtn
+            link="/dashboard/exam-pack"
+            className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200"
+            title="Back to All Packs"
+          >
+            <FaArrowLeft className="text-xs" />
+          </OutlineBtn>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              {packTitle}
+            </h1>
+          </div>
+        </div>
       </div>
+
+      {exams.length > 0 ? (
+        <>
+          <div className="hidden sm:block overflow-x-auto bg-white border border-slate-200/80 rounded-none shadow-xs">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="bg-slate-50/90 border-b border-slate-200/80 text-slate-500 font-extrabold text-[11px] uppercase tracking-wider">
+                  <th className="px-5 py-3.5 text-left">Exam Name</th>
+                  <th className="px-5 py-3.5 text-left">Start Date</th>
+                  <th className="px-5 py-3.5 text-left">End Date</th>
+                  <th className="px-5 py-3.5 text-center">
+                    Status / Evaluation Report
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm font-medium">
+                {exams.map((exam) => (
+                  <tr
+                    key={exam.id}
+                    className="hover:bg-slate-50/50 transition-colors"
+                  >
+                    <td className="px-5 py-3.5 font-bold text-slate-900 text-xs sm:text-sm">
+                      {exam.name}
+                    </td>
+                    <td className="px-5 py-3.5 text-xs text-slate-600 font-semibold">
+                      {exam.startDate}
+                    </td>
+                    <td className="px-5 py-3.5 text-xs text-slate-600 font-semibold">
+                      {exam.endDate}
+                    </td>
+                    <td className="px-5 py-3.5 text-center">
+                      {exam.status === "Start Exam" && (
+                        <div className="inline-flex items-center gap-1.5 justify-center">
+                          <PrimaryBtn
+                            link={exam.link}
+                            className="!text-xs !py-1.5 !px-3.5 gap-1.5 shadow-xs !rounded font-bold"
+                          >
+                            <FaPlay className="text-[9px]" />
+                            <span>Start Exam</span>
+                          </PrimaryBtn>
+                          <ShareBtn
+                            metadata={{
+                              title: `${exam.name} - Online Exam`,
+                              text: `Take the ${exam.name} examination on Self Test!`,
+                              path: exam.link,
+                            }}
+                            variant="action"
+                            size="sm"
+                            title={`Share ${exam.name}`}
+                          />
+                        </div>
+                      )}
+                      {exam.status === "Complete" && (
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-full border border-emerald-200">
+                            <FaCheckCircle className="text-[10px]" />
+                            <span>Completed</span>
+                          </span>
+                          {exam.attemptId ? (
+                            <OutlineBtn
+                              link={`/dashboard/reporting/${exam.attemptId}`}
+                              className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded"
+                            >
+                              <span className="text-slate-700 font-bold">
+                                View Report
+                              </span>
+                            </OutlineBtn>
+                          ) : (
+                            <OutlineBtn
+                              link="/dashboard/reporting"
+                              className="!text-xs !py-1.5 !px-3 gap-1.5 shadow-xs !rounded"
+                            >
+                              <FaEye className="text-xs text-primary" />
+                              <span className="text-slate-700 font-bold">
+                                Reports
+                              </span>
+                            </OutlineBtn>
+                          )}
+                        </div>
+                      )}
+                      {exam.status === "Expire" && (
+                        <span className="inline-block px-3.5 py-1 bg-slate-100 text-slate-500 font-bold text-xs rounded-full border border-slate-200">
+                          Expired
+                        </span>
+                      )}
+                      {exam.status === "Upcoming" && (
+                        <span className="inline-block px-3.5 py-1 bg-amber-50 text-amber-700 font-bold text-xs rounded-full border border-amber-200">
+                          Upcoming
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Phone Card View */}
+          <div className="block sm:hidden space-y-3">
+            {exams.map((exam) => (
+              <div
+                key={exam.id}
+                className="p-3.5 bg-white rounded border border-slate-200/80 shadow-2xs space-y-3"
+              >
+                {/* Header: Title & Code */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-slate-900 text-sm tracking-tight leading-snug">
+                      {exam.name}
+                    </h3>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      ID: #{exam.id}
+                    </span>
+                  </div>
+                  <span
+                    className={`shrink-0 text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                      exam.status === "Start Exam"
+                        ? "bg-primary/10 text-primary border-primary/20"
+                        : exam.status === "Complete"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-slate-100 text-slate-500 border-slate-200"
+                    }`}
+                  >
+                    {exam.status === "Start Exam" ? "Available" : exam.status}
+                  </span>
+                </div>
+
+                {/* Dates Grid */}
+                <div className="grid grid-cols-2 gap-2 p-2 rounded bg-slate-50 border border-slate-100 text-[11px] font-mono">
+                  <div>
+                    <span className="text-[9px] text-slate-400 block uppercase font-sans font-semibold">
+                      Start:
+                    </span>
+                    <span className="text-slate-700 font-medium truncate block">
+                      {exam.startDate}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-slate-400 block uppercase font-sans font-semibold">
+                      Deadline:
+                    </span>
+                    <span className="text-slate-700 font-medium truncate block">
+                      {exam.endDate}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                {exam.status === "Start Exam" && (
+                  <div className="flex items-center gap-2">
+                    <PrimaryBtn
+                      link={exam.link}
+                      className="flex-1 !text-xs !py-2.5 gap-1.5 shadow-xs !rounded justify-center font-bold"
+                    >
+                      <FaPlay className="text-[10px]" />
+                      <span>Start Assessment Exam</span>
+                    </PrimaryBtn>
+                    <ShareBtn
+                      metadata={{
+                        title: `${exam.name} - Online Exam`,
+                        text: `Take the ${exam.name} examination on Self Test!`,
+                        path: exam.link,
+                      }}
+                      variant="action"
+                      size="md"
+                      title={`Share ${exam.name}`}
+                    />
+                  </div>
+                )}
+
+                {exam.status === "Complete" && (
+                  <div className="flex items-center gap-2">
+                    {exam.attemptId ? (
+                      <OutlineBtn
+                        link={`/dashboard/reporting/${exam.attemptId}`}
+                        className="w-full !text-xs !py-2 shadow-xs !rounded justify-center font-bold font-mono"
+                      >
+                        <span>View Evaluation Report</span>
+                      </OutlineBtn>
+                    ) : (
+                      <OutlineBtn
+                        link="/dashboard/reporting"
+                        className="w-full !text-xs !py-2 shadow-xs !rounded justify-center font-bold font-mono"
+                      >
+                        <span>View Results</span>
+                      </OutlineBtn>
+                    )}
+                  </div>
+                )}
+
+                {exam.status === "Expire" && (
+                  <div className="w-full py-2 bg-slate-100 text-slate-500 rounded text-center text-xs font-mono font-bold border border-slate-200">
+                    Exam Expired
+                  </div>
+                )}
+
+                {exam.status === "Upcoming" && (
+                  <div className="w-full py-2 bg-amber-50 text-amber-700 rounded text-center text-xs font-mono font-bold border border-amber-200">
+                    Upcoming Exam
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <DynamicPagination meta={initialMeta} />
+        </>
+      ) : (
+        <EmptyState
+          compact
+          type="exam"
+          title="No Active Exams"
+          description="No active exams are available in this pack at this time."
+        />
+      )}
     </PageContainer>
   );
 }

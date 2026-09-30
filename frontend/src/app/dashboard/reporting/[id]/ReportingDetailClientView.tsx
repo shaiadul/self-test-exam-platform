@@ -1,36 +1,17 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import Image from "next/image";
-import { FaSearch, FaSortAmountDown, FaSortAmountUp, FaArrowLeft } from "react-icons/fa";
+import React, { useMemo } from "react";
+import { FaArrowLeft, FaEyeSlash, FaPrint, FaTimesCircle } from "react-icons/fa";
 import { PageContainer } from "../../../../components/common/PageContainer";
 import Scorecard from "../../../../components/dashboard/Scorecard";
 import CertificatePrintLayout from "../../../../components/dashboard/CertificatePrintLayout";
-import { useRouter } from "next/navigation";
-
-interface InfoItemProps {
-  label: string;
-  value: string;
-}
-
-const InfoItem: React.FC<InfoItemProps> = ({ label, value }) => (
-  <div>
-    <span className="text-sm font-semibold text-gray-500">{label}</span>
-    <p className="border border-[#dd6b01] rounded text-sm px-3 py-1 bg-orange-50/20 text-gray-800">{value}</p>
-  </div>
-);
-
-interface PeerStudent {
-  id: string | number;
-  merit: number;
-  name: string;
-  board: string;
-  time: string;
-  score: number;
-  negative: number;
-  image?: string;
-  institution?: string;
-}
+import { PrimaryBtn } from "../../../../components/ui/PrimaryBtn";
+import { OutlineBtn } from "../../../../components/ui/OutlineBtn";
+import { formatDate, formatTime, DATE_FORMATS } from "@/lib/date";
+import { PeerStudent } from "./types";
+import { ReportingDetailInfoGrid } from "./components/ReportingDetailInfoGrid";
+import { ReportingDetailQuestionsList } from "./components/ReportingDetailQuestionsList";
+import { ReportingDetailMeritSection } from "./components/ReportingDetailMeritSection";
 
 interface ReportingDetailClientViewProps {
   attemptId: number;
@@ -45,292 +26,242 @@ export default function ReportingDetailClientView({
   initialQuestions,
   initialReportDetails,
 }: ReportingDetailClientViewProps) {
-  const router = useRouter();
   const attempt = initialAttempt;
   const questions = initialQuestions || [];
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"score" | "name">("score");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [showDropdown, setShowDropdown] = useState(false);
+  // Helper to format duration in minutes and seconds
+  const formatDuration = (seconds?: number): string => {
+    if (!seconds || seconds <= 0) return "N/A";
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins === 0) return `${secs}s`;
+    if (secs === 0) return `${mins}m`;
+    return `${mins}m ${secs}s`;
+  };
 
-  // Compute peers and rank from initialReportDetails
-  const { peers, myRank } = useMemo(() => {
+  // Compute peers and rank from initialReportDetails with multi-tier tie-breakers:
+  // 1. Highest Score / Points
+  // 2. Less time taken (lower duration)
+  // 3. Attempt Number (first attempt before retakes)
+  // 4. Started earlier (earlier start/submission date-time)
+  const { peers } = useMemo(() => {
     if (!initialReportDetails?.attempts || !attempt) {
-      return { peers: [], myRank: 1 };
+      return { peers: [] };
     }
 
-    const sorted = [...initialReportDetails.attempts].sort((a, b) => b.score - a.score);
+    const sorted = [...initialReportDetails.attempts].sort((a, b) => {
+      // 1. Score (higher score wins)
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+
+      // 2. Who took less time (lower durationSeconds wins)
+      const durA = a.durationSeconds && a.durationSeconds > 0 ? a.durationSeconds : Infinity;
+      const durB = b.durationSeconds && b.durationSeconds > 0 ? b.durationSeconds : Infinity;
+      if (durA !== durB) {
+        return durA - durB;
+      }
+
+      // 3. Attempt Number (1st attempt before retakes / who started again)
+      const attNumA = a.attemptNumber && a.attemptNumber > 0 ? a.attemptNumber : 1;
+      const attNumB = b.attemptNumber && b.attemptNumber > 0 ? b.attemptNumber : 1;
+      if (attNumA !== attNumB) {
+        return attNumA - attNumB;
+      }
+
+      // 4. Who started earlier
+      const timeA = new Date(a.startedAt || a.time).getTime() || 0;
+      const timeB = new Date(b.startedAt || b.time).getTime() || 0;
+      return timeA - timeB;
+    });
+
     let rank = 1;
-    let foundMyRank = 1;
 
     const formattedPeers: PeerStudent[] = sorted.map((att, idx) => {
-      if (idx > 0 && att.score < sorted[idx - 1].score) {
-        rank = idx + 1;
+      if (idx > 0) {
+        const prev = sorted[idx - 1];
+        const prevDur = prev.durationSeconds && prev.durationSeconds > 0 ? prev.durationSeconds : Infinity;
+        const curDur = att.durationSeconds && att.durationSeconds > 0 ? att.durationSeconds : Infinity;
+        const prevAttNum = prev.attemptNumber && prev.attemptNumber > 0 ? prev.attemptNumber : 1;
+        const curAttNum = att.attemptNumber && att.attemptNumber > 0 ? att.attemptNumber : 1;
+        const prevTime = new Date(prev.startedAt || prev.time).getTime() || 0;
+        const curTime = new Date(att.startedAt || att.time).getTime() || 0;
+
+        const isExactTie =
+          att.score === prev.score &&
+          curDur === prevDur &&
+          curAttNum === prevAttNum &&
+          curTime === prevTime;
+
+        if (!isExactTie) {
+          rank = idx + 1;
+        }
       }
-      if (att.id === attempt.id) {
-        foundMyRank = rank;
-      }
+
       return {
         id: att.id,
         merit: rank,
         name: att.name,
         board: "Online",
-        time: att.time ? new Date(att.time).toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }) : "N/A",
+        time: formatTime(att.time, DATE_FORMATS.TIME_12H, "N/A"),
         score: att.score,
         negative: att.negative,
         institution: att.institution,
+        durationSeconds: att.durationSeconds,
+        durationFormatted: formatDuration(att.durationSeconds),
+        startedAt: att.startedAt,
+        attemptNumber: att.attemptNumber || 1,
       };
     });
 
-    return { peers: formattedPeers, myRank: foundMyRank };
+    return { peers: formattedPeers };
   }, [initialReportDetails, attempt]);
-
-  const filteredPeers = useMemo(() => {
-    return peers
-      .filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      .sort((a, b) => {
-        if (sortBy === "score") {
-          return sortOrder === "asc" ? a.score - b.score : b.score - a.score;
-        } else {
-          return sortOrder === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-        }
-      });
-  }, [peers, searchTerm, sortBy, sortOrder]);
 
   if (!attempt) {
     return (
       <PageContainer>
-        <div className="text-center py-16 text-gray-500 font-medium">
-          Attempt details not found.
+        <div className="text-center py-20 px-4 bg-white rounded border border-slate-200/80 shadow-sm max-w-lg mx-auto">
+          <div className="w-16 h-16 rounded bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center text-2xl mx-auto mb-4">
+            <FaTimesCircle />
+          </div>
+          <h2 className="text-xl font-black text-slate-900 mb-2">
+            Attempt Not Found
+          </h2>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto mb-6">
+            We couldn&apos;t find an evaluation report matching Attempt #{attemptId}. It may have been archived or submitted under another account.
+          </p>
+          <PrimaryBtn
+            link="/dashboard/reporting"
+            className="!text-xs !py-2.5 !px-5 gap-2 shadow-sm"
+          >
+            <FaArrowLeft className="text-xs" />
+            <span>Return to My Reports</span>
+          </PrimaryBtn>
         </div>
       </PageContainer>
     );
   }
 
   // Parse user answers JSON
-  let userAnswersMap: Record<string, number> = {};
+  let userAnswersMap: Record<string, any> = {};
   try {
     if (attempt.answers) {
-      userAnswersMap = typeof attempt.answers === "string" ? JSON.parse(attempt.answers) : attempt.answers;
+      userAnswersMap =
+        typeof attempt.answers === "string"
+          ? JSON.parse(attempt.answers)
+          : attempt.answers;
     }
   } catch (e) {
     console.error("Error parsing user answers:", e);
   }
 
+  const candidateDisplayName =
+    attempt.userName || attempt.name || "Student Candidate";
+
   return (
     <PageContainer className="space-y-8 animate-fadeIn">
       {/* Print Certificate View (Hidden on screen, visible during print) */}
-      <div className="hidden print:block">
-        <CertificatePrintLayout
-          candidateName={attempt.userName || "Student"}
-          examName={attempt.examName || "Mock Exam"}
-          examDate={attempt.createdAt ? new Date(attempt.createdAt).toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }) : "Recent"}
-          result={{
-            total: (attempt.correct || 0) + (attempt.wrong || 0),
-            correct: attempt.correct || 0,
-            wrong: attempt.wrong || 0,
-            negative: attempt.negative || 0,
-            finalScore: attempt.finalScore || 0,
-            passed: attempt.passed || false,
-          }}
-          totalMarks={attempt.total || 100}
-        />
-      </div>
+      {attempt.feedback !== false && (
+        <div className="hidden print:block">
+          <CertificatePrintLayout
+            candidateName={candidateDisplayName}
+            examName={attempt.examName || "Mock Exam"}
+            examDate={formatDate(attempt.createdAt, DATE_FORMATS.DATETIME_FULL, "Recent")}
+            result={{
+              total: attempt.total || ((attempt.correct || 0) + (attempt.wrong || 0)),
+              correct: attempt.correct || 0,
+              wrong: attempt.wrong || 0,
+              negative: attempt.negative || 0,
+              finalScore: attempt.finalScore || 0,
+              passed: attempt.passed || false,
+            }}
+            totalMarks={attempt.total || 100}
+          />
+        </div>
+      )}
 
       {/* Screen View (Hidden when printing) */}
       <div className="print:hidden space-y-8">
-        <button
-          onClick={() => router.back()}
-          className="inline-flex items-center gap-2 text-sm font-bold text-[#dd6b01] hover:underline cursor-pointer"
-        >
-          <FaArrowLeft /> Back to Reports
-        </button>
+        {/* Navigation & Title Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+          <div className="flex items-center gap-3">
+            <OutlineBtn
+              link="/dashboard/reporting"
+              className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200"
+              title="Back to Reports"
+            >
+              <FaArrowLeft className="text-xs" />
+            </OutlineBtn>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                {attempt.examName || "Mock Exam Evaluation"}
+              </h1>
+            </div>
+          </div>
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-md">
-          <InfoItem label="Exam Title" value={attempt.examName || "N/A"} />
-          <InfoItem label="Exam Pack" value={attempt.packName || "N/A"} />
-          <InfoItem label="Code" value={attempt.examId || "N/A"} />
-          <InfoItem label="Date" value={attempt.createdAt ? new Date(attempt.createdAt).toLocaleDateString() : "N/A"} />
+          {attempt.feedback !== false && (
+            <div className="flex items-center gap-3 self-start sm:self-center">
+              <PrimaryBtn
+                onClick={() => window.print()}
+                className="!text-xs !py-2.5 !px-5 gap-2 !from-purple-600 !to-indigo-600 shadow-md shadow-purple-500/15"
+              >
+                <FaPrint className="text-xs" />
+                <span>Print Official Certificate</span>
+              </PrimaryBtn>
+            </div>
+          )}
         </div>
 
-        {/* Scorecard */}
-        <Scorecard
-          result={{
-            total: (attempt.correct || 0) + (attempt.wrong || 0),
-            correct: attempt.correct || 0,
-            wrong: attempt.wrong || 0,
-            negative: attempt.negative || 0,
-            finalScore: attempt.finalScore || 0,
-            passed: attempt.passed || false,
-          }}
-          totalMarks={attempt.total || 100}
-        />
+        {/* Info Grid */}
+        <ReportingDetailInfoGrid attempt={attempt} />
 
-        {/* Detailed Question Solution Analysis */}
-        {questions.length > 0 && (
-          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-md space-y-6">
-            <h3 className="text-xl font-black text-gray-900 border-b border-gray-100 pb-4">
-              Detailed Question Analysis & Explanations
-            </h3>
-
-            <div className="space-y-6">
-              {questions.map((q, idx) => {
-                const userSelected = userAnswersMap[q.id.toString()];
-                const isUnanswered = userSelected === undefined || userSelected === null;
-                const isCorrect = userSelected === q.correctIndex;
-
-                return (
-                  <div
-                    key={q.id || idx}
-                    className={`p-5 rounded-2xl border transition ${
-                      isCorrect
-                        ? "bg-emerald-50/30 border-emerald-200"
-                        : isUnanswered
-                        ? "bg-gray-50 border-gray-200"
-                        : "bg-rose-50/30 border-rose-200"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <h4 className="font-bold text-gray-900 text-base">
-                        Q{idx + 1}. {q.text}
-                      </h4>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-black uppercase ${
-                          isCorrect
-                            ? "bg-emerald-100 text-emerald-800"
-                            : isUnanswered
-                            ? "bg-gray-200 text-gray-700"
-                            : "bg-rose-100 text-rose-800"
-                        }`}
-                      >
-                        {isCorrect ? "Correct" : isUnanswered ? "Not Answered" : "Incorrect"}
-                      </span>
-                    </div>
-
-                    {/* Options list */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 my-4">
-                      {q.options && q.options.map((opt: string, optIdx: number) => {
-                        const isOptionCorrect = optIdx === q.correctIndex;
-                        const isOptionUserSelected = optIdx === userSelected;
-
-                        return (
-                          <div
-                            key={optIdx}
-                            className={`p-3 rounded-xl text-xs font-semibold flex items-center justify-between border ${
-                              isOptionCorrect
-                                ? "bg-emerald-100 border-emerald-300 text-emerald-900 font-bold"
-                                : isOptionUserSelected
-                                ? "bg-rose-100 border-rose-300 text-rose-900 font-bold"
-                                : "bg-white border-gray-200 text-gray-700"
-                            }`}
-                          >
-                            <span>
-                              {String.fromCharCode(65 + optIdx)}. {opt}
-                            </span>
-                            {isOptionCorrect && (
-                              <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">
-                                Correct Answer
-                              </span>
-                            )}
-                            {isOptionUserSelected && !isOptionCorrect && (
-                              <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-full font-bold">
-                                Your Choice
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Explanation */}
-                    {q.explanation && (
-                      <div className="mt-3 p-3 bg-amber-50/60 border border-amber-200 rounded-xl text-xs text-amber-900">
-                        <strong className="block text-amber-950 mb-1">💡 Solution Explanation:</strong>
-                        <p>{q.explanation}</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+        {attempt.feedback === false && (
+          <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-4 sm:p-5 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 text-base mt-0.5">
+              <FaEyeSlash />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-950 mb-0.5">
+                Instant Feedback Disabled by Instructor
+              </h3>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                The instructor has turned off instant feedback for this examination. Correct answer keys, question-by-question solution analysis, and detailed explanations are withheld from students.
+              </p>
             </div>
           </div>
         )}
 
-        {/* Peer Leaderboard Table */}
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-md overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h3 className="text-xl font-black text-gray-900">Exam Merit Leaderboard</h3>
-              <p className="text-xs text-gray-500 font-medium">Rankings across all participating students.</p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center border border-gray-300 rounded-xl px-3 py-2 text-xs bg-white">
-                <FaSearch className="text-gray-400 mr-2" />
-                <input
-                  type="text"
-                  placeholder="Filter student..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="outline-none text-xs font-semibold"
-                />
-              </div>
-
-              <button
-                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                className="p-2 border border-gray-300 rounded-xl text-gray-600 hover:border-[#dd6b01]"
-              >
-                {sortOrder === "asc" ? <FaSortAmountUp /> : <FaSortAmountDown />}
-              </button>
-            </div>
+        {/* Scorecard Component - Only visible if feedback is enabled */}
+        {attempt.feedback !== false && (
+          <div className="bg-white rounded border border-slate-200/80 p-4 sm:p-6 shadow-2xs">
+            <Scorecard
+              result={{
+                total: attempt.total || ((attempt.correct || 0) + (attempt.wrong || 0)),
+                correct: attempt.correct || 0,
+                wrong: attempt.wrong || 0,
+                negative: attempt.negative || 0,
+                finalScore: attempt.finalScore || 0,
+                passed: attempt.passed || false,
+              }}
+              totalMarks={attempt.totalMarks || attempt.total || 100}
+              passingPercent={attempt.passingMarks || 33}
+            />
           </div>
+        )}
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 text-gray-400 font-bold text-xs uppercase tracking-wider border-b border-gray-100">
-                  <th className="py-4 px-6">Rank</th>
-                  <th className="py-4 px-6">Student</th>
-                  <th className="py-4 px-6">Score</th>
-                  <th className="py-4 px-6">Time</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-sm">
-                {filteredPeers.map((p) => (
-                  <tr
-                    key={p.id}
-                    className={`transition ${p.id === attempt.id ? "bg-orange-50/60 font-bold" : "hover:bg-gray-50/50"}`}
-                  >
-                    <td className="py-4 px-6 font-black text-gray-900">#{p.merit}</td>
-                    <td className="py-4 px-6 font-bold text-gray-900">
-                      {p.name} {p.id === attempt.id && <span className="text-[#dd6b01] text-xs font-black">(You)</span>}
-                    </td>
-                    <td className="py-4 px-6 font-extrabold text-[#dd6b01]">{p.score}</td>
-                    <td className="py-4 px-6 text-xs text-gray-500">{p.time}</td>
-                  </tr>
-                ))}
+        {/* Detailed Question Solution Analysis - Only visible if feedback is enabled */}
+        {attempt.feedback !== false ? (
+          <ReportingDetailQuestionsList
+            questions={questions}
+            userAnswersMap={userAnswersMap}
+          />
+        ) : null}
 
-                {filteredPeers.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="py-8 text-center text-gray-500 font-medium">
-                      No peer results match your search.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {/* Peer Leaderboard Table & Mobile Cards */}
+        <ReportingDetailMeritSection
+          peers={peers}
+          currentAttemptId={attempt.id}
+        />
       </div>
     </PageContainer>
   );

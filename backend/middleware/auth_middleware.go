@@ -12,7 +12,10 @@ import (
 
 type contextKey string
 
-const UserIDKey contextKey = "userID"
+const (
+	UserIDKey   contextKey = "userID"
+	UserRoleKey contextKey = "userRole"
+)
 
 // AuthMiddleware validates the JWT token in Authorization header
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -63,6 +66,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		// Context value injection
 		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+		if roleVal, ok := claims["role"].(string); ok && roleVal != "" {
+			ctx = context.WithValue(ctx, UserRoleKey, strings.ToLower(roleVal))
+		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -74,4 +80,12 @@ func GetUserIDFromContext(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("user ID not found in context")
 	}
 	return userID, nil
+}
+
+// GetUserRoleFromContext retrieves the lowercase user role from context, or empty string if not found
+func GetUserRoleFromContext(ctx context.Context) string {
+	if role, ok := ctx.Value(UserRoleKey).(string); ok {
+		return strings.ToLower(role)
+	}
+	return ""
 }

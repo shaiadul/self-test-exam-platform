@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useRef, useState, DragEvent } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
-import Image from "next/image";
-import { FaCloudUploadAlt } from "react-icons/fa";
-import CustomSelect from "../../../../../components/ui/CustomSelect";
-import { Input } from "../../../../../components/ui/Input";
-import DateTimePicker from "../../../../../components/ui/DateTimePicker";
-import ToggleSwitch from "../../../../../components/ui/ToggleSwitch";
+import { FaArrowLeft, FaSave } from "react-icons/fa";
+import { PrimaryBtn } from "../../../../../components/ui/PrimaryBtn";
+import { OutlineBtn } from "../../../../../components/ui/OutlineBtn";
 import { PageContainer } from "../../../../../components/common/PageContainer";
 import { createExamAction } from "../../../../../lib/actions";
 import { useRouter } from "next/navigation";
+import { ExamFormData, ExamSettingsData } from "../../../../../components/dashboard/exam-form/types";
+import { ExamBasicDetailsSection } from "../../../../../components/dashboard/exam-form/ExamBasicDetailsSection";
+import { ExamScoringScheduleSection } from "../../../../../components/dashboard/exam-form/ExamScoringScheduleSection";
+import { ExamRulesPolicySection } from "../../../../../components/dashboard/exam-form/ExamRulesPolicySection";
 
 interface AddExamClientViewProps {
   packId: number;
@@ -22,9 +23,6 @@ export default function AddExamClientView({
   initialAssets,
 }: AddExamClientViewProps) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const levelOptions = (initialAssets || [])
@@ -34,89 +32,125 @@ export default function AddExamClientView({
     .filter((a: any) => a.type === "batch")
     .map((a: any) => a.value);
 
-  const [examPackData, setExamPackData] = useState({
+  const [examPackData, setExamPackData] = useState<ExamFormData>({
     name: "",
     details: "",
     level: levelOptions[0] || "HSC",
-    batch: batchOptions[0] || "2023",
+    batch: batchOptions[0] || "2024",
     image: "",
-    pack: "Science Explorer",
-    totalMarks: 10,
+    totalMarks: 100,
     perQuestionMark: 2,
-    passMark: 5,
+    passMark: 33,
+    durationMinutes: 30,
     startDate: "",
     endDate: "",
   });
 
-  const [examSettings, setExamSettings] = useState({
+  const [examSettings, setExamSettings] = useState<ExamSettingsData>({
     randomization: false,
-    feedback: false,
-    scoreLimit: false,
-    scoreValue: 0,
-    negativeMarking: false,
+    feedback: true,
+    negativeMarking: true,
     negativeValue: 0.5,
-    totalTime: false,
-    totalTimeValue: 0,
     privateExam: false,
     privatePassword: "",
   });
 
-  const handleFileChange = (file: File) => {
-    const imageUrl = URL.createObjectURL(file);
-    setExamPackData({ ...examPackData, image: imageUrl });
-  };
-
-  const handleDrag = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
-    else if (e.type === "dragleave") setDragActive(false);
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileChange(e.dataTransfer.files[0]);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!examPackData.name) {
+    if (!examPackData.name.trim()) {
       toast.error("Please enter an exam title.");
       return;
     }
-    if (!examPackData.startDate || !examPackData.endDate) {
-      toast.error("Please select start and end dates.");
+    if (examPackData.name.trim().length < 3) {
+      toast.error("Exam title must be at least 3 characters long.");
       return;
+    }
+    if (!examPackData.perQuestionMark || Number(examPackData.perQuestionMark) < 1) {
+      toast.error("Marks per question must be at least 1.");
+      return;
+    }
+    if (
+      !examPackData.passMark ||
+      Number(examPackData.passMark) < 1 ||
+      Number(examPackData.passMark) > 100
+    ) {
+      toast.error("Pass mark percentage must be between 1 and 100.");
+      return;
+    }
+    if (!examPackData.durationMinutes || Number(examPackData.durationMinutes) < 1) {
+      toast.error("Exam duration must be at least 1 minute.");
+      return;
+    }
+    if (!examPackData.startDate) {
+      toast.error("Please select an exam start date & time.");
+      return;
+    }
+    if (!examPackData.endDate) {
+      toast.error("Please select an exam end date & time.");
+      return;
+    }
+
+    const start = new Date(examPackData.startDate);
+    const end = new Date(examPackData.endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      toast.error("Please enter valid start and end dates.");
+      return;
+    }
+    if (end <= start) {
+      toast.error("Exam end date & time must be after the start date & time.");
+      return;
+    }
+
+    if (examSettings.negativeMarking) {
+      const negVal = Number(examSettings.negativeValue);
+      if (!negVal || negVal <= 0) {
+        toast.error("Negative mark deduction must be greater than 0.");
+        return;
+      }
+    }
+
+    if (examSettings.privateExam) {
+      const passcode = examSettings.privatePassword?.trim();
+      if (!passcode) {
+        toast.error("Please enter an access passcode for the private exam.");
+        return;
+      }
+      if (passcode.length < 4) {
+        toast.error("Exam passcode must be at least 4 characters long.");
+        return;
+      }
     }
 
     setLoading(true);
     try {
       const payload = {
-        name: examPackData.name,
-        details: examPackData.details,
+        name: examPackData.name.trim(),
+        details: examPackData.details.trim(),
         level: examPackData.level,
         batch: examPackData.batch,
-        totalMarks: Number(examPackData.totalMarks),
-        perQuestionMark: Number(examPackData.perQuestionMark),
-        passMark: Number(examPackData.passMark),
-        startDate: examPackData.startDate,
-        endDate: examPackData.endDate,
+        totalMarks: Number(examPackData.perQuestionMark) || 2,
+        passingMarks: Number(examPackData.passMark) || 33,
+        passMark: Number(examPackData.passMark) || 33,
+        perQuestionMarks: Number(examPackData.perQuestionMark) || 2,
+        perQuestionMark: Number(examPackData.perQuestionMark) || 2,
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+        durationMinutes: Number(examPackData.durationMinutes) || 30,
 
         randomization: examSettings.randomization,
         feedback: examSettings.feedback,
-        scoreLimit: examSettings.scoreLimit,
-        scoreValue: Number(examSettings.scoreValue),
         negativeMarking: examSettings.negativeMarking,
-        negativeValue: Number(examSettings.negativeValue),
-        totalTime: examSettings.totalTime,
-        totalTimeValue: Number(examSettings.totalTimeValue),
+        negativeMarks: examSettings.negativeMarking
+          ? Number(examSettings.negativeValue) || 0.5
+          : 0,
+        negativeValue: examSettings.negativeMarking
+          ? Number(examSettings.negativeValue) || 0.5
+          : 0,
         privateExam: examSettings.privateExam,
-        privatePassword: examSettings.privatePassword,
+        isPrivate: examSettings.privateExam,
+        passcode: examSettings.privatePassword || "",
+        privatePassword: examSettings.privatePassword || "",
       };
 
       const res = await createExamAction(packId, payload);
@@ -134,157 +168,86 @@ export default function AddExamClientView({
   };
 
   return (
-    <PageContainer>
-      <h1 className="text-3xl font-bold text-[#dd6b01] mb-6">Create New Exam</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-          <h2 className="text-[#dd6b01] text-lg font-bold">Exam Details</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              placeholder="Exam Name"
-              value={examPackData.name}
-              onChange={(e) => setExamPackData({ ...examPackData, name: e.target.value })}
-              required
-            />
-            <Input
-              placeholder="Exam Details"
-              value={examPackData.details}
-              onChange={(e) => setExamPackData({ ...examPackData, details: e.target.value })}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <CustomSelect
-              options={levelOptions.length ? levelOptions : ["Class 10", "HSC", "Admission"]}
-              value={examPackData.level}
-              onChange={(val) => setExamPackData({ ...examPackData, level: val })}
-              placeholder="Select Level"
-            />
-            <CustomSelect
-              options={batchOptions.length ? batchOptions : ["2023", "2024", "2025"]}
-              value={examPackData.batch}
-              onChange={(val) => setExamPackData({ ...examPackData, batch: val })}
-              placeholder="Select Batch"
-            />
-          </div>
-
-          {/* Banner Upload */}
-          <div
-            onDragEnter={handleDrag}
-            onDragOver={handleDrag}
-            onDragLeave={handleDrag}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition ${
-              dragActive ? "border-[#dd6b01] bg-orange-50/40" : "border-gray-300 hover:border-gray-400"
-            }`}
+    <PageContainer className="space-y-4 sm:space-y-6 animate-fadeIn pb-12">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+        <div className="flex items-center gap-3">
+          <OutlineBtn
+            link={`/dashboard/manage-exam-pack/${packId}`}
+            className="!p-2 !rounded !text-slate-600 hover:!text-primary shadow-2xs border-slate-200"
+            title="Return to Pack"
           >
-            <FaCloudUploadAlt className="mx-auto text-4xl text-[#dd6b01] mb-2" />
-            <p className="text-sm font-semibold text-gray-700">
-              Drag & Drop Exam Thumbnail or <span className="text-[#dd6b01] font-bold">Browse</span>
-            </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleFileChange(e.target.files[0])}
-            />
-            {examPackData.image && (
-              <div className="mt-4 flex justify-center">
-                <Image
-                  src={examPackData.image}
-                  alt="Preview"
-                  width={150}
-                  height={90}
-                  className="rounded-lg object-cover border"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Marks */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              type="number"
-              placeholder="Total Marks"
-              value={examPackData.totalMarks}
-              onChange={(e) => setExamPackData({ ...examPackData, totalMarks: Number(e.target.value) })}
-            />
-            <Input
-              type="number"
-              placeholder="Marks Per Question"
-              value={examPackData.perQuestionMark}
-              onChange={(e) => setExamPackData({ ...examPackData, perQuestionMark: Number(e.target.value) })}
-            />
-            <Input
-              type="number"
-              placeholder="Pass Marks"
-              value={examPackData.passMark}
-              onChange={(e) => setExamPackData({ ...examPackData, passMark: Number(e.target.value) })}
-            />
-          </div>
-
-          {/* Schedule */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DateTimePicker
-              label="Exam Start Date & Time"
-              value={examPackData.startDate}
-              onChange={(val) => setExamPackData({ ...examPackData, startDate: val })}
-            />
-            <DateTimePicker
-              label="Exam End Date & Time"
-              value={examPackData.endDate}
-              onChange={(val) => setExamPackData({ ...examPackData, endDate: val })}
-            />
+            <FaArrowLeft className="text-xs" />
+          </OutlineBtn>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Create New Exam Paper
+            </h1>
           </div>
         </div>
 
-        {/* Toggles and Configuration */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-          <h2 className="text-[#dd6b01] text-lg font-bold">Exam Rules & Configuration</h2>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+          New Exam
+        </span>
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ToggleSwitch
-              label="Question Randomization"
-              checked={examSettings.randomization}
-              onChange={(val) => setExamSettings({ ...examSettings, randomization: val })}
-            />
-            <ToggleSwitch
-              label="Instant Feedback"
-              checked={examSettings.feedback}
-              onChange={(val) => setExamSettings({ ...examSettings, feedback: val })}
-            />
-            <ToggleSwitch
-              label="Negative Marking"
-              checked={examSettings.negativeMarking}
-              onChange={(val) => setExamSettings({ ...examSettings, negativeMarking: val })}
-            />
-            <ToggleSwitch
-              label="Timer Enabled"
-              checked={examSettings.totalTime}
-              onChange={(val) => setExamSettings({ ...examSettings, totalTime: val })}
-            />
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+        {/* Section 1: Exam Basic Information */}
+        <ExamBasicDetailsSection
+          data={examPackData}
+          onChange={(patch) => setExamPackData((prev) => ({ ...prev, ...patch }))}
+          levelOptions={levelOptions}
+          batchOptions={batchOptions}
+        />
+
+        {/* Section 2: Marks & Timing Configuration */}
+        <ExamScoringScheduleSection
+          data={examPackData}
+          onChange={(patch) => setExamPackData((prev) => ({ ...prev, ...patch }))}
+          questionCount={0}
+          negativeMarking={examSettings.negativeMarking}
+          negativeValue={examSettings.negativeValue}
+        />
+
+        {/* Section 3: Negative Marking & Rules */}
+        <ExamRulesPolicySection
+          settings={examSettings}
+          onChange={(patch) => setExamSettings((prev) => ({ ...prev, ...patch }))}
+        />
+
+        {/* Action Buttons HUD */}
+        <div className="rounded bg-white border border-slate-200/80 p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-center sm:justify-between mx-auto gap-3">
+          <div className="text-xs text-slate-500">
+            Ready to deploy this exam paper
           </div>
-        </div>
 
-        <div className="flex justify-end gap-4">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2.5 bg-[#dd6b01] hover:bg-orange-600 text-white font-bold text-sm rounded-xl shadow transition"
-          >
-            {loading ? "Creating Exam..." : "Create Exam"}
-          </button>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end">
+            <OutlineBtn
+              type="button"
+              onClick={() => router.back()}
+              className="!text-xs !py-1.5 !px-3.5 !rounded"
+            >
+              Cancel
+            </OutlineBtn>
+
+            <PrimaryBtn
+              type="submit"
+              disabled={loading}
+              className="!text-xs !py-1.5 !px-4 gap-1.5 !rounded shadow-2xs"
+            >
+              {loading ? (
+                <>
+                  <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full" />
+                  <span>Creating Exam…</span>
+                </>
+              ) : (
+                <>
+                  <FaSave className="text-[11px]" />
+                  <span>Deploy Exam Paper</span>
+                </>
+              )}
+            </PrimaryBtn>
+          </div>
         </div>
       </form>
     </PageContainer>
