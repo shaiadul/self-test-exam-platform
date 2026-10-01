@@ -21,7 +21,6 @@ interface ManageExamPackClientViewProps {
 export default function ManageExamPackClientView({
   initialPacks,
   initialMeta,
-  currentUserId,
   currentUserRole,
   packLimit,
 }: ManageExamPackClientViewProps) {
@@ -40,7 +39,6 @@ export default function ManageExamPackClientView({
   }, [initialPacks, initialMeta]);
 
   const userRole = currentUserRole || user?.role || null;
-  const userId = currentUserId || user?.id || null;
 
   // The backend already sends only packs owned by this teacher (when manage=true),
   // so we use the server-filtered list directly.

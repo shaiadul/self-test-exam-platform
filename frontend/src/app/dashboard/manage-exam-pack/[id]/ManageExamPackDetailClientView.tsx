@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/context/UserContext";
 import {
   FaEdit,
   FaTrashAlt,
@@ -43,7 +42,6 @@ export default function ManageExamPackDetailClientView({
   initialExams,
 }: ManageExamPackDetailClientViewProps) {
   const router = useRouter();
-  const { user } = useUser();
   const [pack, setPack] = useState<any>(initialPack);
 
   // The backend already filters exams by teacher when manage=true,
