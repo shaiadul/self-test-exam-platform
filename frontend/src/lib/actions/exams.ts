@@ -66,14 +66,19 @@ export async function getTeacherExamsAction(packId: number, clientToken?: string
 			return [];
 		}
 
-		const data = await fetcherWithAuth<any[]>(`/exam-packs/${packId}/exams?manage=true`, {}, clientToken);
-		if (!Array.isArray(data)) return [];
+		const res = await fetcherWithAuth<any>(`/exam-packs/${packId}/exams?manage=true&per_page=100`, {}, clientToken);
 
-		if (role === "teacher" && profile?.id) {
-			return data.filter((e: any) => !e.createdBy || String(e.createdBy) === String(profile.id));
+		// The backend returns a paginated envelope { data: [...], meta: {...} }
+		let exams: any[] = [];
+		if (Array.isArray(res)) {
+			exams = res;
+		} else if (res && Array.isArray(res.data)) {
+			exams = res.data;
 		}
 
-		return data;
+		// The backend already filters by teacherID when manage=true and role is teacher,
+		// so we trust the backend response directly.
+		return exams;
 	} catch {
 		return [];
 	}

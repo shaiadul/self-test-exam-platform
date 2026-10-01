@@ -33,14 +33,10 @@ export async function getExamPacksAction(options?: { mine?: boolean; manage?: bo
 	if (Array.isArray(data)) packs = data;
 	else if (data && Array.isArray(data.data)) packs = data.data;
 
-	if (isManage || isMine) {
-		if (role === "student") {
-			return [];
-		}
-		if (role === "teacher" && profile?.id) {
-			return packs.filter((p: any) => p.createdBy && Number(p.createdBy) === Number(profile.id));
-		}
-		// Admin manages all packs across the platform
+	// The backend already filters by creator for teachers when manage=true or mine=true,
+	// so we trust the backend response. Only guard against students.
+	if ((isManage || isMine) && role === "student") {
+		return [];
 	}
 
 	return packs;
@@ -91,32 +87,19 @@ export async function getExamPacksPaginatedAction(
 	);
 	const normalized = normalizePaginatedResponse(data, params?.page || 1, params?.per_page || 10);
 
-	if (isManage || isMine) {
-		if (role === "student") {
-			return {
-				data: [],
-				meta: {
-					total_items: 0,
-					total_pages: 1,
-					current_page: params?.page || 1,
-					per_page: params?.per_page || 10,
-				},
-			};
-		}
-		if (role === "teacher" && profile?.id) {
-			const filtered = (normalized.data || []).filter(
-				(p: any) => p.createdBy && Number(p.createdBy) === Number(profile.id)
-			);
-			return {
-				data: filtered,
-				meta: {
-					...normalized.meta,
-					total_items: filtered.length,
-					total_pages: Math.max(1, Math.ceil(filtered.length / (params?.per_page || 10))),
-				},
-			};
-		}
-		// Admin manages all packs across the platform
+	// The backend already filters by creator for teachers when manage=true or mine=true,
+	// so we trust the backend response and do NOT re-filter here. Re-filtering a paginated
+	// response breaks pagination metadata and drops items from other pages.
+	if ((isManage || isMine) && role === "student") {
+		return {
+			data: [],
+			meta: {
+				total_items: 0,
+				total_pages: 1,
+				current_page: params?.page || 1,
+				per_page: params?.per_page || 10,
+			},
+		};
 	}
 
 	return normalized;
