@@ -156,3 +156,62 @@ func (r *PostgresSystemRepository) RejectInstitutionSuggestion(id int) error {
 		Update("status", "rejected").Error
 }
 
+func (r *PostgresSystemRepository) GetInstitutionSuggestionStats() (map[string]int64, error) {
+	stats := map[string]int64{
+		"total":    0,
+		"pending":  0,
+		"approved": 0,
+		"rejected": 0,
+	}
+
+	type countResult struct {
+		Status string
+		Count  int64
+	}
+
+	var results []countResult
+	err := r.db.Model(&system.InstitutionSuggestion{}).
+		Select("status, count(*) as count").
+		Group("status").
+		Scan(&results).Error
+	if err != nil {
+		return stats, err
+	}
+
+	for _, res := range results {
+		stats["total"] += res.Count
+		switch res.Status {
+		case "pending":
+			stats["pending"] += res.Count
+		case "approved":
+			stats["approved"] += res.Count
+		case "rejected":
+			stats["rejected"] += res.Count
+		}
+	}
+
+	return stats, nil
+}
+
+func (r *PostgresSystemRepository) ClearInstitutionSuggestions(status string) (int64, error) {
+	q := r.db.Model(&system.InstitutionSuggestion{})
+
+	switch status {
+	case "pending":
+		q = q.Where("status = ?", "pending")
+	case "approved":
+		q = q.Where("status = ?", "approved")
+	case "rejected":
+		q = q.Where("status = ?", "rejected")
+	case "resolved", "handled":
+		q = q.Where("status IN ('approved', 'rejected')")
+	case "all", "":
+		// clear all
+	default:
+		q = q.Where("status = ?", status)
+	}
+
+	res := q.Delete(&system.InstitutionSuggestion{})
+	return res.RowsAffected, res.Error
+}
+

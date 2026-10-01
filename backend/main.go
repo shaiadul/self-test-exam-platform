@@ -67,6 +67,7 @@ func main() {
 	systemService := service.NewSystemService(systemRepo)
 	uploadService := service.NewUploadService(s3Storage)
 	requestService := service.NewExamRequestService(requestRepo, userRepo, packRepo)
+	adminToolsService := service.NewAdminToolsService(cacheService, requestRepo, systemRepo, userRepo)
 
 	// 3. Initialize Delivery HTTP Handlers
 	authHandler := delivery.NewAuthHandler(userService, oauthService)
@@ -77,6 +78,7 @@ func main() {
 	systemHandler := delivery.NewSystemHandler(systemService)
 	uploadHandler := delivery.NewUploadHandler(uploadService)
 	requestHandler := delivery.NewExamRequestHandler(requestService)
+	adminToolsHandler := delivery.NewAdminToolsHandler(adminToolsService)
 
 	// 4. Initialize Rate Limiter
 	rateLimitConfig := config.LoadRateLimitConfig()
@@ -93,6 +95,7 @@ func main() {
 		SystemHandler:      systemHandler,
 		UploadHandler:      uploadHandler,
 		ExamRequestHandler: requestHandler,
+		AdminToolsHandler:  adminToolsHandler,
 		RateLimiter:        rateLimiter,
 	})
 

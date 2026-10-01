@@ -19,5 +19,7 @@ type SystemRepository interface {
 	UpdateInstitutionSuggestion(id int, value string) (*InstitutionSuggestion, error)
 	ApproveInstitutionSuggestion(id int, optionalValue string) (*InstitutionSuggestion, error)
 	RejectInstitutionSuggestion(id int) error
+	GetInstitutionSuggestionStats() (map[string]int64, error)
+	ClearInstitutionSuggestions(status string) (int64, error)
 }
 

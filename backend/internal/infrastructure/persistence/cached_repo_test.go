@@ -56,6 +56,11 @@ func (m *mockCacheService) Client() *redis.Client {
 	return nil
 }
 
+func (m *mockCacheService) ClearAll(ctx context.Context) error {
+	m.store = make(map[string][]byte)
+	return nil
+}
+
 // Mock base repo for ExamPack
 type mockBasePackRepo struct {
 	packs       []exampack.ExamPack

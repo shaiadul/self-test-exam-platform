@@ -12,9 +12,10 @@ type Handlers struct {
 	ExamHandler     *ExamHandler
 	AttemptHandler  *AttemptHandler
 	ReportHandler   *ReportHandler
-	SystemHandler   *SystemHandler
+	SystemHandler      *SystemHandler
 	UploadHandler      *UploadHandler
 	ExamRequestHandler *ExamRequestHandler
+	AdminToolsHandler  *AdminToolsHandler
 	RateLimiter        *middleware.RateLimiter
 }
 
@@ -111,6 +112,13 @@ func NewRouter(h Handlers) http.Handler {
 		mux.Handle("/api/institutions/suggest", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
 		mux.Handle("/api/admin/institutions/suggestions", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
 		mux.Handle("/api/admin/institutions/suggestions/", middleware.AuthMiddleware(http.HandlerFunc(h.SystemHandler.HandleInstitutionSuggestions)))
+	}
+
+	// Admin Developer Tools & Maintenance routes
+	if h.AdminToolsHandler != nil {
+		mux.Handle("/api/admin/tools/overview", middleware.AuthMiddleware(http.HandlerFunc(h.AdminToolsHandler.HandleTools)))
+		mux.Handle("/api/admin/tools/cache/clear", middleware.AuthMiddleware(http.HandlerFunc(h.AdminToolsHandler.HandleTools)))
+		mux.Handle("/api/admin/tools/requests/clear", middleware.AuthMiddleware(http.HandlerFunc(h.AdminToolsHandler.HandleTools)))
 	}
 	var handler http.Handler = mux
 	if h.RateLimiter != nil {

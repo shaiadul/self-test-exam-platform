@@ -25,6 +25,7 @@ type CacheService interface {
 	Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error
 	Delete(ctx context.Context, keys ...string) error
 	DeleteByPattern(ctx context.Context, pattern string) error
+	ClearAll(ctx context.Context) error
 	Client() *redis.Client
 }
 
@@ -146,5 +147,17 @@ func (c *RedisCache) DeleteByPattern(ctx context.Context, pattern string) error 
 		}
 	}
 
+	return nil
+}
+
+// ClearAll flushes the Redis database, removing all cached keys.
+func (c *RedisCache) ClearAll(ctx context.Context) error {
+	if c.client == nil {
+		return nil
+	}
+	if err := c.client.FlushDB(ctx).Err(); err != nil {
+		log.Printf("Cache FlushDB error: %v\n", err)
+		return err
+	}
 	return nil
 }
