@@ -46,20 +46,10 @@ export default function ManageExamPackDetailClientView({
   const { user } = useUser();
   const [pack, setPack] = useState<any>(initialPack);
 
+  // The backend already filters exams by teacher when manage=true,
+  // so we trust the server-filtered list directly.
   const [exams, setExams] = useState<Exam[]>(() => {
-    const currentUserId = user?.id;
-    const currentUserRole = user?.role;
-    if (currentUserRole === "student") {
-      return [];
-    }
-    let filtered = initialExams || [];
-    if (currentUserRole === "teacher" && currentUserId) {
-      filtered = filtered.filter(
-        (e: any) =>
-          !e.createdBy || String(e.createdBy) === String(currentUserId),
-      );
-    }
-    return filtered.map((e: any) => ({
+    return (initialExams || []).map((e: any) => ({
       id: e.id,
       name: e.name,
       startDate: e.startDate,
@@ -70,24 +60,11 @@ export default function ManageExamPackDetailClientView({
 
   const packTitle = pack?.title || initialPack?.title || "Exam Pack";
 
-  // Sync state whenever SSR props change or user profile loads
+  // Sync state whenever SSR props change
   useEffect(() => {
     if (initialExams) {
-      const currentUserId = user?.id;
-      const currentUserRole = user?.role;
-      if (currentUserRole === "student") {
-        setExams([]);
-        return;
-      }
-      let filtered = initialExams;
-      if (currentUserRole === "teacher" && currentUserId) {
-        filtered = initialExams.filter(
-          (e: any) =>
-            !e.createdBy || String(e.createdBy) === String(currentUserId),
-        );
-      }
       setExams(
-        filtered.map((e: any) => ({
+        initialExams.map((e: any) => ({
           id: e.id,
           name: e.name,
           startDate: e.startDate,
@@ -99,16 +76,11 @@ export default function ManageExamPackDetailClientView({
     if (initialPack) {
       setPack(initialPack);
     }
-  }, [initialExams, initialPack, user]);
+  }, [initialExams, initialPack]);
 
   // Client-side fallback fetch if initial SSR data is not provided
   useEffect(() => {
     if (packId && !initialPack) {
-      if (user?.role === "student") {
-        setExams([]);
-        return;
-      }
-
       Promise.all([
         getExamPackDetailsAction(packId),
         getTeacherExamsAction(packId),
@@ -117,15 +89,8 @@ export default function ManageExamPackDetailClientView({
           setPack(fetchedPack);
         }
         if (fetchedExams && Array.isArray(fetchedExams)) {
-          let filtered = fetchedExams;
-          if (user?.role === "teacher" && user?.id) {
-            filtered = fetchedExams.filter(
-              (e: any) =>
-                !e.createdBy || String(e.createdBy) === String(user.id),
-            );
-          }
           setExams(
-            filtered.map((e: any) => ({
+            fetchedExams.map((e: any) => ({
               id: e.id,
               name: e.name,
               startDate: e.startDate,
@@ -136,7 +101,7 @@ export default function ManageExamPackDetailClientView({
         }
       });
     }
-  }, [packId, initialPack, user]);
+  }, [packId, initialPack]);
 
   const handleEditExam = (examId: string) => {
     router.push(

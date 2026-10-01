@@ -32,21 +32,10 @@ export default async function ManageExamPackPage({
     mine: isTeacher,
   });
 
-  let packs = res?.data || [];
-  let meta = res?.meta;
-
-  if (isTeacher && profile?.id) {
-    packs = packs.filter(
-      (p: any) => p.createdBy && Number(p.createdBy) === Number(profile.id)
-    );
-    if (meta) {
-      meta = {
-        ...meta,
-        total_items: packs.length,
-        total_pages: Math.max(1, Math.ceil(packs.length / perPage)),
-      };
-    }
-  }
+  // The backend already filters by creator for teachers when manage=true / mine=true,
+  // so we trust the response directly without re-filtering.
+  const packs = res?.data || [];
+  const meta = res?.meta;
 
   return (
     <ManageExamPackClientView

@@ -42,19 +42,9 @@ export default function ManageExamPackClientView({
   const userRole = currentUserRole || user?.role || null;
   const userId = currentUserId || user?.id || null;
 
-  const ownedPacks = useMemo(() => {
-    let list = examPacks;
-    const role = String(userRole || "").toLowerCase();
-    if (role === "student") {
-      return [];
-    }
-    if (role === "teacher" && userId) {
-      list = list.filter(
-        (p) => p.createdBy && Number(p.createdBy) === Number(userId),
-      );
-    }
-    return list;
-  }, [examPacks, userRole, userId]);
+  // The backend already sends only packs owned by this teacher (when manage=true),
+  // so we use the server-filtered list directly.
+  const ownedPacks = examPacks;
 
   const isTeacher = userRole && String(userRole).toLowerCase() === "teacher";
   const quotaReached =
