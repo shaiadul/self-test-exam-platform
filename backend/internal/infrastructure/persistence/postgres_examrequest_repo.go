@@ -76,3 +76,76 @@ func (r *PostgresExamRequestRepository) UpdateStatus(id int, status string, admi
 			"updated_at": time.Now(),
 		}).Error
 }
+
+func (r *PostgresExamRequestRepository) GetStats() (map[string]int64, error) {
+	stats := map[string]int64{
+		"total":    0,
+		"pending":  0,
+		"approved": 0,
+		"rejected": 0,
+		"pack":     0,
+		"limit":    0,
+	}
+
+	type countResult struct {
+		Status string
+		Type   string
+		Count  int64
+	}
+
+	var results []countResult
+	err := r.db.Model(&examrequest.ExamRequest{}).
+		Select("status, type, count(*) as count").
+		Group("status, type").
+		Scan(&results).Error
+	if err != nil {
+		return stats, err
+	}
+
+	for _, res := range results {
+		stats["total"] += res.Count
+		switch res.Status {
+		case examrequest.StatusPending:
+			stats["pending"] += res.Count
+		case examrequest.StatusApproved:
+			stats["approved"] += res.Count
+		case examrequest.StatusRejected:
+			stats["rejected"] += res.Count
+		}
+
+		switch res.Type {
+		case examrequest.TypePack:
+			stats["pack"] += res.Count
+		case examrequest.TypeLimit:
+			stats["limit"] += res.Count
+		}
+	}
+
+	return stats, nil
+}
+
+func (r *PostgresExamRequestRepository) ClearRequests(reqType string, status string) (int64, error) {
+	q := r.db.Model(&examrequest.ExamRequest{})
+
+	if reqType != "" && reqType != "all" && reqType != "quota" {
+		q = q.Where("type = ?", reqType)
+	}
+
+	switch status {
+	case "pending":
+		q = q.Where("status = ?", examrequest.StatusPending)
+	case "approved":
+		q = q.Where("status = ?", examrequest.StatusApproved)
+	case "rejected":
+		q = q.Where("status = ?", examrequest.StatusRejected)
+	case "resolved", "handled":
+		q = q.Where("status IN (?, ?)", examrequest.StatusApproved, examrequest.StatusRejected)
+	case "all", "":
+		// clear all
+	default:
+		q = q.Where("status = ?", status)
+	}
+
+	res := q.Delete(&examrequest.ExamRequest{})
+	return res.RowsAffected, res.Error
+}
