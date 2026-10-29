@@ -16,6 +16,7 @@ import (
 	"github.com/selftest/backend/internal/domain/exam"
 	"github.com/selftest/backend/internal/domain/exampack"
 	"github.com/selftest/backend/internal/domain/examrequest"
+	"github.com/selftest/backend/internal/domain/notification"
 	"github.com/selftest/backend/internal/domain/system"
 	"github.com/selftest/backend/internal/domain/user"
 )
@@ -41,6 +42,7 @@ func models() []interface{} {
 		&system.Transaction{},
 		&system.InstitutionSuggestion{},
 		&examrequest.ExamRequest{},
+		&notification.Notification{},
 	}
 }
 

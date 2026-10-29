@@ -14,6 +14,7 @@ import (
 	"github.com/selftest/backend/internal/infrastructure/oauth"
 	"github.com/selftest/backend/internal/infrastructure/persistence"
 	"github.com/selftest/backend/internal/infrastructure/storage"
+	ws "github.com/selftest/backend/internal/infrastructure/websocket"
 	"github.com/selftest/backend/internal/service"
 	"github.com/selftest/backend/middleware"
 )
@@ -50,6 +51,11 @@ func main() {
 	reportRepo := persistence.NewPostgresReportRepository(config.DB)
 	systemRepo := persistence.NewPostgresSystemRepository(config.DB)
 	requestRepo := persistence.NewPostgresExamRequestRepository(config.DB)
+	notificationRepo := persistence.NewPostgresNotificationRepository(config.DB)
+
+	// Initialize WebSocket Hub
+	wsHub := ws.NewHub(config.RedisClient)
+	go wsHub.Run()
 
 	s3Storage, err := storage.NewS3Storage()
 	if err != nil {
@@ -59,14 +65,17 @@ func main() {
 	oauthService := oauth.NewOAuthService()
 
 	// 2. Initialize Domain / Application Services
+	notificationService := service.NewNotificationService(notificationRepo, wsHub, userRepo)
 	userService := service.NewUserService(userRepo, emailService, cacheService)
 	packService := service.NewExamPackService(packRepo, userRepo)
 	examService := service.NewExamService(examRepo, userRepo, packRepo)
 	attemptService := service.NewAttemptService(attemptRepo, examRepo, packRepo, userRepo)
+	attemptService.SetNotificationService(notificationService)
 	reportService := service.NewReportService(userRepo, examRepo, packRepo, attemptRepo, reportRepo)
 	systemService := service.NewSystemService(systemRepo)
 	uploadService := service.NewUploadService(s3Storage)
 	requestService := service.NewExamRequestService(requestRepo, userRepo, packRepo)
+	requestService.SetNotificationService(notificationService)
 	adminToolsService := service.NewAdminToolsService(cacheService, requestRepo, systemRepo, userRepo)
 
 	// 3. Initialize Delivery HTTP Handlers
@@ -79,6 +88,7 @@ func main() {
 	uploadHandler := delivery.NewUploadHandler(uploadService)
 	requestHandler := delivery.NewExamRequestHandler(requestService)
 	adminToolsHandler := delivery.NewAdminToolsHandler(adminToolsService)
+	notificationHandler := delivery.NewNotificationHandler(notificationService)
 
 	// 4. Initialize Rate Limiter
 	rateLimitConfig := config.LoadRateLimitConfig()
@@ -87,16 +97,17 @@ func main() {
 
 	// 5. Build Router with Middlewares
 	router := delivery.NewRouter(delivery.Handlers{
-		AuthHandler:        authHandler,
-		ExamPackHandler:    packHandler,
-		ExamHandler:        examHandler,
-		AttemptHandler:     attemptHandler,
-		ReportHandler:      reportHandler,
-		SystemHandler:      systemHandler,
-		UploadHandler:      uploadHandler,
-		ExamRequestHandler: requestHandler,
-		AdminToolsHandler:  adminToolsHandler,
-		RateLimiter:        rateLimiter,
+		AuthHandler:         authHandler,
+		ExamPackHandler:     packHandler,
+		ExamHandler:         examHandler,
+		AttemptHandler:      attemptHandler,
+		ReportHandler:       reportHandler,
+		SystemHandler:       systemHandler,
+		UploadHandler:       uploadHandler,
+		ExamRequestHandler:  requestHandler,
+		AdminToolsHandler:   adminToolsHandler,
+		NotificationHandler: notificationHandler,
+		RateLimiter:         rateLimiter,
 	})
 
 	port := os.Getenv("PORT")

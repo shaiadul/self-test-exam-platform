@@ -13,3 +13,4 @@ export * from "./transactions";
 export * from "./upload";
 export * from "./pagination";
 export * from "./tools";
+export * from "./notifications";

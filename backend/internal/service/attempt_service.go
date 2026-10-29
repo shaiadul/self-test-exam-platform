@@ -1,8 +1,10 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -21,6 +23,7 @@ type AttemptService struct {
 	examRepo     exam.ExamRepository
 	examPackRepo exampack.ExamPackRepository
 	userRepo     user.UserRepository
+	notifService *NotificationService
 }
 
 func NewAttemptService(
@@ -35,6 +38,10 @@ func NewAttemptService(
 		examPackRepo: examPackRepo,
 		userRepo:     userRepo,
 	}
+}
+
+func (s *AttemptService) SetNotificationService(notifService *NotificationService) {
+	s.notifService = notifService
 }
 
 func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.SubmitExamRequest) (*attempt.SubmitExamResponse, error) {
@@ -142,6 +149,22 @@ func (s *AttemptService) SubmitExam(userID int, examID string, req attempt.Submi
 
 	if err := s.attemptRepo.CreateExamAttempt(&newAttempt); err != nil {
 		return nil, err
+	}
+
+	if s.notifService != nil {
+		notifType := "info"
+		statusText := "Completed"
+		if evalResult.Passed {
+			notifType = "success"
+			statusText = "Passed"
+		} else {
+			notifType = "warning"
+			statusText = "Needs Improvement"
+		}
+		title := fmt.Sprintf("Exam Submitted: %s", targetExam.Name)
+		msg := fmt.Sprintf("Score: %.1f / %.1f (%s)", evalResult.FinalScore, float64(evalResult.Total), statusText)
+		link := fmt.Sprintf("/dashboard/report/%d", newAttempt.ID)
+		_, _ = s.notifService.SendToUser(context.Background(), userID, title, msg, notifType, &link)
 	}
 
 	userName := "Candidate"

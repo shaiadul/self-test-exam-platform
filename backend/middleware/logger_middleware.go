@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"bufio"
+	"errors"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -41,6 +44,22 @@ func (lrw *loggingResponseWriter) Write(b []byte) (int, error) {
 	n, err := lrw.ResponseWriter.Write(b)
 	lrw.bytesWritten += int64(n)
 	return n, err
+}
+
+// Hijack implements http.Hijacker interface so WebSocket upgrades work seamlessly through logger middleware
+func (lrw *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := lrw.ResponseWriter.(http.Hijacker); ok {
+		lrw.statusCode = http.StatusSwitchingProtocols
+		return hj.Hijack()
+	}
+	return nil, nil, errors.New("underlying response writer does not implement http.Hijacker")
+}
+
+// Flush implements http.Flusher interface so streaming responses work seamlessly
+func (lrw *loggingResponseWriter) Flush() {
+	if fl, ok := lrw.ResponseWriter.(http.Flusher); ok {
+		fl.Flush()
+	}
 }
 
 // LoggerMiddleware logs detailed info for every incoming HTTP request:
