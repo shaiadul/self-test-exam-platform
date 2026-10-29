@@ -31,6 +31,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 import { cookies } from "next/headers";
 import { UserProvider } from "../context/UserContext";
+import { NotificationProvider } from "../context/NotificationContext";
 
 export const viewport: Viewport = {
   themeColor: siteConfig.themeColor,
@@ -71,13 +72,16 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable}`}
     >
       <body className="antialiased font-sans">
         <UserProvider initialUser={initialUser}>
-          <JsonLd data={rootStructuredData} id="selftest-root-schemas" />
-          {children}
-          <Toaster richColors position="top-right" />
+          <NotificationProvider>
+            <JsonLd data={rootStructuredData} id="selftest-root-schemas" />
+            {children}
+            <Toaster richColors position="top-right" />
+          </NotificationProvider>
         </UserProvider>
       </body>
     </html>

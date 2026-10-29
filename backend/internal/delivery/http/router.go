@@ -16,6 +16,7 @@ type Handlers struct {
 	UploadHandler      *UploadHandler
 	ExamRequestHandler *ExamRequestHandler
 	AdminToolsHandler  *AdminToolsHandler
+	NotificationHandler *NotificationHandler
 	RateLimiter        *middleware.RateLimiter
 }
 
@@ -120,6 +121,17 @@ func NewRouter(h Handlers) http.Handler {
 		mux.Handle("/api/admin/tools/cache/clear", middleware.AuthMiddleware(http.HandlerFunc(h.AdminToolsHandler.HandleTools)))
 		mux.Handle("/api/admin/tools/requests/clear", middleware.AuthMiddleware(http.HandlerFunc(h.AdminToolsHandler.HandleTools)))
 	}
+
+	// Real-time Notification & WebSocket routes
+	if h.NotificationHandler != nil {
+		// WebSocket endpoint (handles its own token auth via query/header)
+		mux.HandleFunc("/api/ws/notifications", h.NotificationHandler.HandleWS)
+
+		// Protected REST notification routes
+		mux.Handle("/api/notifications", middleware.AuthMiddleware(http.HandlerFunc(h.NotificationHandler.HandleNotifications)))
+		mux.Handle("/api/notifications/", middleware.AuthMiddleware(http.HandlerFunc(h.NotificationHandler.HandleNotifications)))
+	}
+
 	var handler http.Handler = mux
 	if h.RateLimiter != nil {
 		handler = h.RateLimiter.Middleware(handler)

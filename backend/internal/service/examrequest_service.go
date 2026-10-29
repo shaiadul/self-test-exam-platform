@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -16,13 +17,18 @@ var (
 )
 
 type ExamRequestService struct {
-	repo     examrequest.ExamRequestRepository
-	userRepo user.UserRepository
-	packRepo exampack.ExamPackRepository
+	repo         examrequest.ExamRequestRepository
+	userRepo     user.UserRepository
+	packRepo     exampack.ExamPackRepository
+	notifService *NotificationService
 }
 
 func NewExamRequestService(repo examrequest.ExamRequestRepository, userRepo user.UserRepository, packRepo exampack.ExamPackRepository) *ExamRequestService {
 	return &ExamRequestService{repo: repo, userRepo: userRepo, packRepo: packRepo}
+}
+
+func (s *ExamRequestService) SetNotificationService(notifService *NotificationService) {
+	s.notifService = notifService
 }
 
 func (s *ExamRequestService) roleOf(userID int) string {
@@ -67,7 +73,19 @@ func (s *ExamRequestService) Create(teacherID int, req examrequest.ExamRequest) 
 		return nil, err
 	}
 
-	return s.repo.GetByID(req.ID)
+	created, err := s.repo.GetByID(req.ID)
+	if err == nil && created != nil && s.notifService != nil {
+		title := "New Resource Request"
+		msg := "A teacher submitted a new request: " + req.Title
+		link := "/dashboard/settings"
+		_, _ = s.notifService.SendToRole(nilRoleContext(), "admin", title, msg, "info", &link)
+	}
+
+	return created, err
+}
+
+func nilRoleContext() context.Context {
+	return context.Background()
 }
 
 func (s *ExamRequestService) List(userID int) ([]examrequest.ExamRequest, error) {
@@ -108,7 +126,19 @@ func (s *ExamRequestService) Review(adminID, requestID int, status string, note 
 		return nil, err
 	}
 
-	return s.repo.GetByID(requestID)
+	updated, err := s.repo.GetByID(requestID)
+	if err == nil && updated != nil && s.notifService != nil {
+		notifType := "success"
+		if status == examrequest.StatusRejected {
+			notifType = "warning"
+		}
+		title := "Request " + strings.Title(status)
+		msg := "Your request '" + updated.Title + "' has been " + status + " by administrator."
+		link := "/dashboard/manage-exam-pack"
+		_, _ = s.notifService.SendToUser(nilRoleContext(), updated.TeacherID, title, msg, notifType, &link)
+	}
+
+	return updated, nil
 }
 
 func (s *ExamRequestService) applyApproval(req *examrequest.ExamRequest) error {

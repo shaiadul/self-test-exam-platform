@@ -1,42 +1,57 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { FaBell, FaSearch, FaTimes, FaBookOpen, FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
+import {
+  FaBell,
+  FaSearch,
+  FaTimes,
+  FaBookOpen,
+  FaCheckCircle,
+  FaExclamationCircle,
+  FaInfoCircle,
+  FaExclamationTriangle,
+} from "react-icons/fa";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { getAllExamsAction, PaginationMeta } from "../../lib/actions";
 import { useUser } from "../../context/UserContext";
+import { useNotifications } from "../../context/NotificationContext";
 
-// --- NOTIFICATION MOCK DATA ---
-interface NotifItem {
-  id: string;
-  title: string;
-  desc: string;
-  time: string;
-  unread: boolean;
-  type: "success" | "info";
+function formatRelativeTime(dateStr?: string): string {
+  if (!dateStr) return "Just now";
+  try {
+    const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+    if (isNaN(diff) || diff < 45) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return new Date(dateStr).toLocaleDateString();
+  } catch {
+    return "Recently";
+  }
 }
-
-const initialNotifications: NotifItem[] = [
-  { id: "1", title: "Exam Submission Successful", desc: "Your exam 'Science Explorer' was submitted. Score: 15/20", time: "2 mins ago", unread: true, type: "success" },
-  { id: "2", title: "New Exam Pack Released", desc: "HSC Physics Pack is now available in your batch.", time: "1 hour ago", unread: true, type: "info" },
-  { id: "3", title: "Merit Rank Published", desc: "You placed #3 out of all candidates in Science Explorer.", time: "1 day ago", unread: false, type: "success" },
-];
 
 export const DashboardHeader = () => {
   const router = useRouter();
   const { user } = useUser();
-  
+  const {
+    notifications,
+    unreadCount,
+    isConnected,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications();
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchMeta, setSearchMeta] = useState<PaginationMeta | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  
-  // Notifications state
-  const [notifications, setNotifications] = useState<NotifItem[]>(initialNotifications);
+
+  // Notifications dropdown state
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   // User Profile from Context
@@ -55,8 +70,6 @@ export const DashboardHeader = () => {
   // Refs for clicking outside
   const searchRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
-
-  const unreadCount = notifications.filter(n => n.unread).length;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -118,13 +131,14 @@ export const DashboardHeader = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
-  };
-
-  const deleteNotification = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  const handleNotificationClick = (notif: any) => {
+    if (!notif.isRead) {
+      markAsRead(notif.id);
+    }
+    if (notif.link) {
+      setShowNotifDropdown(false);
+      router.push(notif.link);
+    }
   };
 
   const handleSearchSelect = (examId: string) => {
@@ -271,21 +285,25 @@ export const DashboardHeader = () => {
               <FaBell className="text-lg" />
               {unreadCount > 0 && (
                 <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white rounded-full border-2 border-white text-[9px] font-black flex items-center justify-center animate-pulse">
-                  {unreadCount}
+                  {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
             </button>
 
             {showNotifDropdown && (
-              <div className="absolute top-full -right-10 sm:right-0 w-80 sm:w-88 mt-2 bg-white border border-slate-200/80 rounded shadow-xl z-50 p-4 text-left font-sans animate-in fade-in zoom-in-95">
+              <div className="absolute top-full -right-10 sm:right-0 w-80 sm:w-96 mt-2 bg-white border border-slate-200/80 rounded shadow-xl z-50 p-4 text-left font-sans animate-in fade-in zoom-in-95">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                  <div>
+                  <div className="flex items-center gap-2">
                     <h3 className="text-xs font-bold text-slate-900">Notifications</h3>
-                    <p className="text-[10px] text-slate-400">{unreadCount} unread update(s)</p>
+                    <span 
+                      title={isConnected ? "Real-time sync active" : "Reconnecting to real-time feed..."}
+                      className={`inline-block w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-400"}`}
+                    />
+                    <span className="text-[10px] text-slate-400">({unreadCount} unread)</span>
                   </div>
                   {unreadCount > 0 && (
                     <button 
-                      onClick={markAllAsRead}
+                      onClick={() => markAllAsRead()}
                       className="text-[10px] font-bold text-primary hover:underline cursor-pointer"
                     >
                       Mark all read
@@ -294,33 +312,67 @@ export const DashboardHeader = () => {
                 </div>
 
                 {notifications.length > 0 ? (
-                  <div className="space-y-1.5 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-                    {notifications.map((n) => (
-                      <div 
-                        key={n.id} 
-                        className={`flex items-start gap-2.5 p-2.5 rounded border transition-all relative group ${
-                          n.unread ? "bg-primary/5 border-primary/20" : "border-transparent hover:bg-slate-50"
-                        }`}
-                      >
-                        <div className={`w-6 h-6 rounded flex items-center justify-center text-xs shrink-0 mt-0.5 ${
-                          n.type === "success" ? "bg-emerald-50 text-emerald-600" : "bg-sky-50 text-sky-600"
-                        }`}>
-                          {n.type === "success" ? <FaCheckCircle /> : <FaExclamationCircle />}
-                        </div>
-                        <div className="flex-1 pr-4">
-                          <p className={`text-xs ${n.unread ? "font-bold text-slate-900" : "text-slate-700"}`}>{n.title}</p>
-                          <p className="text-[10px] text-slate-500 mt-0.5 leading-normal">{n.desc}</p>
-                          <span className="text-[9px] text-slate-400 mt-1 block">{n.time}</span>
-                        </div>
-                        <button
-                          onClick={(e) => deleteNotification(n.id, e)}
-                          className="absolute top-2 right-2 p-1 text-slate-300 hover:text-slate-600 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                          aria-label="Delete notification"
+                  <div className="space-y-1.5 max-h-72 overflow-y-auto custom-scrollbar pr-1">
+                    {notifications.map((n) => {
+                      const isUnread = !n.isRead;
+                      return (
+                        <div 
+                          key={n.id} 
+                          onClick={() => handleNotificationClick(n)}
+                          className={`flex items-start gap-2.5 p-2.5 rounded border transition-all relative group cursor-pointer ${
+                            isUnread ? "bg-primary/5 border-primary/20 hover:bg-primary/10" : "border-slate-100 hover:bg-slate-50"
+                          }`}
                         >
-                          <FaTimes className="text-[9px]" />
-                        </button>
-                      </div>
-                    ))}
+                          <div className={`w-6 h-6 rounded flex items-center justify-center text-xs shrink-0 mt-0.5 ${
+                            n.type === "success" 
+                              ? "bg-emerald-50 text-emerald-600" 
+                              : n.type === "warning"
+                              ? "bg-amber-50 text-amber-600"
+                              : n.type === "error"
+                              ? "bg-rose-50 text-rose-600"
+                              : "bg-sky-50 text-sky-600"
+                          }`}>
+                            {n.type === "success" ? (
+                              <FaCheckCircle />
+                            ) : n.type === "warning" ? (
+                              <FaExclamationTriangle />
+                            ) : n.type === "error" ? (
+                              <FaExclamationCircle />
+                            ) : (
+                              <FaInfoCircle />
+                            )}
+                          </div>
+                          <div className="flex-1 pr-5">
+                            <p className={`text-xs ${isUnread ? "font-bold text-slate-900" : "text-slate-700"}`}>
+                              {n.title}
+                            </p>
+                            <p className="text-[10px] text-slate-500 mt-0.5 leading-normal">
+                              {n.message}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[9px] text-slate-400">
+                                {formatRelativeTime(n.createdAt)}
+                              </span>
+                              {n.link && (
+                                <span className="text-[9px] text-primary font-semibold">
+                                  Click to open &rarr;
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(n.id);
+                            }}
+                            className="absolute top-2 right-2 p-1 text-slate-300 hover:text-slate-600 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            aria-label="Delete notification"
+                          >
+                            <FaTimes className="text-[9px]" />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="py-8 text-center text-slate-400">

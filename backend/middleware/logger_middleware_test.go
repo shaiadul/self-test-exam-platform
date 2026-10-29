@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"bufio"
 	"bytes"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -79,5 +81,32 @@ func TestLoggerMiddleware(t *testing.T) {
 				t.Errorf("expected log to contain method '%s', got: %s", tc.method, output)
 			}
 		})
+	}
+}
+
+type mockHijackableResponseWriter struct {
+	http.ResponseWriter
+}
+
+func (m *mockHijackableResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return nil, nil, nil
+}
+
+func TestLoggerMiddleware_Hijacker(t *testing.T) {
+	mockRW := &mockHijackableResponseWriter{ResponseWriter: httptest.NewRecorder()}
+	lrw := newLoggingResponseWriter(mockRW)
+
+	hijacker, ok := any(lrw).(http.Hijacker)
+	if !ok {
+		t.Fatalf("loggingResponseWriter must implement http.Hijacker")
+	}
+
+	_, _, err := hijacker.Hijack()
+	if err != nil {
+		t.Errorf("unexpected error on hijack: %v", err)
+	}
+
+	if lrw.statusCode != http.StatusSwitchingProtocols {
+		t.Errorf("expected statusCode 101 on hijack, got %d", lrw.statusCode)
 	}
 }
