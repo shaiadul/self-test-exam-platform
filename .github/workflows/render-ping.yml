@@ -20,7 +20,7 @@ jobs:
     steps:
       - name: Execute Back-to-Back Ping
         env:
-          TARGET_URL: ${{ inputs.custom_url || secrets.RENDER_URL || secrets.RENDER_SERVICE_URL }}
+          TARGET_URL: ${{ inputs.custom_url || secrets.RENDER_URL }}
         run: |
           set -e
           echo "================================================="
@@ -32,17 +32,20 @@ jobs:
             echo "::error::No Render URL configured!"
             echo "Please add 'RENDER_URL' or 'RENDER_SERVICE_URL' under:"
             echo "Repository Settings -> Secrets and variables -> Actions"
-            echo "Example: https://your-backend.onrender.com"
+            echo "Example: https://your-backend.onrender.com/api"
             exit 1
           fi
 
           # Normalize URL
           BASE_URL="${TARGET_URL%/}"
-          # Prefer /health endpoint if user provided just the base domain
-          if [[ "$BASE_URL" != *"/health"* && "$BASE_URL" != *"/api"* ]]; then
+          
+          # Automatically resolve endpoint so that base URLs ending in /api or domain correctly ping /api/health
+          if [[ "$BASE_URL" == *"/health" ]]; then
+            TEST_URL="${BASE_URL}"
+          elif [[ "$BASE_URL" == *"/api" ]]; then
             TEST_URL="${BASE_URL}/health"
           else
-            TEST_URL="${BASE_URL}"
+            TEST_URL="${BASE_URL}/api/health"
           fi
 
           echo "Target Ping URL: ${TEST_URL}"
