@@ -2,133 +2,70 @@ name: Render Keep-Alive & Ping Test
 
 on:
   schedule:
-    # Run every 10 minutes to prevent Render free-tier service from spinning down
+    # Run every 10 minutes to prevent Render free-tier service from sleeping
     - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
       custom_url:
-        description: 'Optional Render Service URL override (leave empty to use RENDER_URL secret)'
+        description: 'Optional URL override (e.g. https://example.onrender.com/api/health)'
         required: false
         default: ''
 
 jobs:
   ping-test:
-    name: Back-to-Back Ping Test
+    name: Ping /api/health
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
-      - name: Execute Back-to-Back Ping
+      - name: Ping Render Backend
         env:
-          TARGET_URL: ${{ inputs.custom_url || secrets.RENDER_URL }}
+          INPUT_URL: ${{ inputs.custom_url || secrets.RENDER_URL || 'https://self-test-exam-platform.onrender.com' }}
         run: |
           set -e
-          echo "================================================="
-          echo "  Render Keep-Alive & Back-to-Back Ping Test     "
-          echo "  Time (UTC): $(date -u)                         "
-          echo "================================================="
 
-          if [ -z "$TARGET_URL" ]; then
-            echo "::error::No Render URL configured!"
-            echo "Please add 'RENDER_URL' or 'RENDER_SERVICE_URL' under:"
-            echo "Repository Settings -> Secrets and variables -> Actions"
-            echo "Example: https://your-backend.onrender.com/api"
-            exit 1
-          fi
-
-          # Normalize URL
-          BASE_URL="${TARGET_URL%/}"
-          
-          # Automatically resolve endpoint so that base URLs ending in /api or domain correctly ping /api/health
-          if [[ "$BASE_URL" == *"/health" ]]; then
-            TEST_URL="${BASE_URL}"
-          elif [[ "$BASE_URL" == *"/api" ]]; then
-            TEST_URL="${BASE_URL}/health"
+          # Ensure the URL always resolves to /api/health
+          RAW_URL="${INPUT_URL%/}"
+          if [[ "$RAW_URL" == *"/api/health" ]]; then
+            TARGET_URL="$RAW_URL"
+          elif [[ "$RAW_URL" == *"/api" ]]; then
+            TARGET_URL="${RAW_URL}/health"
+          elif [[ "$RAW_URL" == *"/health" ]]; then
+            TARGET_URL="$RAW_URL"
           else
-            TEST_URL="${BASE_URL}/api/health"
+            TARGET_URL="${RAW_URL}/api/health"
           fi
 
-          echo "Target Ping URL: ${TEST_URL}"
+          echo "========================================="
+          echo "  Render Keep-Alive Ping Test"
+          echo "  Target URL: $TARGET_URL"
+          echo "  Time (UTC): $(date -u)"
+          echo "========================================="
+
+          # Ping 1 (Wake-up ping)
+          echo "▶ Ping 1: Sending request..."
+          HTTP_1=$(curl -s -L -o /dev/null -w "%{http_code}" --connect-timeout 20 --max-time 60 "$TARGET_URL" || echo "000")
+          echo "  └ Status Code: $HTTP_1"
+
+          # Wait 5 seconds before back-to-back ping
           echo ""
-
-          ping_endpoint() {
-            local attempt_num=$1
-            local url=$2
-
-            echo "▶ Ping #${attempt_num}: Sending request to ${url}..."
-            
-            # Use curl to capture response body, HTTP status, and duration
-            RESPONSE_FILE=$(mktemp)
-            HTTP_METRICS=$(curl -s -L -o "$RESPONSE_FILE" \
-              -w "%{http_code}:%{time_total}:%{size_download}" \
-              --connect-timeout 20 \
-              --max-time 60 \
-              -H "User-Agent: GitHub-Actions-KeepAlive/1.0" \
-              "$url" || echo "000:0.000:0")
-            
-            HTTP_CODE=$(echo "$HTTP_METRICS" | cut -d: -f1)
-            TIME_TOTAL=$(echo "$HTTP_METRICS" | cut -d: -f2)
-            SIZE_BYTES=$(echo "$HTTP_METRICS" | cut -d: -f3)
-            BODY_PREVIEW=$(head -c 200 "$RESPONSE_FILE" 2>/dev/null || echo "")
-            rm -f "$RESPONSE_FILE"
-
-            echo "  └ Status Code: ${HTTP_CODE}"
-            echo "  └ Duration   : ${TIME_TOTAL}s"
-            echo "  └ Payload    : ${BODY_PREVIEW}"
-
-            echo "${attempt_num}|${HTTP_CODE}|${TIME_TOTAL}s|${BODY_PREVIEW}"
-          }
-
-          echo "--- Performing 1st Ping (Wake-up / Cold check) ---"
-          PING1_RESULT=$(ping_endpoint 1 "$TEST_URL")
-          HTTP1=$(echo "$PING1_RESULT" | cut -d'|' -f2)
-          TIME1=$(echo "$PING1_RESULT" | cut -d'|' -f3)
-          BODY1=$(echo "$PING1_RESULT" | cut -d'|' -f4)
-
-          # Wait 5 seconds before back-to-back follow-up ping
-          echo ""
-          echo "Waiting 5 seconds before back-to-back ping..."
+          echo "Waiting 5 seconds..."
           sleep 5
 
-          echo ""
-          echo "--- Performing 2nd Ping (Warm verification) ---"
-          PING2_RESULT=$(ping_endpoint 2 "$TEST_URL")
-          HTTP2=$(echo "$PING2_RESULT" | cut -d'|' -f2)
-          TIME2=$(echo "$PING2_RESULT" | cut -d'|' -f3)
-          BODY2=$(echo "$PING2_RESULT" | cut -d'|' -f4)
+          # Ping 2 (Back-to-back ping)
+          echo "▶ Ping 2: Sending back-to-back request..."
+          HTTP_2=$(curl -s -L -o /dev/null -w "%{http_code}" --connect-timeout 20 --max-time 60 "$TARGET_URL" || echo "000")
+          echo "  └ Status Code: $HTTP_2"
 
           echo ""
-          echo "================================================="
-          echo "  Results Summary                                "
-          echo "================================================="
-          echo "Ping 1 -> HTTP ${HTTP1} in ${TIME1}"
-          echo "Ping 2 -> HTTP ${HTTP2} in ${TIME2}"
+          echo "========================================="
 
-          # Publish GitHub Step Summary
-          {
-            echo "### 🚀 Render Keep-Alive & Ping Test Summary"
-            echo "- **Target URL:** \`${TEST_URL}\`"
-            echo "- **Triggered At (UTC):** $(date -u)"
-            echo ""
-            echo "| Ping Attempt | HTTP Status | Response Time | Response Preview |"
-            echo "| :--- | :--- | :--- | :--- |"
-            echo "| **Ping #1 (Initial)** | \`${HTTP1}\` | ${TIME1} | \`${BODY1}\` |"
-            echo "| **Ping #2 (Back-to-Back)** | \`${HTTP2}\` | ${TIME2} | \`${BODY2}\` |"
-            echo ""
-            if [ "$HTTP2" -ge 200 ] && [ "$HTTP2" -lt 400 ]; then
-              echo "✅ **Service is awake, responsive, and operational!**"
-            elif [ "$HTTP1" -ge 200 ] && [ "$HTTP1" -lt 400 ]; then
-              echo "⚠️ **Service responded on Ping 1 but Ping 2 had issues.**"
-            else
-              echo "❌ **Service is not responding with healthy HTTP status.**"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          # Evaluate overall success (at least one valid HTTP response)
-          if [ "$HTTP1" -ge 200 ] && [ "$HTTP1" -lt 400 ] || [ "$HTTP2" -ge 200 ] && [ "$HTTP2" -lt 400 ]; then
-            echo "✅ Keep-alive ping test passed!"
+          # Check if either ping returned success (2xx or 3xx)
+          if ([ "$HTTP_1" -ge 200 ] 2>/dev/null && [ "$HTTP_1" -lt 400 ] 2>/dev/null) || \
+             ([ "$HTTP_2" -ge 200 ] 2>/dev/null && [ "$HTTP_2" -lt 400 ] 2>/dev/null); then
+            echo "✅ Keep-alive successful! Service is alive and healthy."
             exit 0
           else
-            echo "::error::Both ping attempts failed or returned non-success HTTP status."
+            echo "❌ Keep-alive failed (Ping 1: $HTTP_1, Ping 2: $HTTP_2)"
             exit 1
           fi
