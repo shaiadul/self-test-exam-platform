@@ -1,0 +1,118 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Run at 04:00 UTC every 4 days
+    - cron: '0 4 */4 * *'
+  workflow_dispatch:
+    inputs:
+      custom_url:
+        description: 'Optional Supabase URL override (leave empty to use repository secret)'
+        required: false
+        default: ''
+
+jobs:
+  keep-alive:
+    name: Supabase Ping & Activity Pulse
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Keep-Alive Ping
+        env:
+          SUPABASE_URL: ${{ inputs.custom_url || secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -e
+          echo "================================================"
+          echo "  Supabase Keep-Alive Pulse - $(date -u)"
+          echo "================================================"
+
+          PING_SUCCESS=false
+          SUMMARY=""
+
+          # Auto-detect if user passed a PostgreSQL connection string into SUPABASE_URL
+          if [[ "$SUPABASE_URL" == postgres*://* ]]; then
+            if [ -z "$DATABASE_URL" ]; then
+              DATABASE_URL="$SUPABASE_URL"
+            fi
+            SUPABASE_URL=""
+          fi
+
+          # 1. Check HTTP REST / Auth Endpoints if SUPABASE_URL is configured
+          if [ -n "$SUPABASE_URL" ]; then
+            # Clean trailing slash if present
+            CLEAN_URL="${SUPABASE_URL%/}"
+            echo "Checking Supabase HTTP endpoints at: ${CLEAN_URL}"
+
+            # Ping Auth health endpoint
+            AUTH_URL="${CLEAN_URL}/auth/v1/health"
+            echo "Pinging Auth Health: ${AUTH_URL}..."
+            AUTH_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 15 --max-time 30 "${AUTH_URL}" || echo "000")
+            echo "Auth health response code: ${AUTH_HTTP_CODE}"
+
+            # Ping PostgREST endpoint
+            REST_URL="${CLEAN_URL}/rest/v1/"
+            echo "Pinging REST API: ${REST_URL}..."
+            if [ -n "$SUPABASE_ANON_KEY" ]; then
+              REST_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                -H "apikey: ${SUPABASE_ANON_KEY}" \
+                -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+                --connect-timeout 15 --max-time 30 "${REST_URL}" || echo "000")
+            else
+              REST_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                --connect-timeout 15 --max-time 30 "${REST_URL}" || echo "000")
+            fi
+            echo "REST API response code: ${REST_HTTP_CODE}"
+
+            if [ "$AUTH_HTTP_CODE" -ge 200 ] && [ "$AUTH_HTTP_CODE" -lt 400 ] || [ "$REST_HTTP_CODE" -ge 200 ] && [ "$REST_HTTP_CODE" -lt 400 ]; then
+              PING_SUCCESS=true
+              SUMMARY="${SUMMARY}✅ HTTP Ping succeeded (Auth: ${AUTH_HTTP_CODE}, REST: ${REST_HTTP_CODE})\n"
+            else
+              SUMMARY="${SUMMARY}⚠️ HTTP Ping returned non-2xx status (Auth: ${AUTH_HTTP_CODE}, REST: ${REST_HTTP_CODE})\n"
+            fi
+          fi
+
+          # 2. Check direct PostgreSQL ping if DATABASE_URL is configured
+          if [ -n "$DATABASE_URL" ]; then
+            echo ""
+            echo "Testing direct PostgreSQL connection with query 'SELECT 1;'..."
+            if psql "${DATABASE_URL}" -c "SELECT 1 AS keep_alive_ping;" > /dev/null 2>&1; then
+              echo "✅ PostgreSQL query executed successfully."
+              PING_SUCCESS=true
+              SUMMARY="${SUMMARY}✅ Direct PostgreSQL query (SELECT 1) succeeded\n"
+            else
+              echo "⚠️ PostgreSQL direct query failed."
+              SUMMARY="${SUMMARY}⚠️ Direct PostgreSQL query failed\n"
+            fi
+          fi
+
+          # 3. Handle cases where neither secret is configured
+          if [ -z "$SUPABASE_URL" ] && [ -z "$DATABASE_URL" ]; then
+            echo "::error::Neither SUPABASE_URL nor DATABASE_URL secret is set in GitHub Secrets!"
+            echo "Please configure at least one of:"
+            echo "  - SUPABASE_URL (and optionally SUPABASE_ANON_KEY)"
+            echo "  - DATABASE_URL"
+            echo "Go to: Repository Settings -> Secrets and variables -> Actions"
+            exit 1
+          fi
+
+          # 4. Generate GitHub Step Summary
+          {
+            echo "### Supabase Keep-Alive Execution Summary"
+            echo "- **Date & Time (UTC):** $(date -u)"
+            echo "- **Configured Endpoints:**"
+            [ -n "$SUPABASE_URL" ] && echo "  - URL: \`${CLEAN_URL}\`"
+            [ -n "$DATABASE_URL" ] && echo "  - PostgreSQL: configured"
+            echo ""
+            echo -e "$SUMMARY"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$PING_SUCCESS" = "true" ]; then
+            echo "🎉 Supabase project is active and alive!"
+            exit 0
+          else
+            echo "::error::All ping attempts failed to receive an active response."
+            exit 1
+          fi
